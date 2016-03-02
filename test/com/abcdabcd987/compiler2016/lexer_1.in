@@ -1,0 +1,13 @@
+int nfactor(int n) {
+  if (n == 0) return 1;
+  else return n * nfactor(n - 1);
+}
+
+int main() {
+  int a = nfactor(6);
+  printf("%d\n", a);
+  double b = 1.3 + 4.2;
+  char c = 'c';
+  printf("%f%c\n", b, c);
+  return a;
+}
