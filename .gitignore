@@ -62,6 +62,9 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+### Intellij Patch ###
+*.iml
+
 
 ### OSX ###
 .DS_Store
@@ -89,4 +92,3 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
-
