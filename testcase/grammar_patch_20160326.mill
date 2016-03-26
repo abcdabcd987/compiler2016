@@ -1,0 +1,8 @@
+void func(int arg1, string arg2) {
+    print("...");
+}
+int x, y, z;
+int main() {
+    int a, b = 3, c, d;
+    a = c = d = b << 2;
+}

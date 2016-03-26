@@ -50,18 +50,18 @@ jumpStatement
     ;
 
 //------ Declaration
-variableDeclarator
-    :   typeSpecifier Identifier
-    ;
-
 typeSpecifier
-    :   'int' | 'bool' | 'string'
+    :   'int' | 'bool' | 'string' | 'void'
     |   Identifier
     |   typeSpecifier '[' ']'
     ;
 
 variableDeclaration
-    :   variableDeclarator ('=' expression) ';'
+    :   typeSpecifier variableInitDeclarator (',' variableInitDeclarator)* ';'
+    ;
+
+variableInitDeclarator
+    :   Identifier ('=' expression)?
     ;
 
 classDeclaration
@@ -69,11 +69,11 @@ classDeclaration
     ;
 
 memberDeclaration
-    :   variableDeclarator ';'
+    :   typeSpecifier Identifier ';'
     ;
 
 functionDeclaration
-    :   (variableDeclarator | 'void') '(' parameterDeclarationList? ')' blockStatement
+    :   typeSpecifier Identifier '(' parameterDeclarationList? ')' blockStatement
     ;
 
 parameterDeclarationList
@@ -81,7 +81,7 @@ parameterDeclarationList
     ;
 
 parameterDeclaration
-    :   variableDeclarator
+    :   typeSpecifier Identifier
     ;
 
 //------ Expression: http://en.cppreference.com/w/cpp/language/operator_precedence
@@ -108,7 +108,7 @@ expression
     |   expression op='&&' expression                # BoolAnd          // Precedence 11
     |   expression op='||' expression                # BoolOr           // Precedence 12
 
-    |   expression op='=' expression                 # Assign           // Precedence 14
+    |   <assoc=right> expression op='=' expression   # Assign           // Precedence 14
 
     |   Identifier                                   # Identifier
     |   Constant                                     # Literal

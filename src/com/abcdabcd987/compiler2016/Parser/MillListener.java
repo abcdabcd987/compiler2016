@@ -90,16 +90,6 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitJumpStatement(MillParser.JumpStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MillParser#variableDeclarator}.
-	 * @param ctx the parse tree
-	 */
-	void enterVariableDeclarator(MillParser.VariableDeclaratorContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MillParser#variableDeclarator}.
-	 * @param ctx the parse tree
-	 */
-	void exitVariableDeclarator(MillParser.VariableDeclaratorContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MillParser#typeSpecifier}.
 	 * @param ctx the parse tree
 	 */
@@ -119,6 +109,16 @@ public interface MillListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitVariableDeclaration(MillParser.VariableDeclarationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MillParser#variableInitDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void enterVariableInitDeclarator(MillParser.VariableInitDeclaratorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MillParser#variableInitDeclarator}.
+	 * @param ctx the parse tree
+	 */
+	void exitVariableInitDeclarator(MillParser.VariableInitDeclaratorContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MillParser#classDeclaration}.
 	 * @param ctx the parse tree
