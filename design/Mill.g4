@@ -50,10 +50,13 @@ jumpStatement
     ;
 
 //------ Declaration
-typeSpecifier
+nonArrayTypeSpecifier
     :   'int' | 'bool' | 'string' | 'void'
     |   Identifier
-    |   typeSpecifier '[' ']'
+    ;
+
+typeSpecifier
+    :   nonArrayTypeSpecifier ('[' ']')*
     ;
 
 variableDeclaration
@@ -94,7 +97,7 @@ expression
     |   <assoc=right> op=('++'|'--') expression      # PrefixIncDec     // Precedence 2
     |   <assoc=right> op=('+' | '-') expression      # UnaryPlusMinus
     |   <assoc=right> op=('!' | '~') expression      # BoolBitNot
-    |   <assoc=right> op='new' expression            # New
+    |   <assoc=right> 'new' creator                  # New
 
     |   expression op=('*' | '/' | '%') expression   # MulDivMod        // Precedence 3
     |   expression op=('+' | '-') expression         # AddSub           // Precedence 4
@@ -113,6 +116,10 @@ expression
     |   Identifier                                   # Identifier
     |   Constant                                     # Literal
     |   '(' expression ')'                           # SubExpression
+    ;
+
+creator
+    :   nonArrayTypeSpecifier ('[' expression ']')*
     ;
 
 parameterList

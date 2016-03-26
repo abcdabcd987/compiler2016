@@ -1,0 +1,9 @@
+class experience {
+    int naive;
+}
+int main() {
+    experience[][] exp = new experience[5][6];
+    string[] vec;
+    int[][] mat = new int[5][6];
+    vec = new string[10];
+}
