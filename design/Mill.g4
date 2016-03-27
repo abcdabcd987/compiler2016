@@ -5,19 +5,22 @@ package com.abcdabcd987.compiler2016.Parser;
 }
 
 program
-    :   (   classDeclaration
-        |   functionDeclaration
-        |   variableDeclaration
-        )* EOF
+    :   programSection* EOF
+    ;
+
+programSection
+    :   classDeclaration          # class
+    |   functionDeclaration       # func
+    |   variableDeclaration       # var
     ;
 
 //------ Statement
 statement
-    :   blockStatement
-    |   expressionStatement
-    |   selectionStatement
-    |   iterationStatement
-    |   jumpStatement
+    :   blockStatement            # block
+    |   expressionStatement       # expr
+    |   selectionStatement        # select
+    |   iterationStatement        # iter
+    |   jumpStatement             # jump
     ;
 
 blockStatement
@@ -25,8 +28,8 @@ blockStatement
     ;
 
 blockItem
-    : variableDeclaration
-    | statement
+    : variableDeclaration         # vardecl
+    | statement                   # stmt
     ;
 
 expressionStatement
@@ -38,25 +41,31 @@ selectionStatement
     ;
 
 iterationStatement
-    :   'while' '(' expression ')' statement
-    |   'for' '(' expression? ';' expression? ';' expression? ')' statement
-    //|   'for' '(' declaration expression? ';' expression? ')' statement
+    :   'while' '(' expression ')' statement                  # while
+    |   'for' '(' (variableDeclaration | expression)? ';'
+                  expression? ';'
+                  expression? ')'
+            statement                                         # for
     ;
 
 jumpStatement
-    :   'continue' ';'
-    |   'break' ';'
-    |   'return' expression? ';'
+    :   'continue' ';'              # continue
+    |   'break' ';'                 # break
+    |   'return' expression? ';'    # return
     ;
 
 //------ Declaration
 nonArrayTypeSpecifier
-    :   'int' | 'bool' | 'string' | 'void'
-    |   Identifier
+    :   type='int'
+    |   type='bool'
+    |   type='string'
+    |   type='void'
+    |   type=Identifier
     ;
 
 typeSpecifier
-    :   nonArrayTypeSpecifier ('[' ']')*
+    :   typeSpecifier '[' ']'     # arrayType
+    |   nonArrayTypeSpecifier     # nonArrayType
     ;
 
 variableDeclaration
@@ -123,11 +132,7 @@ creator
     ;
 
 parameterList
-    :   parameter (',' parameter)*
-    ;
-
-parameter
-    :   expression
+    :   expression (',' expression)*
     ;
 
 //------ Reserved Keywords

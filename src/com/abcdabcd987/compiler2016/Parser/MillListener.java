@@ -20,15 +20,101 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitProgram(MillParser.ProgramContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MillParser#statement}.
+	 * Enter a parse tree produced by the {@code class}
+	 * labeled alternative in {@link MillParser#programSection}.
 	 * @param ctx the parse tree
 	 */
-	void enterStatement(MillParser.StatementContext ctx);
+	void enterClass(MillParser.ClassContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MillParser#statement}.
+	 * Exit a parse tree produced by the {@code class}
+	 * labeled alternative in {@link MillParser#programSection}.
 	 * @param ctx the parse tree
 	 */
-	void exitStatement(MillParser.StatementContext ctx);
+	void exitClass(MillParser.ClassContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code func}
+	 * labeled alternative in {@link MillParser#programSection}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunc(MillParser.FuncContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code func}
+	 * labeled alternative in {@link MillParser#programSection}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunc(MillParser.FuncContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code var}
+	 * labeled alternative in {@link MillParser#programSection}.
+	 * @param ctx the parse tree
+	 */
+	void enterVar(MillParser.VarContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code var}
+	 * labeled alternative in {@link MillParser#programSection}.
+	 * @param ctx the parse tree
+	 */
+	void exitVar(MillParser.VarContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code block}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterBlock(MillParser.BlockContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code block}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitBlock(MillParser.BlockContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code expr}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr(MillParser.ExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code expr}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr(MillParser.ExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code select}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSelect(MillParser.SelectContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code select}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSelect(MillParser.SelectContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code iter}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterIter(MillParser.IterContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code iter}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitIter(MillParser.IterContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code jump}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterJump(MillParser.JumpContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code jump}
+	 * labeled alternative in {@link MillParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitJump(MillParser.JumpContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MillParser#blockStatement}.
 	 * @param ctx the parse tree
@@ -40,15 +126,29 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitBlockStatement(MillParser.BlockStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MillParser#blockItem}.
+	 * Enter a parse tree produced by the {@code vardecl}
+	 * labeled alternative in {@link MillParser#blockItem}.
 	 * @param ctx the parse tree
 	 */
-	void enterBlockItem(MillParser.BlockItemContext ctx);
+	void enterVardecl(MillParser.VardeclContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MillParser#blockItem}.
+	 * Exit a parse tree produced by the {@code vardecl}
+	 * labeled alternative in {@link MillParser#blockItem}.
 	 * @param ctx the parse tree
 	 */
-	void exitBlockItem(MillParser.BlockItemContext ctx);
+	void exitVardecl(MillParser.VardeclContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code stmt}
+	 * labeled alternative in {@link MillParser#blockItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterStmt(MillParser.StmtContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code stmt}
+	 * labeled alternative in {@link MillParser#blockItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitStmt(MillParser.StmtContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MillParser#expressionStatement}.
 	 * @param ctx the parse tree
@@ -70,25 +170,65 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitSelectionStatement(MillParser.SelectionStatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MillParser#iterationStatement}.
+	 * Enter a parse tree produced by the {@code while}
+	 * labeled alternative in {@link MillParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterIterationStatement(MillParser.IterationStatementContext ctx);
+	void enterWhile(MillParser.WhileContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MillParser#iterationStatement}.
+	 * Exit a parse tree produced by the {@code while}
+	 * labeled alternative in {@link MillParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitIterationStatement(MillParser.IterationStatementContext ctx);
+	void exitWhile(MillParser.WhileContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MillParser#jumpStatement}.
+	 * Enter a parse tree produced by the {@code for}
+	 * labeled alternative in {@link MillParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterJumpStatement(MillParser.JumpStatementContext ctx);
+	void enterFor(MillParser.ForContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MillParser#jumpStatement}.
+	 * Exit a parse tree produced by the {@code for}
+	 * labeled alternative in {@link MillParser#iterationStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitJumpStatement(MillParser.JumpStatementContext ctx);
+	void exitFor(MillParser.ForContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code continue}
+	 * labeled alternative in {@link MillParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterContinue(MillParser.ContinueContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code continue}
+	 * labeled alternative in {@link MillParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitContinue(MillParser.ContinueContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code break}
+	 * labeled alternative in {@link MillParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterBreak(MillParser.BreakContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code break}
+	 * labeled alternative in {@link MillParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitBreak(MillParser.BreakContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code return}
+	 * labeled alternative in {@link MillParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterReturn(MillParser.ReturnContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code return}
+	 * labeled alternative in {@link MillParser#jumpStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitReturn(MillParser.ReturnContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MillParser#nonArrayTypeSpecifier}.
 	 * @param ctx the parse tree
@@ -100,15 +240,29 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitNonArrayTypeSpecifier(MillParser.NonArrayTypeSpecifierContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MillParser#typeSpecifier}.
+	 * Enter a parse tree produced by the {@code arrayType}
+	 * labeled alternative in {@link MillParser#typeSpecifier}.
 	 * @param ctx the parse tree
 	 */
-	void enterTypeSpecifier(MillParser.TypeSpecifierContext ctx);
+	void enterArrayType(MillParser.ArrayTypeContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MillParser#typeSpecifier}.
+	 * Exit a parse tree produced by the {@code arrayType}
+	 * labeled alternative in {@link MillParser#typeSpecifier}.
 	 * @param ctx the parse tree
 	 */
-	void exitTypeSpecifier(MillParser.TypeSpecifierContext ctx);
+	void exitArrayType(MillParser.ArrayTypeContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code nonArrayType}
+	 * labeled alternative in {@link MillParser#typeSpecifier}.
+	 * @param ctx the parse tree
+	 */
+	void enterNonArrayType(MillParser.NonArrayTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code nonArrayType}
+	 * labeled alternative in {@link MillParser#typeSpecifier}.
+	 * @param ctx the parse tree
+	 */
+	void exitNonArrayType(MillParser.NonArrayTypeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MillParser#variableDeclaration}.
 	 * @param ctx the parse tree
@@ -475,14 +629,4 @@ public interface MillListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitParameterList(MillParser.ParameterListContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MillParser#parameter}.
-	 * @param ctx the parse tree
-	 */
-	void enterParameter(MillParser.ParameterContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MillParser#parameter}.
-	 * @param ctx the parse tree
-	 */
-	void exitParameter(MillParser.ParameterContext ctx);
 }

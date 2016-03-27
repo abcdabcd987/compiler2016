@@ -18,7 +18,7 @@ public class ForLoop extends Stmt {
         this.body = body;
     }
 
-    public ForLoop(VariableDecl initWithDecl, Stmt body, Expr cond, Expr step) {
+    public ForLoop(VariableDecl initWithDecl, Expr cond, Expr step, Stmt body) {
         this.initWithDecl = initWithDecl;
         this.init = null;
         this.body = body;
