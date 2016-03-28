@@ -346,138 +346,6 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitNew(MillParser.NewContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code BitOr}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterBitOr(MillParser.BitOrContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code BitOr}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitBitOr(MillParser.BitOrContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code AddSub}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterAddSub(MillParser.AddSubContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code AddSub}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitAddSub(MillParser.AddSubContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code LefRigShift}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterLefRigShift(MillParser.LefRigShiftContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code LefRigShift}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitLefRigShift(MillParser.LefRigShiftContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Subscript}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterSubscript(MillParser.SubscriptContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Subscript}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitSubscript(MillParser.SubscriptContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code BoolBitNot}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterBoolBitNot(MillParser.BoolBitNotContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code BoolBitNot}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitBoolBitNot(MillParser.BoolBitNotContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code PostfixIncDec}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterPostfixIncDec(MillParser.PostfixIncDecContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code PostfixIncDec}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitPostfixIncDec(MillParser.PostfixIncDecContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code LtRt}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterLtRt(MillParser.LtRtContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code LtRt}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitLtRt(MillParser.LtRtContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code EqNeq}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterEqNeq(MillParser.EqNeqContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code EqNeq}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitEqNeq(MillParser.EqNeqContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code MulDivMod}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterMulDivMod(MillParser.MulDivModContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code MulDivMod}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitMulDivMod(MillParser.MulDivModContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code LeqReq}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterLeqReq(MillParser.LeqReqContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code LeqReq}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitLeqReq(MillParser.LeqReqContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code UnaryPlusMinus}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterUnaryPlusMinus(MillParser.UnaryPlusMinusContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code UnaryPlusMinus}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitUnaryPlusMinus(MillParser.UnaryPlusMinusContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code Identifier}
 	 * labeled alternative in {@link MillParser#expression}.
 	 * @param ctx the parse tree
@@ -489,18 +357,6 @@ public interface MillListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIdentifier(MillParser.IdentifierContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code BitXor}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterBitXor(MillParser.BitXorContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code BitXor}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitBitXor(MillParser.BitXorContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MemberAccess}
 	 * labeled alternative in {@link MillParser#expression}.
@@ -526,41 +382,29 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitLiteral(MillParser.LiteralContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code BitAnd}
+	 * Enter a parse tree produced by the {@code BinaryExpr}
 	 * labeled alternative in {@link MillParser#expression}.
 	 * @param ctx the parse tree
 	 */
-	void enterBitAnd(MillParser.BitAndContext ctx);
+	void enterBinaryExpr(MillParser.BinaryExprContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code BitAnd}
+	 * Exit a parse tree produced by the {@code BinaryExpr}
 	 * labeled alternative in {@link MillParser#expression}.
 	 * @param ctx the parse tree
 	 */
-	void exitBitAnd(MillParser.BitAndContext ctx);
+	void exitBinaryExpr(MillParser.BinaryExprContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code PrefixIncDec}
+	 * Enter a parse tree produced by the {@code Subscript}
 	 * labeled alternative in {@link MillParser#expression}.
 	 * @param ctx the parse tree
 	 */
-	void enterPrefixIncDec(MillParser.PrefixIncDecContext ctx);
+	void enterSubscript(MillParser.SubscriptContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code PrefixIncDec}
+	 * Exit a parse tree produced by the {@code Subscript}
 	 * labeled alternative in {@link MillParser#expression}.
 	 * @param ctx the parse tree
 	 */
-	void exitPrefixIncDec(MillParser.PrefixIncDecContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code Assign}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterAssign(MillParser.AssignContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code Assign}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitAssign(MillParser.AssignContext ctx);
+	void exitSubscript(MillParser.SubscriptContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code FunctionCall}
 	 * labeled alternative in {@link MillParser#expression}.
@@ -574,6 +418,30 @@ public interface MillListener extends ParseTreeListener {
 	 */
 	void exitFunctionCall(MillParser.FunctionCallContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code PostfixIncDec}
+	 * labeled alternative in {@link MillParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostfixIncDec(MillParser.PostfixIncDecContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code PostfixIncDec}
+	 * labeled alternative in {@link MillParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostfixIncDec(MillParser.PostfixIncDecContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code UnaryExpr}
+	 * labeled alternative in {@link MillParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnaryExpr(MillParser.UnaryExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code UnaryExpr}
+	 * labeled alternative in {@link MillParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnaryExpr(MillParser.UnaryExprContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code SubExpression}
 	 * labeled alternative in {@link MillParser#expression}.
 	 * @param ctx the parse tree
@@ -585,30 +453,6 @@ public interface MillListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSubExpression(MillParser.SubExpressionContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code BoolOr}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterBoolOr(MillParser.BoolOrContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code BoolOr}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitBoolOr(MillParser.BoolOrContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code BoolAnd}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterBoolAnd(MillParser.BoolAndContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code BoolAnd}
-	 * labeled alternative in {@link MillParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitBoolAnd(MillParser.BoolAndContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MillParser#creator}.
 	 * @param ctx the parse tree

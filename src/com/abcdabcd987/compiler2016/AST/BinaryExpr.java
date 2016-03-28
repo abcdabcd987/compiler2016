@@ -4,7 +4,7 @@ package com.abcdabcd987.compiler2016.AST;
  * Created by abcdabcd987 on 2016-03-26.
  */
 public class BinaryExpr extends Expr {
-    public enum BinaryOP {
+    public enum BinaryOp {
         ASSIGN,
         LOGICAL_OR, LOGICAL_AND,
         BITWISE_OR, BITWISE_AND, XOR,
@@ -14,11 +14,11 @@ public class BinaryExpr extends Expr {
         MUL, DIV, MOD
     }
 
-    public final BinaryOP op;
+    public final BinaryOp op;
     public final Expr lhs;
     public final Expr rhs;
 
-    public BinaryExpr(BinaryOP op, Expr lhs, Expr rhs) {
+    public BinaryExpr(BinaryOp op, Expr lhs, Expr rhs) {
         this.op = op;
         this.lhs = lhs;
         this.rhs = rhs;

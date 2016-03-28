@@ -1,11 +1,11 @@
 package com.abcdabcd987.compiler2016.Parser;
 
 import com.abcdabcd987.compiler2016.AST.*;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Created by abcdabcd987 on 2016-03-26.
@@ -162,7 +162,7 @@ public class ASTBuilder extends MillBaseListener {
     // typeSpecifier: typeSpecifier '[' ']'
     @Override
     public void exitArrayType(MillParser.ArrayTypeContext ctx) {
-        map.put(ctx, new ArrayType((Type)map.get(ctx.typeSpecifier())));
+        map.put(ctx, new ArrayType((Type)map.get(ctx.typeSpecifier()), null));
     }
 
     // typeSpecifier: nonArrayTypeSpecifier
@@ -177,12 +177,11 @@ public class ASTBuilder extends MillBaseListener {
     public void exitVariableDeclaration(MillParser.VariableDeclarationContext ctx) {
         List<VariableDecl> decls = new ArrayList<>();
         Type type = (Type)map.get(ctx.typeSpecifier());
-        ctx.variableInitDeclarator().stream().forEachOrdered(x -> {
-            decls.add(new VariableDecl(
+        ctx.variableInitDeclarator().stream()
+                .forEachOrdered(x -> decls.add(new VariableDecl(
                     type,
                     Symbol.get(x.Identifier().getText()),
-                    x.expression() != null ? (Expr)map.get(x.expression()) : null));
-        });
+                    x.expression() != null ? (Expr)map.get(x.expression()) : null)));
         map.put(ctx, decls);
     }
 
@@ -227,5 +226,188 @@ public class ASTBuilder extends MillBaseListener {
                 Symbol.get(ctx.Identifier().getText()),
                 null
         ));
+    }
+
+    // expression: expression op=('++' | '--')
+    @Override
+    public void exitPostfixIncDec(MillParser.PostfixIncDecContext ctx) {
+        Expr expr = (Expr)map.get(ctx.expression());
+        if (ctx.op.getType() == MillParser.PlusPlus)
+            map.put(ctx, new SelfIncrement(expr));
+        else
+            map.put(ctx, new SelfDecrement(expr));
+    }
+
+    // expression: Identifier '(' parameterList? ')'
+    // parameterList: expression (',' expression)*
+    @Override
+    public void exitFunctionCall(MillParser.FunctionCallContext ctx) {
+        FunctionCall.Builder builder = new FunctionCall.Builder();
+        builder.setName(Symbol.get(ctx.Identifier().getText()));
+        if (ctx.parameterList() != null)
+            ctx.parameterList().expression().stream()
+                    .map(map::get).forEachOrdered(builder::addArg);
+        map.put(ctx, builder.build());
+    }
+
+    // expression: expression '[' expression ']'
+    @Override
+    public void exitSubscript(MillParser.SubscriptContext ctx) {
+        map.put(ctx, new ArrayAccess(
+                (Expr)map.get(ctx.expression(0)),
+                (Expr)map.get(ctx.expression(1))
+        ));
+    }
+
+    // expression: expression '.' Identifier
+    @Override
+    public void exitMemberAccess(MillParser.MemberAccessContext ctx) {
+        map.put(ctx, new RecordAccess(
+                (Expr)map.get(ctx.expression()),
+                Symbol.get(ctx.Identifier().getText())
+        ));
+    }
+
+    // expression
+    //     :   <assoc=right> op=('++'|'--') expression
+    //     |   <assoc=right> op=('+' | '-') expression
+    //     |   <assoc=right> op=('!' | '~') expression
+    @Override
+    public void exitUnaryExpr(MillParser.UnaryExprContext ctx) {
+        UnaryExpr.UnaryOp op;
+        switch (ctx.op.getType()) {
+            case MillParser.PlusPlus: op = UnaryExpr.UnaryOp.INC; break;
+            case MillParser.MinusMinus: op = UnaryExpr.UnaryOp.DEC; break;
+            case MillParser.Plus: op = UnaryExpr.UnaryOp.POS; break;
+            case MillParser.Minus: op = UnaryExpr.UnaryOp.NEG; break;
+            case MillParser.Not: op = UnaryExpr.UnaryOp.LOGICAL_NOT; break;
+            case MillParser.Tilde: op = UnaryExpr.UnaryOp.BITWISE_NOT; break;
+            default: throw new RuntimeException("Unknown unary op.");
+        }
+        map.put(ctx, new UnaryExpr(
+                op,
+                (Expr)map.get(ctx.expression())
+        ));
+    }
+
+    // expression: <assoc=right> 'new' creator
+    @Override
+    public void exitNew(MillParser.NewContext ctx) {
+        map.put(ctx, new NewExpr((Type)map.get(ctx.creator())));
+    }
+
+    // expression
+    //     :   expression op=('*' | '/' | '%') expression
+    //     |   expression op=('+' | '-') expression
+    //     |   expression op=('<<'|'>>') expression
+    //     |   expression op=('<' | '>') expression
+    //     |   expression op=('<='|'>=') expression
+    //     |   expression op=('=='|'!=') expression
+    //     |   expression op='&' expression
+    //     |   expression op='^' expression
+    //     |   expression op='|' expression
+    //     |   expression op='&&' expression
+    //     |   expression op='||' expression
+    //     |   <assoc=right> expression op='=' expression
+    @Override
+    public void exitBinaryExpr(MillParser.BinaryExprContext ctx) {
+        BinaryExpr.BinaryOp op;
+        switch (ctx.op.getType()) {
+            case MillParser.Star: op = BinaryExpr.BinaryOp.MUL; break;
+            case MillParser.Div: op = BinaryExpr.BinaryOp.DIV; break;
+            case MillParser.Mod: op = BinaryExpr.BinaryOp.MOD; break;
+            case MillParser.Plus: op = BinaryExpr.BinaryOp.ADD; break;
+            case MillParser.Minus: op = BinaryExpr.BinaryOp.SUB; break;
+            case MillParser.LeftShift: op = BinaryExpr.BinaryOp.SHL; break;
+            case MillParser.RightShift: op = BinaryExpr.BinaryOp.SHR; break;
+            case MillParser.Less: op = BinaryExpr.BinaryOp.LT; break;
+            case MillParser.Greater: op = BinaryExpr.BinaryOp.GT; break;
+            case MillParser.LessEqual: op = BinaryExpr.BinaryOp.LE; break;
+            case MillParser.GreaterEqual: op = BinaryExpr.BinaryOp.GE; break;
+            case MillParser.Equal: op = BinaryExpr.BinaryOp.EQ; break;
+            case MillParser.NotEqual: op = BinaryExpr.BinaryOp.NE; break;
+            case MillParser.And: op = BinaryExpr.BinaryOp.BITWISE_AND; break;
+            case MillParser.Caret: op = BinaryExpr.BinaryOp.XOR; break;
+            case MillParser.Or: op = BinaryExpr.BinaryOp.BITWISE_OR; break;
+            case MillParser.AndAnd: op = BinaryExpr.BinaryOp.LOGICAL_AND; break;
+            case MillParser.OrOr: op = BinaryExpr.BinaryOp.LOGICAL_OR; break;
+            case MillParser.Assign: op = BinaryExpr.BinaryOp.ASSIGN; break;
+            default: throw new RuntimeException("Unknown binary op.");
+        }
+        map.put(ctx, new BinaryExpr(
+                op,
+                (Expr)map.get(ctx.expression(0)),
+                (Expr)map.get(ctx.expression(1))
+        ));
+    }
+
+    // expression: Identifier
+    @Override
+    public void exitIdentifier(MillParser.IdentifierContext ctx) {
+        map.put(ctx, new Identifier(Symbol.get(ctx.Identifier().getText())));
+    }
+
+    private String unescape(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); ++i) {
+            if (s.charAt(i) != '\\') {
+                sb.append(s.charAt(i));
+            } else {
+                ++i;
+                switch (s.charAt(i)) {
+                    case 't': sb.append('\t'); break;
+                    case 'n': sb.append('\n'); break;
+                    case 'r': sb.append('\r'); break;
+                    case '\'':sb.append('\''); break;
+                    case '"': sb.append('"');  break;
+                    case '\\':sb.append('\\'); break;
+                    default: sb.append(s.charAt(i));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    // expression: Constant
+    @Override
+    public void exitLiteral(MillParser.LiteralContext ctx) {
+        String s = ctx.Constant().getText();
+        int type = ctx.Constant().getSymbol().getType();
+        if (type == MillParser.IntegerConstant) {
+            map.put(ctx, new IntConst(Integer.valueOf(s)));
+        } else if (type == MillParser.NullLiteral) {
+            map.put(ctx, new NullLiteral());
+        } else if (type == MillParser.BoolConstant) {
+            map.put(ctx, new BoolConst(s.equals("true")));
+        } else if (type == MillParser.CharacterConstant || type == MillParser.StringLiteral) {
+            s = unescape(s);
+            if (type == MillParser.CharacterConstant) {
+                if (s.length() == 1) map.put(ctx, new IntConst(s.charAt(0)));
+                else throw new RuntimeException("Invalid char literal.");
+            } else {
+                map.put(ctx, new StringConst(s));
+            }
+        } else {
+            throw new RuntimeException("Unknown literal.");
+        }
+    }
+
+    // expression: '(' expression ')'
+    @Override
+    public void exitSubExpression(MillParser.SubExpressionContext ctx) {
+        map.put(ctx, map.get(ctx.expression()));
+    }
+
+    // creator: nonArrayTypeSpecifier ('[' expression ']')*
+    @Override
+    public void exitCreator(MillParser.CreatorContext ctx) {
+        Type type = (Type)map.get(ctx.nonArrayTypeSpecifier());
+        ListIterator<MillParser.ExpressionContext> iter =
+                ctx.expression().listIterator(ctx.expression().size());
+        while (iter.hasPrevious()) {
+            MillParser.ExpressionContext x = iter.previous();
+            type = new ArrayType(type, (Expr)map.get(x));
+        }
+        map.put(ctx, type);
     }
 }

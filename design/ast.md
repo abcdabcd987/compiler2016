@@ -17,6 +17,8 @@
             BinaryExpr, BinaryOp
             EmptyExpr
             IntConst
+            NewExpr
+            NullLiteral
             RecordAccess
             Identifier
             SelfDecrement
