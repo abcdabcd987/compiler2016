@@ -15,4 +15,9 @@ public class UnaryExpr extends Expr {
         this.op = op;
         this.body = body;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

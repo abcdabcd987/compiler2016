@@ -9,4 +9,9 @@ public class IntConst extends Expr {
     public IntConst(int value) {
         this.value = value;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

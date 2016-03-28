@@ -12,4 +12,9 @@ public class RecordType extends BasicType {
     public RecordType(Symbol name) {
         this.name = name;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

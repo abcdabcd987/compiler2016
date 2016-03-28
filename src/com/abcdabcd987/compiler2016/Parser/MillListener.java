@@ -473,4 +473,14 @@ public interface MillListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitParameterList(MillParser.ParameterListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MillParser#constant}.
+	 * @param ctx the parse tree
+	 */
+	void enterConstant(MillParser.ConstantContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MillParser#constant}.
+	 * @param ctx the parse tree
+	 */
+	void exitConstant(MillParser.ConstantContext ctx);
 }

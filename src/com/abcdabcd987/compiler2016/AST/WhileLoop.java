@@ -11,4 +11,9 @@ public class WhileLoop extends Stmt {
         this.cond = cond;
         this.body = body;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

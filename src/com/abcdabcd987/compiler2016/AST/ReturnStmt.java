@@ -9,4 +9,9 @@ public class ReturnStmt extends Stmt {
     public ReturnStmt(Expr value) {
         this.value = value;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

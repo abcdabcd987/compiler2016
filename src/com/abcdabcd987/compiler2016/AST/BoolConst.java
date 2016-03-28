@@ -9,4 +9,9 @@ public class BoolConst extends Expr {
     public BoolConst(boolean value) {
         this.value = value;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

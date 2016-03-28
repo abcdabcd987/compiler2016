@@ -1,10 +1,12 @@
 package com.abcdabcd987.compiler2016.AST;
 
+import java.util.List;
+
 /**
  * Created by abcdabcd987 on 2016-03-26.
  */
 public class ForLoop extends Stmt {
-    public final VariableDecl initWithDecl;
+    public final List<VariableDecl> initWithDecl;
     public final Expr init;
     public final Expr cond;
     public final Expr step;
@@ -18,11 +20,16 @@ public class ForLoop extends Stmt {
         this.body = body;
     }
 
-    public ForLoop(VariableDecl initWithDecl, Expr cond, Expr step, Stmt body) {
+    public ForLoop(List<VariableDecl> initWithDecl, Expr cond, Expr step, Stmt body) {
         this.initWithDecl = initWithDecl;
         this.init = null;
         this.body = body;
         this.cond = cond;
         this.step = step;
+    }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
     }
 }

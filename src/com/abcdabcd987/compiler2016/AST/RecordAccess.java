@@ -11,4 +11,9 @@ public class RecordAccess extends Expr {
         this.record = record;
         this.member = member;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

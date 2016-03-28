@@ -5,4 +5,8 @@ package com.abcdabcd987.compiler2016.AST;
  */
 public class BoolType extends BasicType {
 
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

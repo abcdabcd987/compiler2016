@@ -11,4 +11,9 @@ public class ArrayAccess extends Expr {
         this.array = array;
         this.subscript = subscript;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

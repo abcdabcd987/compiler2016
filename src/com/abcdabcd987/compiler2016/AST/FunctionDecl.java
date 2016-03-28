@@ -43,4 +43,9 @@ public class FunctionDecl extends Decl {
         this.argTypes = argTypes;
         this.body = body;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

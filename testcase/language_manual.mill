@@ -8,7 +8,7 @@ int get(int n) {
     return 1 + get(n-1);
 }
 int main() {
-    sometimes keep = new sometimes();
+    sometimes keep = new sometimes;
     int n = 3;
     keep.naive = 2 + get(n) * 4 / 5;
     bool fun = keep.naive - 5 * 3 != 666 ^ 7;

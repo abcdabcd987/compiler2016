@@ -23,4 +23,9 @@ public class BinaryExpr extends Expr {
         this.lhs = lhs;
         this.rhs = rhs;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

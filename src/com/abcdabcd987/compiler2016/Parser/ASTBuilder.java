@@ -11,7 +11,21 @@ import java.util.ListIterator;
  * Created by abcdabcd987 on 2016-03-26.
  */
 public class ASTBuilder extends MillBaseListener {
-    public ParseTreeProperty<Object> map = new ParseTreeProperty<>();
+    private ParseTreeProperty<Object> map = new ParseTreeProperty<>();
+    private Program program;
+
+    public Program getProgram() {
+        return program;
+    }
+
+    // program: programSection* EOF
+    @Override
+    public void exitProgram(MillParser.ProgramContext ctx) {
+        Program.Builder builder = new Program.Builder();
+        ctx.programSection().stream().map(map::get).forEachOrdered(builder::add);
+        program = builder.build();
+        map.put(ctx, program);
+    }
 
     // programSection: classDeclaration
     @Override
@@ -110,7 +124,7 @@ public class ASTBuilder extends MillBaseListener {
     //                     statement
     @Override
     public void exitFor(MillParser.ForContext ctx) {
-        VariableDecl initWithDecl = (VariableDecl)map.get(ctx.variableDeclaration());
+        List<VariableDecl> initWithDecl = (List<VariableDecl>)map.get(ctx.variableDeclaration());
         Expr init = (Expr)map.get(ctx.expression(0));
         Expr cond = (Expr)map.get(ctx.expression(1));
         Expr step = (Expr)map.get(ctx.expression(2));
@@ -371,8 +385,20 @@ public class ASTBuilder extends MillBaseListener {
     // expression: Constant
     @Override
     public void exitLiteral(MillParser.LiteralContext ctx) {
-        String s = ctx.Constant().getText();
-        int type = ctx.Constant().getSymbol().getType();
+        map.put(ctx, map.get(ctx.constant()));
+    }
+
+    // constant
+    //     :   type=IntegerConstant
+    //     |   type=CharacterConstant
+    //     |   type=StringLiteral
+    //     |   type=NullLiteral
+    //     |   type=BoolConstant
+    //     ;
+    @Override
+    public void exitConstant(MillParser.ConstantContext ctx) {
+        String s = ctx.type.getText();
+        int type = ctx.type.getType();
         if (type == MillParser.IntegerConstant) {
             map.put(ctx, new IntConst(Integer.valueOf(s)));
         } else if (type == MillParser.NullLiteral) {

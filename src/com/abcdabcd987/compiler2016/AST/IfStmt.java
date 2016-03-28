@@ -13,4 +13,9 @@ public class IfStmt extends Stmt {
         this.then = then;
         this.otherwise = otherwise;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

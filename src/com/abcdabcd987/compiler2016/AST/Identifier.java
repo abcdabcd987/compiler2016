@@ -9,4 +9,9 @@ public class Identifier extends Expr {
     public Identifier(Symbol name) {
         this.name = name;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

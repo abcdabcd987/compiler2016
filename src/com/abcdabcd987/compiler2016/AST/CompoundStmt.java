@@ -17,6 +17,7 @@ public class CompoundStmt extends Stmt {
         public void add(Object node) {
             if      (node instanceof Decl) decls.add((Decl) node);
             else if (node instanceof Stmt) stmts.add((Stmt) node);
+            else if (node instanceof List) ((List) node).stream().forEachOrdered(this::add);
             else throw new RuntimeException("CompoundStmt accepts either Decl or Stmt only.");
         }
 
@@ -26,5 +27,10 @@ public class CompoundStmt extends Stmt {
     public CompoundStmt(List<Decl> decls, List<Stmt> stmts) {
         this.decls = decls;
         this.stmts = stmts;
+    }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
     }
 }

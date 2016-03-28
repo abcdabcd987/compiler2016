@@ -11,4 +11,9 @@ public class ArrayType extends Type {
         this.baseType = baseType;
         this.size = size;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

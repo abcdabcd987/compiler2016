@@ -9,4 +9,9 @@ public class InitValue extends Initializer {
     public InitValue(Expr expr) {
         this.expr = expr;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

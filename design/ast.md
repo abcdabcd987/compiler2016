@@ -16,6 +16,7 @@
             BoolConst
             BinaryExpr, BinaryOp
             EmptyExpr
+            FunctionCall
             IntConst
             NewExpr
             NullLiteral
@@ -26,7 +27,6 @@
             StringConst
             UnaryExpr, UnaryOp
         ForLoop
-        FunctionCall
         IfStmt
         ReturnStmt
         WhileLoop

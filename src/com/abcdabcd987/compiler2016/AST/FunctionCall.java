@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by abcdabcd987 on 2016-03-26.
  */
-public class FunctionCall extends Stmt {
+public class FunctionCall extends Expr {
     public final Symbol name;
     public final List<Expr> parameters;
 
@@ -31,5 +31,10 @@ public class FunctionCall extends Stmt {
     public FunctionCall(Symbol name, List<Expr> parameters) {
         this.parameters = parameters;
         this.name = name;
+    }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
     }
 }

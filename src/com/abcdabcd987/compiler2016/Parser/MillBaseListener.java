@@ -505,6 +505,18 @@ public class MillBaseListener implements MillListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitParameterList(MillParser.ParameterListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterConstant(MillParser.ConstantContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitConstant(MillParser.ConstantContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

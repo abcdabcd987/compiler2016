@@ -9,4 +9,9 @@ public class SelfDecrement extends Expr {
     public SelfDecrement(Expr self) {
         this.self = self;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

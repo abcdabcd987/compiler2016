@@ -9,4 +9,9 @@ public class NewExpr extends Expr {
     public NewExpr(Type type) {
         this.type = type;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

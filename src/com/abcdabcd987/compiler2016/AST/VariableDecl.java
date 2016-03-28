@@ -13,4 +13,9 @@ public class VariableDecl extends Decl {
         this.name = name;
         this.init = init;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

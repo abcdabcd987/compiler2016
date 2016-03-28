@@ -127,7 +127,7 @@ expression
     |   <assoc=right> expression op='=' expression   # BinaryExpr       // Precedence 14
 
     |   Identifier                                   # Identifier
-    |   Constant                                     # Literal
+    |   constant                                     # Literal
     |   '(' expression ')'                           # SubExpression
     ;
 
@@ -137,6 +137,14 @@ creator
 
 parameterList
     :   expression (',' expression)*
+    ;
+
+constant
+    :   type=IntegerConstant
+    |   type=CharacterConstant
+    |   type=StringLiteral
+    |   type=NullLiteral
+    |   type=BoolConstant
     ;
 
 //------ Reserved Keywords
@@ -200,14 +208,6 @@ NotEqual : '!=';
 Dot : '.';
 
 //------ Constant
-Constant
-    :   IntegerConstant
-    |   CharacterConstant
-    |   StringLiteral
-    |   NullLiteral
-    |   BoolConstant
-    ;
-
 NullLiteral
     :   'null'
     ;

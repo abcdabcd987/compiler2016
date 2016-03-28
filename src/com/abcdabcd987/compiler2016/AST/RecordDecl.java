@@ -32,4 +32,9 @@ public class RecordDecl extends Decl {
         this.name = name;
         this.members = members;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }

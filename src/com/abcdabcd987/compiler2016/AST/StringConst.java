@@ -9,4 +9,9 @@ public class StringConst extends Expr {
     public StringConst(String value) {
         this.value = value;
     }
+
+    @Override
+    public void accept(IASTVisitor visitor) {
+        visitor.visit(this);
+    }
 }
