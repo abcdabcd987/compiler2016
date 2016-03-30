@@ -5,9 +5,9 @@ package com.abcdabcd987.compiler2016.AST;
  */
 public class RecordAccess extends Expr {
     public final Expr record;
-    public final Symbol member;
+    public final String member;
 
-    public RecordAccess(Expr record, Symbol member) {
+    public RecordAccess(Expr record, String member) {
         this.record = record;
         this.member = member;
     }

@@ -8,10 +8,10 @@ import java.util.List;
  */
 public class RecordDecl extends Decl {
     public final List<VariableDecl> members;
-    public final Symbol name;
+    public final String name;
 
     public static class Builder {
-        private Symbol name;
+        private String name;
         private List<VariableDecl> members = new ArrayList<>();
 
         public void add(Object node) {
@@ -19,7 +19,7 @@ public class RecordDecl extends Decl {
             else throw new RuntimeException("Invalid type");
         }
 
-        public void setName(Symbol name) {
+        public void setName(String name) {
             this.name = name;
         }
 
@@ -28,7 +28,7 @@ public class RecordDecl extends Decl {
         }
     }
 
-    public RecordDecl(Symbol name, List<VariableDecl> members) {
+    public RecordDecl(String name, List<VariableDecl> members) {
         this.name = name;
         this.members = members;
     }

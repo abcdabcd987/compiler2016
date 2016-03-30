@@ -5,15 +5,18 @@ package com.abcdabcd987.compiler2016.AST;
  */
 public class ArrayType extends Type {
     public final Type baseType;
-    public final Expr size;
 
-    public ArrayType(Type baseType, Expr size) {
+    public ArrayType(Type baseType) {
         this.baseType = baseType;
-        this.size = size;
     }
 
     @Override
     public void accept(IASTVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public Types getType() {
+        return Types.ARRAY;
     }
 }

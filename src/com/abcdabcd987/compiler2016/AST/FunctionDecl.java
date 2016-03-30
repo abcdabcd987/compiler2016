@@ -8,20 +8,20 @@ import java.util.List;
  */
 public class FunctionDecl extends Decl {
     public final Type returnType;
-    public final Symbol name;
+    public final String name;
     public final List<VariableDecl> argTypes;
     public final CompoundStmt body;
 
     public static class Builder {
         private Type returnType;
-        private Symbol name;
+        private String name;
         private List<VariableDecl> argTypes = new ArrayList<>();
         private CompoundStmt body;
 
         public void setReturnType(Type returnType) {
             this.returnType = returnType;
         }
-        public void setName(Symbol name) {
+        public void setName(String name) {
             this.name = name;
         }
         public void setBody(CompoundStmt body) {
@@ -37,7 +37,7 @@ public class FunctionDecl extends Decl {
         }
     }
 
-    public FunctionDecl(Type returnType, Symbol name, List<VariableDecl> argTypes, CompoundStmt body) {
+    public FunctionDecl(Type returnType, String name, List<VariableDecl> argTypes, CompoundStmt body) {
         this.returnType = returnType;
         this.name = name;
         this.argTypes = argTypes;

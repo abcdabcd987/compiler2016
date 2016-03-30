@@ -6,15 +6,20 @@ import java.util.List;
 /**
  * Created by abcdabcd987 on 2016-03-26.
  */
-public class RecordType extends BasicType {
-    public final Symbol name;
+public class StructType extends Type {
+    public final String name;
 
-    public RecordType(Symbol name) {
+    public StructType(String name) {
         this.name = name;
     }
 
     @Override
     public void accept(IASTVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public Types getType() {
+        return Types.STRUCT;
     }
 }
