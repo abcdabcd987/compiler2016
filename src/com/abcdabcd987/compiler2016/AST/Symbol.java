@@ -20,7 +20,6 @@ public class Symbol {
     }
 
     public static Symbol get(String s) {
-        s = s.intern();
         Symbol sym = pool.get(s);
         if (sym == null) {
             sym = new Symbol(s);

@@ -134,5 +134,9 @@ int main(){
 		break;
 	}
 
+	string tmpstr = "test";
+	print(tmpstr.length());
+	print(tmpstr.substr(1,2));
+
 	return 0;
 }

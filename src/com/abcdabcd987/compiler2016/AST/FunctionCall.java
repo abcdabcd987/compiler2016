@@ -7,14 +7,14 @@ import java.util.List;
  * Created by abcdabcd987 on 2016-03-26.
  */
 public class FunctionCall extends Expr {
-    public final Symbol name;
+    public final Expr name;
     public final List<Expr> parameters;
 
     public static class Builder {
-        private Symbol name;
+        private Expr name;
         private List<Expr> parameters = new ArrayList<>();
 
-        public void setName(Symbol name) {
+        public void setName(Expr name) {
             this.name = name;
         }
 
@@ -28,7 +28,7 @@ public class FunctionCall extends Expr {
         }
     }
 
-    public FunctionCall(Symbol name, List<Expr> parameters) {
+    public FunctionCall(Expr name, List<Expr> parameters) {
         this.parameters = parameters;
         this.name = name;
     }

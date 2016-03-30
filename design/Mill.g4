@@ -103,7 +103,7 @@ parameterDeclaration
 //------ Expression: http://en.cppreference.com/w/cpp/language/operator_precedence
 expression
     :   expression op=('++' | '--')                  # PostfixIncDec    // Precedence 1
-    |   Identifier '(' parameterList? ')'            # FunctionCall
+    |   expression '(' parameterList? ')'            # FunctionCall
     |   expression '[' expression ']'                # Subscript
     |   expression '.' Identifier                    # MemberAccess
 

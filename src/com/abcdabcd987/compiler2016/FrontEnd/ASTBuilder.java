@@ -1,11 +1,14 @@
-package com.abcdabcd987.compiler2016.Parser;
+package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
+import com.abcdabcd987.compiler2016.Parser.MillBaseListener;
+import com.abcdabcd987.compiler2016.Parser.MillParser;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.stream.Collectors;
 
 /**
  * Created by abcdabcd987 on 2016-03-26.
@@ -86,7 +89,14 @@ public class ASTBuilder extends MillBaseListener {
     // blockItem: variableDeclaration
     @Override
     public void exitVardecl(MillParser.VardeclContext ctx) {
-        map.put(ctx, map.get(ctx.variableDeclaration()));
+        Object node = map.get(ctx.variableDeclaration());
+        if (node instanceof List) {
+            List<VariableDeclStmt> decls = ((List<VariableDecl>)node).stream()
+                    .map(x -> new VariableDeclStmt(x)).collect(Collectors.toList());
+            map.put(ctx, decls);
+        } else {
+            map.put(ctx, new VariableDeclStmt((VariableDecl) node));
+        }
     }
 
     // blockItem: statement
@@ -257,7 +267,7 @@ public class ASTBuilder extends MillBaseListener {
     @Override
     public void exitFunctionCall(MillParser.FunctionCallContext ctx) {
         FunctionCall.Builder builder = new FunctionCall.Builder();
-        builder.setName(Symbol.get(ctx.Identifier().getText()));
+        builder.setName((Expr)map.get(ctx.expression()));
         if (ctx.parameterList() != null)
             ctx.parameterList().expression().stream()
                     .map(map::get).forEachOrdered(builder::addArg);

@@ -45,4 +45,5 @@ public interface IASTVisitor {
     void visit(ASTNode node);
     void visit(BinaryExpr.BinaryOp node);
     void visit(UnaryExpr.UnaryOp node);
+    void visit(VariableDeclStmt node);
 }

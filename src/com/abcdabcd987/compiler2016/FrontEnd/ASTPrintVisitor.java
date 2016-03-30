@@ -1,4 +1,4 @@
-package com.abcdabcd987.compiler2016.Parser;
+package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
 
@@ -70,7 +70,6 @@ public class ASTPrintVisitor implements IASTVisitor {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName());
         indent();
-        node.decls.stream().forEachOrdered(this::visit);
         node.stmts.stream().forEachOrdered(this::visit);
         dedent();
     }
@@ -186,9 +185,7 @@ public class ASTPrintVisitor implements IASTVisitor {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName());
         indent();
-        node.recordDecl.stream().forEachOrdered(this::visit);
-        node.variableDecl.stream().forEachOrdered(this::visit);
-        node.functionDecl.stream().forEachOrdered(this::visit);
+        node.decls.stream().forEachOrdered(this::visit);
         dedent();
     }
 
@@ -197,8 +194,8 @@ public class ASTPrintVisitor implements IASTVisitor {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName());
         indent();
-        visit(node.member);
         visit(node.record);
+        visit(node.member);
         dedent();
     }
 
@@ -340,6 +337,14 @@ public class ASTPrintVisitor implements IASTVisitor {
     public void visit(UnaryExpr.UnaryOp node) {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName() + node);
+    }
+
+    @Override
+    public void visit(VariableDeclStmt node) {
+        if (node == null) return;
+        System.out.print(sb.toString() + node.getClass().getSimpleName() + " -> ");
+        if (node.decl != null) visit(node.decl);
+        else System.out.println();
     }
 
 }
