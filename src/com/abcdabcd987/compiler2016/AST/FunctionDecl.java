@@ -7,18 +7,18 @@ import java.util.List;
  * Created by abcdabcd987 on 2016-03-26.
  */
 public class FunctionDecl extends Decl {
-    public final Type returnType;
+    public final TypeNode returnType;
     public final String name;
     public final List<VariableDecl> argTypes;
     public final CompoundStmt body;
 
     public static class Builder {
-        private Type returnType;
+        private TypeNode returnType;
         private String name;
         private List<VariableDecl> argTypes = new ArrayList<>();
         private CompoundStmt body;
 
-        public void setReturnType(Type returnType) {
+        public void setReturnType(TypeNode returnType) {
             this.returnType = returnType;
         }
         public void setName(String name) {
@@ -37,7 +37,7 @@ public class FunctionDecl extends Decl {
         }
     }
 
-    public FunctionDecl(Type returnType, String name, List<VariableDecl> argTypes, CompoundStmt body) {
+    public FunctionDecl(TypeNode returnType, String name, List<VariableDecl> argTypes, CompoundStmt body) {
         this.returnType = returnType;
         this.name = name;
         this.argTypes = argTypes;

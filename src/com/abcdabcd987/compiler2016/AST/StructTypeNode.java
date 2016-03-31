@@ -1,15 +1,14 @@
 package com.abcdabcd987.compiler2016.AST;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.abcdabcd987.compiler2016.Symbol.Type;
 
 /**
  * Created by abcdabcd987 on 2016-03-26.
  */
-public class StructType extends Type {
+public class StructTypeNode extends TypeNode {
     public final String name;
 
-    public StructType(String name) {
+    public StructTypeNode(String name) {
         this.name = name;
     }
 
@@ -19,7 +18,7 @@ public class StructType extends Type {
     }
 
     @Override
-    public Types getType() {
-        return Types.STRUCT;
+    public Type.Types getType() {
+        return Type.Types.STRUCT;
     }
 }

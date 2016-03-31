@@ -1,12 +1,14 @@
 package com.abcdabcd987.compiler2016.AST;
 
+import com.abcdabcd987.compiler2016.Symbol.Type;
+
 /**
  * Created by abcdabcd987 on 2016-03-26.
  */
-public class ArrayType extends Type {
-    public final Type baseType;
+public class ArrayTypeNode extends TypeNode {
+    public final TypeNode baseType;
 
-    public ArrayType(Type baseType) {
+    public ArrayTypeNode(TypeNode baseType) {
         this.baseType = baseType;
     }
 
@@ -16,7 +18,7 @@ public class ArrayType extends Type {
     }
 
     @Override
-    public Types getType() {
-        return Types.ARRAY;
+    public Type.Types getType() {
+        return Type.Types.ARRAY;
     }
 }

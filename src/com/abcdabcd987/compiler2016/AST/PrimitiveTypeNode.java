@@ -1,12 +1,14 @@
 package com.abcdabcd987.compiler2016.AST;
 
+import com.abcdabcd987.compiler2016.Symbol.Type;
+
 /**
  * Created by abcdabcd987 on 2016-03-30.
  */
-public class PrimitiveType extends Type {
-    private Types type;
+public class PrimitiveTypeNode extends TypeNode {
+    private Type.Types type;
 
-    public PrimitiveType(Types type) {
+    public PrimitiveTypeNode(Type.Types type) {
         this.type = type;
     }
 
@@ -16,7 +18,7 @@ public class PrimitiveType extends Type {
     }
 
     @Override
-    public Types getType() {
+    public Type.Types getType() {
         return type;
     }
 }

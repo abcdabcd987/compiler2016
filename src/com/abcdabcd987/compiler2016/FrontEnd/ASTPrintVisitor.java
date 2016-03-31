@@ -27,7 +27,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(ArrayType node) {
+    public void visit(ArrayTypeNode node) {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName());
         indent();
@@ -187,7 +187,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(RecordDecl node) {
+    public void visit(StructDecl node) {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName() + ": " + node.name);
         indent();
@@ -196,7 +196,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(StructType node) {
+    public void visit(StructTypeNode node) {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName() + ": " + node.name);
     }
@@ -265,12 +265,6 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(Type node) {
-        if (node == null) return;
-        node.accept(this);
-    }
-
-    @Override
     public void visit(Stmt node) {
         if (node == null) return;
         node.accept(this);
@@ -309,13 +303,13 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(PrimitiveType node) {
+    public void visit(PrimitiveTypeNode node) {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName() + ": " + node.getType().name());
     }
 
     @Override
-    public void visit(FunctionType node) {
+    public void visit(FunctionTypeNode node) {
         if (node == null) return;
         System.out.println(sb.toString() + node.getClass().getSimpleName());
     }

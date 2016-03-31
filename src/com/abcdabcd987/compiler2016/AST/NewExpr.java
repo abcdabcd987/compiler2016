@@ -7,14 +7,14 @@ import java.util.List;
  * Created by abcdabcd987 on 2016-03-27.
  */
 public class NewExpr extends Expr {
-    public final Type type;
+    public final TypeNode type;
     public final List<Expr> dim;
 
     public static class Builder {
-        private Type type;
+        private TypeNode type;
         private List<Expr> dim = new ArrayList<>();
 
-        public void setType(Type type) {
+        public void setType(TypeNode type) {
             this.type = type;
         }
 
@@ -28,7 +28,7 @@ public class NewExpr extends Expr {
         }
     }
 
-    public NewExpr(Type type, List<Expr> dim) {
+    public NewExpr(TypeNode type, List<Expr> dim) {
         this.type = type;
         this.dim = dim;
     }

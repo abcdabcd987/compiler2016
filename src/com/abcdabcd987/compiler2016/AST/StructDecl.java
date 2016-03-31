@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by abcdabcd987 on 2016-03-26.
  */
-public class RecordDecl extends Decl {
+public class StructDecl extends Decl {
     public final List<VariableDecl> members;
     public final String name;
 
@@ -23,12 +23,12 @@ public class RecordDecl extends Decl {
             this.name = name;
         }
 
-        public RecordDecl build() {
-            return new RecordDecl(name, members);
+        public StructDecl build() {
+            return new StructDecl(name, members);
         }
     }
 
-    public RecordDecl(String name, List<VariableDecl> members) {
+    public StructDecl(String name, List<VariableDecl> members) {
         this.name = name;
         this.members = members;
     }
