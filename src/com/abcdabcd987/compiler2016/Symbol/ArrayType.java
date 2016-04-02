@@ -22,6 +22,7 @@ public class ArrayType extends VariableType {
 
     @Override
     public boolean isSameType(Type rhs) {
+        if (rhs.type == Types.NULL) return true;
         if (rhs.type != Types.ARRAY) return false;
         ArrayType t = (ArrayType) rhs;
         return bodyType.isSameType(t.bodyType);

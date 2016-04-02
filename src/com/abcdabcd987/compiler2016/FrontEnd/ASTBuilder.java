@@ -139,8 +139,8 @@ public class ASTBuilder extends MillBaseListener {
         Expr cond = (Expr)map.get(ctx.expression(1));
         Expr step = (Expr)map.get(ctx.expression(2));
         Stmt body = (Stmt)map.get(ctx.statement());
-        if (init != null) map.put(ctx, new ForLoop(init, cond, step, body));
-        else map.put(ctx, new ForLoop(initWithDecl, cond, step, body));
+        if (ctx.variableDeclaration() == null) map.put(ctx, new ForLoop(init, cond, step, body));
+        else map.put(ctx, new ForLoop(initWithDecl, init, cond, body));
     }
 
     // jumpStatement: 'continue' ';'

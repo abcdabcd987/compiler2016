@@ -165,7 +165,7 @@ public class SemanticChecker implements IASTVisitor {
 
         if (node.init != null) {
             visit(node.init);
-        } else {
+        } else if (node.initWithDecl != null) {
             node.initWithDecl.stream().forEachOrdered(x -> x.accept(this));
         }
 
@@ -306,6 +306,14 @@ public class SemanticChecker implements IASTVisitor {
 
             case EQ:
             case NE:
+                if (!node.lhs.exprType.isSameType(node.rhs.exprType)) {
+                    ce.add("Operands of equality test should be of the same type.");
+                    return;
+                }
+                node.exprType = boolType;
+                node.isLvalue = false;
+                return;
+
             case LT:
             case GT:
             case LE:

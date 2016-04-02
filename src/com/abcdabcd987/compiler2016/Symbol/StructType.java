@@ -29,6 +29,6 @@ public class StructType extends VariableType {
 
     @Override
     public boolean isSameType(Type rhs) {
-        return this == rhs;
+        return rhs.type == Types.NULL || this == rhs;
     }
 }
