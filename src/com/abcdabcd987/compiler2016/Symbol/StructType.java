@@ -8,8 +8,9 @@ public class StructType extends VariableType {
     public SymbolTable members;
 
     public StructType(String name) {
+        this.type = Types.STRUCT;
         this.name = name;
-        this.members = new SymbolTable();
+        this.members = new SymbolTable(null);
     }
 
     @Override
@@ -24,5 +25,10 @@ public class StructType extends VariableType {
         sb.append(members.toStructureString(indent + "  "));
         sb.append(indent).append("}\n");
         return sb.toString();
+    }
+
+    @Override
+    public boolean isSameType(Type rhs) {
+        return this == rhs;
     }
 }

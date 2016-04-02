@@ -18,4 +18,10 @@ public class PrimitiveType extends VariableType {
     public String toStructureString(String indent) {
         return indent + toString() + "\n";
     }
+
+    @Override
+    public boolean isSameType(Type rhs) {
+        return type == rhs.type;
+    }
+
 }

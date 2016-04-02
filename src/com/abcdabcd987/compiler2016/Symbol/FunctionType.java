@@ -14,6 +14,7 @@ public class FunctionType extends Type {
     public FunctionType(VariableType returnType, String name) {
         this.returnType = returnType;
         this.name = name;
+        this.type = Types.FUNCTION;
     }
 
     @Override
@@ -31,5 +32,18 @@ public class FunctionType extends Type {
     @Override
     public String toStructureString(String indent) {
         return indent + toString() + "\n";
+    }
+
+    @Override
+    public boolean isSameType(Type rhs) {
+        /*if (!(rhs instanceof FunctionType)) return false;
+        FunctionType t = (FunctionType) rhs;
+        if (!returnType.isSameType(t.returnType)) return false;
+        if (argTypes.size() != t.argTypes.size()) return false;
+        for (int i = 0; i < argTypes.size(); ++i)
+            if (!argTypes.get(i).isSameType(t.argTypes.get(i)))
+                return false;
+        return true;*/
+        return this == rhs;
     }
 }

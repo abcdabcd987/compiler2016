@@ -19,7 +19,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(ArrayAccess node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.array);
         visit(node.subscript);
@@ -38,7 +38,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(BinaryExpr node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.op);
         visit(node.lhs);
@@ -49,7 +49,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(BoolConst node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName() + " value:" + node.value);
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue + ", value:" + node.value);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(EmptyExpr node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(FunctionCall node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.name);
         node.parameters.stream().forEachOrdered(this::visit);
@@ -122,7 +122,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(Identifier node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName() + ": " + node.name);
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue + ", name:" + node.name);
     }
 
     @Override
@@ -137,24 +137,15 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(InitValue node) {
-        if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
-        indent();
-        visit(node.expr);
-        dedent();
-    }
-
-    @Override
     public void visit(IntConst node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName() + ": " + node.value);
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue + ", value:" + node.value);
     }
 
     @Override
     public void visit(NewExpr node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.type);
         node.dim.forEach(this::visit);
@@ -164,7 +155,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(NullLiteral node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
     }
 
     @Override
@@ -177,9 +168,9 @@ public class ASTPrintVisitor implements IASTVisitor {
     }
 
     @Override
-    public void visit(RecordAccess node) {
+    public void visit(MemberAccess node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.record);
         System.out.println(sb.toString() + "member: " + node.member);
@@ -213,7 +204,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(SelfDecrement node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.self);
         dedent();
@@ -222,7 +213,7 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(SelfIncrement node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.self);
         dedent();
@@ -231,13 +222,13 @@ public class ASTPrintVisitor implements IASTVisitor {
     @Override
     public void visit(StringConst node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName() + ": " + node.value);
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue + ", value:" + node.value);
     }
 
     @Override
     public void visit(UnaryExpr node) {
         if (node == null) return;
-        System.out.println(sb.toString() + node.getClass().getSimpleName());
+        System.out.println(sb.toString() + node.getClass().getSimpleName() + " exprType:" + node.exprType + ", isLvalue:" + node.isLvalue);
         indent();
         visit(node.op);
         visit(node.body);

@@ -11,5 +11,6 @@ public class CompilationError {
 
     public void add(String reason) {
         errors.add(reason);
+        throw new RuntimeException(reason);
     }
 }

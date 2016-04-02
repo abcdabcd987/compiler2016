@@ -162,17 +162,12 @@ public class StructFunctionDeclarator implements IASTVisitor {
     }
 
     @Override
-    public void visit(InitValue node) {
-
-    }
-
-    @Override
     public void visit(NewExpr node) {
 
     }
 
     @Override
-    public void visit(RecordAccess node) {
+    public void visit(MemberAccess node) {
 
     }
 

@@ -30,9 +30,8 @@ public interface IASTVisitor {
     void visit(BinaryExpr node);
     void visit(EmptyExpr node);
     void visit(FunctionCall node);
-    void visit(InitValue node);
     void visit(NewExpr node);
-    void visit(RecordAccess node);
+    void visit(MemberAccess node);
     void visit(SelfDecrement node);
     void visit(SelfIncrement node);
 

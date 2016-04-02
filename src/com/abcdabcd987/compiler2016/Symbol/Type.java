@@ -5,10 +5,12 @@ package com.abcdabcd987.compiler2016.Symbol;
  */
 public abstract class Type {
     public enum Types {
-        INT, BOOL, STRING, VOID, ARRAY, STRUCT, FUNCTION
+        INT, BOOL, STRING, VOID, ARRAY, STRUCT, FUNCTION, NULL
     }
 
     public Types type;
 
     public abstract String toStructureString(String indent);
+
+    public abstract boolean isSameType(Type rhs);
 }

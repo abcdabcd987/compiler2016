@@ -8,13 +8,29 @@ import java.util.Map;
  */
 public class SymbolTable {
     private Map<String, Type> map = new LinkedHashMap<>();
+    private SymbolTable enclosingScope;
+
+    public SymbolTable(SymbolTable enclosingScope) {
+        this.enclosingScope = enclosingScope;
+    }
 
     public void define(String name, Type type) {
         map.put(name, type);
     }
 
-    public Type resolve(String name) {
+    public Type resolveCurrent(String name) {
         return map.get(name);
+    }
+
+    public Type resolve(String name) {
+        Type t = map.get(name);
+        if (t != null) return t;
+        if (enclosingScope != null) return enclosingScope.resolve(name);
+        return null;
+    }
+
+    public SymbolTable getEnclosingScope() {
+        return enclosingScope;
     }
 
     public String toStructureString(String indent) {

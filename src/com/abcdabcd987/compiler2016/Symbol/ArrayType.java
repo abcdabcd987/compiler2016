@@ -19,4 +19,11 @@ public class ArrayType extends VariableType {
     public String toStructureString(String indent) {
         return toString() + "\n";
     }
+
+    @Override
+    public boolean isSameType(Type rhs) {
+        if (rhs.type != Types.ARRAY) return false;
+        ArrayType t = (ArrayType) rhs;
+        return bodyType.isSameType(t.bodyType);
+    }
 }

@@ -286,7 +286,7 @@ public class ASTBuilder extends MillBaseListener {
     // expression: expression '.' Identifier
     @Override
     public void exitMemberAccess(MillParser.MemberAccessContext ctx) {
-        map.put(ctx, new RecordAccess(
+        map.put(ctx, new MemberAccess(
                 (Expr)map.get(ctx.expression()),
                 ctx.Identifier().getText()
         ));
