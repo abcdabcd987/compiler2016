@@ -1,0 +1,3 @@
+int main() {
+    string str = null;
+}

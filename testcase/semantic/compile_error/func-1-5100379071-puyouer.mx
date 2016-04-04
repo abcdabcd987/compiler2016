@@ -1,0 +1,14 @@
+class A {
+    int x;
+    int y;
+    int z;
+}
+
+B f() {
+    int a;
+    a = 1;
+}
+
+int main() {
+    return 0;
+}

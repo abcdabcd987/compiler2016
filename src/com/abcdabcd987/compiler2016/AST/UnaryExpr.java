@@ -8,12 +8,16 @@ public class UnaryExpr extends Expr {
         INC, DEC, POS, NEG, LOGICAL_NOT, BITWISE_NOT
     }
 
-    public final UnaryOp op;
-    public final Expr body;
+    public UnaryOp op;
+    public Expr body;
+    public SourcePosition posOp;
+    public SourcePosition posBody;
 
-    public UnaryExpr(UnaryOp op, Expr body) {
+    public UnaryExpr(UnaryOp op, Expr body, SourcePosition posOp, SourcePosition posBody) {
         this.op = op;
         this.body = body;
+        this.posOp = posOp;
+        this.posBody = posBody;
     }
 
     @Override

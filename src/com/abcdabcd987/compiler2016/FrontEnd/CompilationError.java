@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
+import com.abcdabcd987.compiler2016.AST.SourcePosition;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +11,8 @@ import java.util.List;
 public class CompilationError {
     private List<String> errors = new ArrayList<>();
 
-    public void add(String reason) {
+    public void add(SourcePosition pos, String reason) {
+        reason = pos + ": " + reason;
         errors.add(reason);
         throw new RuntimeException(reason);
     }

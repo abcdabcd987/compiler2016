@@ -1,0 +1,5 @@
+
+int mai() {
+    string str = "120";
+    int x = str >> 3;
+}

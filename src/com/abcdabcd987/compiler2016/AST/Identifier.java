@@ -5,9 +5,11 @@ package com.abcdabcd987.compiler2016.AST;
  */
 public class Identifier extends Expr {
     public final String name;
+    public final SourcePosition pos;
 
-    public Identifier(String name) {
+    public Identifier(String name, SourcePosition pos) {
         this.name = name;
+        this.pos = pos;
     }
 
     @Override

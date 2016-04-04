@@ -28,12 +28,16 @@ public class StructFunctionDeclarator implements IASTVisitor {
         StructType s = (StructType) symbolTable.resolveType(node.name);
         node.members.stream().forEachOrdered(x -> {
             if (x.init != null) {
-                ce.add("Initializer is not allowed in struct declaration.");
+                ce.add(x.posInit, "Initializer is not allowed in struct declaration.");
+                return;
+            }
+            if (s.members.resolveCurrent(x.name) != null) {
+                ce.add(x.posName, node.name + " has already been declared.");
                 return;
             }
             VariableType type = symbolTable.resolveVariableTypeFromAST(x.type);
             if (type == null) {
-                ce.add("Cannot resolve type.");
+                ce.add(x.posType, "Cannot resolve type.");
                 return;
             }
             s.members.define(x.name, type);
@@ -48,24 +52,24 @@ public class StructFunctionDeclarator implements IASTVisitor {
     @Override
     public void visit(FunctionDecl node) {
         if (symbolTable.globals.resolve(node.name) != null) {
-            ce.add(node.name + " has already been declared.");
+            ce.add(node.posName, node.name + " has already been declared.");
             return;
         }
         VariableType returnType = symbolTable.resolveVariableTypeFromAST(node.returnType);
         if (returnType == null) {
-            ce.add("Cannot resolve type");
+            ce.add(node.posReturnType, "Cannot resolve type");
             return;
         }
         FunctionType func = new FunctionType(returnType, node.name);
         boolean success = true;
         for (VariableDecl x : node.argTypes) {
             if (x.init != null) {
-                ce.add("Initializer is not allowed in parameter declaration.");
+                ce.add(x.posInit, "Initializer is not allowed in parameter declaration.");
                 return;
             }
             VariableType type = symbolTable.resolveVariableTypeFromAST(x.type);
             if (type == null) {
-                ce.add("Cannot resolve type.");
+                ce.add(x.posType, "Cannot resolve type.");
                 success = false;
                 break;
             }

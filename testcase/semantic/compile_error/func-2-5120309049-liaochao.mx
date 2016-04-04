@@ -1,0 +1,8 @@
+int f(A x) {
+    int year = 2016;
+    return year;
+}
+
+int main() {
+    return 0;
+}

@@ -9,13 +9,21 @@ import java.util.List;
 public class FunctionCall extends Expr {
     public final Expr name;
     public final List<Expr> parameters;
+    public final SourcePosition posName;
+    public final List<SourcePosition> posArgs;
 
     public static class Builder {
         private Expr name;
         private List<Expr> parameters = new ArrayList<>();
+        private SourcePosition posName;
+        private List<SourcePosition> posArgs = new ArrayList<>();
 
         public void setName(Expr name) {
             this.name = name;
+        }
+
+        public void setPosName(SourcePosition posName) {
+            this.posName = posName;
         }
 
         public void addArg(Object arg) {
@@ -23,14 +31,20 @@ public class FunctionCall extends Expr {
             else throw new RuntimeException("Invalid type");
         }
 
+        public void addPosArg(SourcePosition pos) {
+            posArgs.add(pos);
+        }
+
         public FunctionCall build() {
-            return new FunctionCall(name, parameters);
+            return new FunctionCall(name, parameters, posName, posArgs);
         }
     }
 
-    public FunctionCall(Expr name, List<Expr> parameters) {
-        this.parameters = parameters;
+    public FunctionCall(Expr name, List<Expr> parameters, SourcePosition posName, List<SourcePosition> posArgs) {
         this.name = name;
+        this.parameters = parameters;
+        this.posName = posName;
+        this.posArgs = posArgs;
     }
 
     @Override

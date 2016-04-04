@@ -40,19 +40,23 @@ public class SemanticChecker implements IASTVisitor {
     public void visit(VariableDecl node) {
         node.scope = currentScope;
         if (currentScope.resolveCurrent(node.name) != null) {
-            ce.add(node.name + " has already been declared.");
+            ce.add(node.posName, node.name + " has already been declared.");
             return;
         }
         Type type = globalSymbolTable.resolveVariableTypeFromAST(node.type);
         if (type == null) {
-            ce.add("Cannot resolve type.");
+            ce.add(node.posType, "Cannot resolve type.");
+            return;
+        }
+        if (type.type == Type.Types.VOID) {
+            ce.add(node.posType, "Variable declaration does not allow `void` type.");
             return;
         }
 
         if (node.init != null) {
             visit(node.init);
             if (!type.isSameType(node.init.exprType)) {
-                ce.add("The initializer must match the type of the declaration.");
+                ce.add(node.posInit, "The initializer must match the type of the declaration.");
                 return;
             }
         }
@@ -90,7 +94,7 @@ public class SemanticChecker implements IASTVisitor {
     public void visit(BreakStmt node) {
         node.scope = currentScope;
         if (loopASTStack.empty()) {
-            ce.add("Break statement should only exist inside a loop.");
+            ce.add(node.pos, "Break statement should only exist inside a loop.");
             return;
         }
     }
@@ -99,7 +103,7 @@ public class SemanticChecker implements IASTVisitor {
     public void visit(ContinueStmt node) {
         node.scope = currentScope;
         if (loopASTStack.empty()) {
-            ce.add("Continue statement should only exist inside a loop.");
+            ce.add(node.pos, "Continue statement should only exist inside a loop.");
             return;
         }
     }
@@ -108,7 +112,7 @@ public class SemanticChecker implements IASTVisitor {
     public void visit(ReturnStmt node) {
         node.scope = currentScope;
         if (currentFunction == null) {
-            ce.add("Return statement should only exist inside a function.");
+            ce.add(node.pos, "Return statement should only exist inside a function.");
             return;
         }
         Type retType;
@@ -119,7 +123,7 @@ public class SemanticChecker implements IASTVisitor {
             retType = voidType;
         }
         if (!currentFunctionType.returnType.isSameType(retType)) {
-            ce.add("Expect `" + currentFunctionType.returnType + "` return type, but got `" + retType + "`");
+            ce.add(node.posValue, "Expect `" + currentFunctionType.returnType + "` return type, but got `" + retType + "`");
             return;
         }
     }
@@ -146,7 +150,7 @@ public class SemanticChecker implements IASTVisitor {
         visit(node.cond);
         Type condType = node.cond.exprType;
         if (!condType.isSameType(boolType)) {
-            ce.add("Condition expression in a if-statement should be `bool`, but got `" + condType + "`.");
+            ce.add(node.posCond, "Condition expression in a if-statement should be `bool`, but got `" + condType + "`.");
         }
         currentScope = new SymbolTable(currentScope);
         visit(node.then);
@@ -172,7 +176,7 @@ public class SemanticChecker implements IASTVisitor {
         if (node.cond != null) {
             visit(node.cond);
             if (!node.cond.exprType.isSameType(boolType)) {
-                ce.add("Condition expression in a for-loop should be bool, but got `" + node.cond.exprType + "`.");
+                ce.add(node.posCond, "Condition expression in a for-loop should be bool, but got `" + node.cond.exprType + "`.");
             }
         }
 
@@ -194,7 +198,7 @@ public class SemanticChecker implements IASTVisitor {
 
         visit(node.cond);
         if (!node.cond.exprType.isSameType(boolType)) {
-            ce.add("Condition expression in a while-loop should be bool, but got `" + node.cond.exprType + "`.");
+            ce.add(node.posCond, "Condition expression in a while-loop should be bool, but got `" + node.cond.exprType + "`.");
         }
         loopASTStack.push(node);
         visit(node.body);
@@ -219,11 +223,11 @@ public class SemanticChecker implements IASTVisitor {
         visit(node.array);
         visit(node.subscript);
         if (node.array.exprType.type != Type.Types.ARRAY) {
-            ce.add("Array access occurs at non-array expression.");
+            ce.add(node.posArray, "Array access occurs at non-array expression.");
             return;
         }
         if (node.subscript.exprType.type != Type.Types.INT) {
-            ce.add("Array subscript expression should be `int`, but got `" + node.subscript.exprType + "`.");
+            ce.add(node.posSubscript, "Array subscript expression should be `int`, but got `" + node.subscript.exprType + "`.");
             return;
         }
         node.exprType = ((ArrayType)node.array.exprType).bodyType;
@@ -238,11 +242,11 @@ public class SemanticChecker implements IASTVisitor {
             case INC:
             case DEC:
                 if (!node.body.isLvalue) {
-                    ce.add("Self increment/decrement can only be operated on lvalues.");
+                    ce.add(node.posOp, "Self increment/decrement can only be operated on lvalues.");
                     return;
                 }
                 if (node.body.exprType.type != Type.Types.INT) {
-                    ce.add("Self increment/decrement can only be operated on `int`.");
+                    ce.add(node.posOp, "Self increment/decrement can only be operated on `int`.");
                     return;
                 }
                 node.exprType = intType;
@@ -253,7 +257,7 @@ public class SemanticChecker implements IASTVisitor {
             case NEG:
             case BITWISE_NOT:
                 if (node.body.exprType.type != Type.Types.INT) {
-                    ce.add("Unary +/-/~ can only be operated on `int`.");
+                    ce.add(node.posOp, "Unary +/-/~ can only be operated on `int`.");
                     return;
                 }
                 node.exprType = intType;
@@ -262,7 +266,7 @@ public class SemanticChecker implements IASTVisitor {
 
             case LOGICAL_NOT:
                 if (node.body.exprType.type != Type.Types.BOOL) {
-                    ce.add("Logical not can only be operated on `bool`.");
+                    ce.add(node.posOp, "Logical not can only be operated on `bool`.");
                     return;
                 }
                 node.exprType = boolType;
@@ -276,14 +280,15 @@ public class SemanticChecker implements IASTVisitor {
         node.scope = currentScope;
         visit(node.lhs);
         visit(node.rhs);
+        if (!node.lhs.exprType.isSameType(node.rhs.exprType)) {
+            ce.add(node.posRhs, "The left and right operands of a binary expression should be of the same value.");
+            return;
+        }
+        Type.Types operandType = node.lhs.exprType.type;
         switch (node.op) {
             case ASSIGN:
                 if (!node.lhs.isLvalue) {
-                    ce.add("The left operand of assignment expression should be a lvalue.");
-                    return;
-                }
-                if (!node.lhs.exprType.isSameType(node.rhs.exprType)) {
-                    ce.add("The right operand of assignment expression has a different type of the right one.");
+                    ce.add(node.posLhs, "The left operand of assignment expression should be a lvalue.");
                     return;
                 }
                 node.exprType = node.rhs.exprType;
@@ -292,12 +297,8 @@ public class SemanticChecker implements IASTVisitor {
 
             case LOGICAL_OR:
             case LOGICAL_AND:
-                if (node.lhs.exprType.type != Type.Types.BOOL) {
-                    ce.add("The left operand of logical or/and should be a `bool`");
-                    return;
-                }
-                if (node.rhs.exprType.type != Type.Types.BOOL) {
-                    ce.add("The right operand of logical or/and should be a `bool`");
+                if (operandType != Type.Types.BOOL) {
+                    ce.add(node.posLhs, "The operands of logical or/and should be a `bool`");
                     return;
                 }
                 node.exprType = boolType;
@@ -306,10 +307,6 @@ public class SemanticChecker implements IASTVisitor {
 
             case EQ:
             case NE:
-                if (!node.lhs.exprType.isSameType(node.rhs.exprType)) {
-                    ce.add("Operands of equality test should be of the same type.");
-                    return;
-                }
                 node.exprType = boolType;
                 node.isLvalue = false;
                 return;
@@ -318,12 +315,8 @@ public class SemanticChecker implements IASTVisitor {
             case GT:
             case LE:
             case GE:
-                if (node.lhs.exprType.type != Type.Types.INT) {
-                    ce.add("The left operand of relational operation should be a `bool`");
-                    return;
-                }
-                if (node.rhs.exprType.type != Type.Types.INT) {
-                    ce.add("The right operand of relational operation should be a `bool`");
+                if (operandType != Type.Types.INT && operandType != Type.Types.STRING) {
+                    ce.add(node.posLhs, "The operands of relational operation should be a `int` or a `string`");
                     return;
                 }
                 node.exprType = boolType;
@@ -335,22 +328,25 @@ public class SemanticChecker implements IASTVisitor {
             case XOR:
             case SHL:
             case SHR:
-            case ADD:
             case SUB:
             case MUL:
             case DIV:
             case MOD:
-                if (node.lhs.exprType.type != Type.Types.INT) {
-                    ce.add("The left operand of binary arithmetic operation should be a `int`");
-                    return;
-                }
-                if (node.rhs.exprType.type != Type.Types.INT) {
-                    ce.add("The right operand of binary arithmetic operation should be a `int`");
+                if (operandType != Type.Types.INT) {
+                    ce.add(node.posLhs, "The operands of binary arithmetic operation should be a `int`");
                     return;
                 }
                 node.exprType = intType;
                 node.isLvalue = false;
                 return;
+
+            case ADD:
+                if (operandType != Type.Types.INT && operandType != Type.Types.STRING) {
+                    ce.add(node.posLhs, "The operands of binary addition operation should be a `int` or a `string`");
+                    return;
+                }
+                node.exprType = operandType == Type.Types.INT ? intType : stringType;
+                node.isLvalue = false;
         }
     }
 
@@ -368,11 +364,11 @@ public class SemanticChecker implements IASTVisitor {
         visit(node.name);
         FunctionType functionType = (FunctionType)node.name.exprType;
         if (functionType.type != Type.Types.FUNCTION) {
-            ce.add("Function call on non-function type.");
+            ce.add(node.posName, "Function call on non-function type.");
             return;
         }
         if (functionType.argTypes.size() != node.parameters.size()) {
-            ce.add("Function call expect " + functionType.argTypes.size() + "arguments, but got " + node.parameters.size() + ".");
+            ce.add(node.posArgs.get(node.posArgs.size()-1), "Function call expect " + functionType.argTypes.size() + "arguments, but got " + node.parameters.size() + ".");
             return;
         }
         for (int i = 0; i < functionType.argTypes.size(); ++i) {
@@ -380,7 +376,7 @@ public class SemanticChecker implements IASTVisitor {
             VariableType targetType = functionType.argTypes.get(i);
             Type sourceType = node.parameters.get(i).exprType;
             if (!targetType.isSameType(sourceType)) {
-                ce.add("The " + (i+1) + "# argument of function call expect " + targetType + ", but got " + sourceType + ".");
+                ce.add(node.posArgs.get(i), "The " + (i+1) + "# argument of function call expect " + targetType + ", but got " + sourceType + ".");
                 return;
             }
         }
@@ -393,13 +389,15 @@ public class SemanticChecker implements IASTVisitor {
     public void visit(NewExpr node) {
         node.scope = currentScope;
         VariableType type = globalSymbolTable.resolveVariableTypeFromAST(node.type);
-        node.dim.stream().forEachOrdered(x -> {
+        for (int i = 0; i < node.dim.size(); ++i) {
+            Expr x = node.dim.get(i);
+            if (x == null) break;
             visit(x);
             if (x.exprType.type != Type.Types.INT) {
-                ce.add("Dimension expression in a new-expression should be `int`.");
+                ce.add(node.posDim.get(i), "Dimension expression in a new-expression should be `int`.");
                 return;
             }
-        });
+        }
         for (int i = 0; i < node.dim.size(); ++i)
             type = new ArrayType(type);
         node.exprType = type;
@@ -415,7 +413,7 @@ public class SemanticChecker implements IASTVisitor {
             StructType s = (StructType) node.record.exprType;
             VariableType t = (VariableType) s.members.resolveCurrent(node.member);
             if (t == null) {
-                ce.add("Struct " + s + " has no member named " + node.member + ".");
+                ce.add(node.posMember, "Struct " + s + " has no member named " + node.member + ".");
                 return;
             }
             node.isLvalue = true;
@@ -423,13 +421,22 @@ public class SemanticChecker implements IASTVisitor {
         } else if (recordType == Type.Types.STRING) {
             FunctionType t = GlobalSymbolTable.stringBuiltinMethods.get(node.member);
             if (t == null) {
-                ce.add("No builtin string method named " + node.member + ".");
+                ce.add(node.posMember, "No builtin string method named " + node.member + ".");
+                return;
+            }
+            node.isLvalue = false;
+            node.exprType = t;
+        } else if (recordType == Type.Types.ARRAY) {
+            FunctionType t = GlobalSymbolTable.arrayBuiltinMethods.get(node.member);
+            if (t == null) {
+                ce.add(node.posMember, "No builtin array method named " + node.member + ".");
                 return;
             }
             node.isLvalue = false;
             node.exprType = t;
         } else {
-            ce.add("Member access should only occur at struct type or string.");
+            ce.add(node.posRecord, "Member access should only occur at struct type or string.");
+            return;
         }
     }
 
@@ -438,11 +445,11 @@ public class SemanticChecker implements IASTVisitor {
         node.scope = currentScope;
         visit(node.self);
         if (!node.isLvalue) {
-            ce.add("Self decrement should only operate on a lvalue.");
+            ce.add(node.posSelf, "Self decrement should only operate on a lvalue.");
             return;
         }
         if (node.self.exprType.type != Type.Types.INT) {
-            ce.add("Self decrement should only operate on a `int`.");
+            ce.add(node.posSelf, "Self decrement should only operate on a `int`.");
             return;
         }
         node.exprType = intType;
@@ -454,11 +461,11 @@ public class SemanticChecker implements IASTVisitor {
         node.scope = currentScope;
         visit(node.self);
         if (!node.isLvalue) {
-            ce.add("Self increment should only operate on a lvalue.");
+            ce.add(node.posSelf, "Self increment should only operate on a lvalue.");
             return;
         }
         if (node.self.exprType.type != Type.Types.INT) {
-            ce.add("Self increment should only operate on a `int`.");
+            ce.add(node.posSelf, "Self increment should only operate on a `int`.");
             return;
         }
         node.exprType = intType;
@@ -470,7 +477,7 @@ public class SemanticChecker implements IASTVisitor {
         node.scope = currentScope;
         Type t = currentScope.resolve(node.name);
         if (t == null) {
-            ce.add("Cannot resolve symbol `" + node.name + "`.");
+            ce.add(node.pos, "Cannot resolve symbol `" + node.name + "`.");
             return;
         }
         node.exprType = t;

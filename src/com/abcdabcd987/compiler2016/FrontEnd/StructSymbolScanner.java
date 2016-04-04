@@ -24,7 +24,7 @@ public class StructSymbolScanner implements IASTVisitor {
     @Override
     public void visit(StructDecl node) {
         if (symbolTable.resolveType(node.name) != null) {
-            ce.add("Struct name " + node.name + " has already been declared.");
+            ce.add(node.posName, "Struct name " + node.name + " has already been declared.");
             return;
         }
         symbolTable.defineType(node.name, new StructType(node.name));

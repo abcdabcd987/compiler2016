@@ -1,0 +1,7 @@
+int[] f() {
+    return new int[20];
+}
+
+int main() {
+    f() = new int[16];
+}

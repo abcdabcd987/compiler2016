@@ -1,0 +1,8 @@
+class Foo {
+    int young;
+}
+
+int main() {
+    Foo chairman = new Foo;
+    chairman.naive = -2147483648;
+}

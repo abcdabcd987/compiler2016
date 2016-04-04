@@ -17,11 +17,17 @@ public class BinaryExpr extends Expr {
     public final BinaryOp op;
     public final Expr lhs;
     public final Expr rhs;
+    public final SourcePosition posOp;
+    public final SourcePosition posLhs;
+    public final SourcePosition posRhs;
 
-    public BinaryExpr(BinaryOp op, Expr lhs, Expr rhs) {
+    public BinaryExpr(BinaryOp op, Expr lhs, Expr rhs, SourcePosition posOp, SourcePosition posLhs, SourcePosition posRhs) {
         this.op = op;
         this.lhs = lhs;
         this.rhs = rhs;
+        this.posOp = posOp;
+        this.posLhs = posLhs;
+        this.posRhs = posRhs;
     }
 
     @Override

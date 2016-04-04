@@ -1,0 +1,4 @@
+
+int main() {
+    A x = new A;
+}

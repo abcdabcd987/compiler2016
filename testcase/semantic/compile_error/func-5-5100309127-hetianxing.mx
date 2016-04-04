@@ -1,0 +1,13 @@
+class AI {
+    int a;
+}
+
+int f(int a, int b)
+{
+}
+
+int main() {
+    int b;
+    AI sa = new AI;
+    f(b, sa);
+}

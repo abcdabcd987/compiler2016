@@ -42,13 +42,13 @@ selectionStatement
 
 iterationStatement
     :   'while' '(' expression ')' statement                  # while
-    |   'for' '(' variableDeclaration
-                  expression? ';'
-                  expression? ')'
+    |   'for' '(' declinit=variableDeclaration
+                  cond=expression? ';'
+                  step=expression? ')'
             statement                                         # for
-    |   'for' '(' expression? ';'
-                  expression? ';'
-                  expression? ')'
+    |   'for' '(' init=expression? ';'
+                  cond=expression? ';'
+                  step=expression? ')'
             statement                                         # for
     ;
 
@@ -132,7 +132,9 @@ expression
     ;
 
 creator
-    :   nonArrayTypeSpecifier ('[' expression ']')*
+    :   nonArrayTypeSpecifier ('[' expression ']')+ ('[' ']')+ ('[' expression ']')+   # creatorError
+    |   nonArrayTypeSpecifier ('[' expression ']')+ ('[' ']')*                         # creatorArray
+    |   nonArrayTypeSpecifier                                                          # creatorNonArray
     ;
 
 parameterList

@@ -4,6 +4,7 @@ import com.abcdabcd987.compiler2016.AST.*;
 import com.abcdabcd987.compiler2016.Parser.MillBaseListener;
 import com.abcdabcd987.compiler2016.Parser.MillParser;
 import com.abcdabcd987.compiler2016.Symbol.Type;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
 import java.util.ArrayList;
@@ -117,7 +118,9 @@ public class ASTBuilder extends MillBaseListener {
         map.put(ctx, new IfStmt(
                 (Expr)map.get(ctx.expression()),
                 (Stmt)map.get(ctx.statement(0)),
-                ctx.statement(1) == null ? null : (Stmt)map.get(ctx.statement(1))));
+                ctx.statement(1) == null ? null : (Stmt)map.get(ctx.statement(1)),
+                new SourcePosition(ctx.expression())
+        ));
     }
 
     // iterationStatement: 'while' '(' expression ')' statement
@@ -125,41 +128,53 @@ public class ASTBuilder extends MillBaseListener {
     public void exitWhile(MillParser.WhileContext ctx) {
         map.put(ctx, new WhileLoop(
                 (Expr)map.get(ctx.expression()),
-                (Stmt)map.get(ctx.statement())));
+                (Stmt)map.get(ctx.statement()),
+                new SourcePosition(ctx.expression())
+        ));
     }
 
-    // iterationStatement: 'for' '(' (variableDeclaration | expression)? ';'
-    //                               expression? ';'
-    //                               expression? ')'
-    //                     statement
+    // iterationStatement:
+    //    'for' '(' declinit=variableDeclaration
+    //              cond=expression? ';'
+    //              step=expression? ')'
+    //        statement
+    //    'for' '(' init=expression? ';'
+    //              cont=expression? ';'
+    //              step=expression? ')'
+
     @Override
     public void exitFor(MillParser.ForContext ctx) {
-        List<VariableDecl> initWithDecl = (List<VariableDecl>)map.get(ctx.variableDeclaration());
-        Expr init = (Expr)map.get(ctx.expression(0));
-        Expr cond = (Expr)map.get(ctx.expression(1));
-        Expr step = (Expr)map.get(ctx.expression(2));
+        List<VariableDecl> initWithDecl = (List<VariableDecl>)map.get(ctx.declinit);
+        Expr init = (Expr)map.get(ctx.init);
+        Expr cond = (Expr)map.get(ctx.cond);
+        Expr step = (Expr)map.get(ctx.step);
         Stmt body = (Stmt)map.get(ctx.statement());
-        if (ctx.variableDeclaration() == null) map.put(ctx, new ForLoop(init, cond, step, body));
-        else map.put(ctx, new ForLoop(initWithDecl, init, cond, body));
+        if (ctx.variableDeclaration() == null)
+            map.put(ctx, new ForLoop(init, cond, step, body, cond != null ? new SourcePosition(ctx.cond) : null));
+        else
+            map.put(ctx, new ForLoop(initWithDecl, cond, step, body, cond != null ? new SourcePosition(ctx.cond) : null));
     }
 
     // jumpStatement: 'continue' ';'
     @Override
     public void exitContinue(MillParser.ContinueContext ctx) {
-        map.put(ctx, new ContinueStmt());
+        map.put(ctx, new ContinueStmt(new SourcePosition(ctx)));
     }
 
     // jumpStatement: 'break' ';'
     @Override
     public void exitBreak(MillParser.BreakContext ctx) {
-        map.put(ctx, new BreakStmt());
+        map.put(ctx, new BreakStmt(new SourcePosition(ctx)));
     }
 
     // jumpStatement: 'return' expression? ';'
     @Override
     public void exitReturn(MillParser.ReturnContext ctx) {
         map.put(ctx, new ReturnStmt(
-                ctx.expression() != null ? (Expr)map.get(ctx.expression()) : null));
+                ctx.expression() != null ? (Expr)map.get(ctx.expression()) : null,
+                new SourcePosition(ctx.start),
+                ctx.expression() != null ? new SourcePosition(ctx.expression()) : null
+        ));
     }
 
     // nonArrayTypeSpecifier
@@ -205,7 +220,10 @@ public class ASTBuilder extends MillBaseListener {
                 .forEachOrdered(x -> decls.add(new VariableDecl(
                     type,
                     x.Identifier().getText(),
-                    x.expression() != null ? (Expr)map.get(x.expression()) : null)));
+                    x.expression() != null ? (Expr)map.get(x.expression()) : null,
+                    new SourcePosition(ctx.typeSpecifier()),
+                    new SourcePosition(x.Identifier()),
+                    x.expression() != null ? new SourcePosition(x.expression().start) : null)));
         map.put(ctx, decls);
     }
 
@@ -214,6 +232,7 @@ public class ASTBuilder extends MillBaseListener {
     public void exitClassDeclaration(MillParser.ClassDeclarationContext ctx) {
         StructDecl.Builder builder = new StructDecl.Builder();
         builder.setName(ctx.Identifier().getText());
+        builder.setPosName(new SourcePosition(ctx.Identifier()));
         ctx.memberDeclaration().stream().map(map::get).forEachOrdered(builder::add);
         map.put(ctx, builder.build());
     }
@@ -224,6 +243,9 @@ public class ASTBuilder extends MillBaseListener {
         map.put(ctx, new VariableDecl(
                 (TypeNode)map.get(ctx.typeSpecifier()),
                 ctx.Identifier().getText(),
+                null,
+                new SourcePosition(ctx.typeSpecifier()),
+                new SourcePosition(ctx.Identifier()),
                 null
         ));
     }
@@ -236,6 +258,8 @@ public class ASTBuilder extends MillBaseListener {
         builder.setReturnType((TypeNode)map.get(ctx.typeSpecifier()));
         builder.setName(ctx.Identifier().getText());
         builder.setBody((CompoundStmt)map.get(ctx.blockStatement()));
+        builder.setPosName(new SourcePosition(ctx.Identifier()));
+        builder.setPosReturnType(new SourcePosition(ctx.typeSpecifier()));
         if (ctx.parameterDeclarationList() != null)
             ctx.parameterDeclarationList().parameterDeclaration()
                     .stream().map(map::get).forEachOrdered(builder::addArgType);
@@ -248,6 +272,9 @@ public class ASTBuilder extends MillBaseListener {
         map.put(ctx, new VariableDecl(
                 (TypeNode)map.get(ctx.typeSpecifier()),
                 ctx.Identifier().getText(),
+                null,
+                new SourcePosition(ctx.typeSpecifier().start),
+                new SourcePosition(ctx.Identifier().getSymbol()),
                 null
         ));
     }
@@ -257,9 +284,9 @@ public class ASTBuilder extends MillBaseListener {
     public void exitPostfixIncDec(MillParser.PostfixIncDecContext ctx) {
         Expr expr = (Expr)map.get(ctx.expression());
         if (ctx.op.getType() == MillParser.PlusPlus)
-            map.put(ctx, new SelfIncrement(expr));
+            map.put(ctx, new SelfIncrement(expr, new SourcePosition(ctx.expression())));
         else
-            map.put(ctx, new SelfDecrement(expr));
+            map.put(ctx, new SelfDecrement(expr, new SourcePosition(ctx.expression())));
     }
 
     // expression: Identifier '(' parameterList? ')'
@@ -268,9 +295,13 @@ public class ASTBuilder extends MillBaseListener {
     public void exitFunctionCall(MillParser.FunctionCallContext ctx) {
         FunctionCall.Builder builder = new FunctionCall.Builder();
         builder.setName((Expr)map.get(ctx.expression()));
-        if (ctx.parameterList() != null)
+        builder.setPosName(new SourcePosition(ctx.expression()));
+        if (ctx.parameterList() != null) {
             ctx.parameterList().expression().stream()
                     .map(map::get).forEachOrdered(builder::addArg);
+            ctx.parameterList().expression().stream()
+                    .forEachOrdered(x -> builder.addPosArg(new SourcePosition(x)));
+        }
         map.put(ctx, builder.build());
     }
 
@@ -279,7 +310,9 @@ public class ASTBuilder extends MillBaseListener {
     public void exitSubscript(MillParser.SubscriptContext ctx) {
         map.put(ctx, new ArrayAccess(
                 (Expr)map.get(ctx.expression(0)),
-                (Expr)map.get(ctx.expression(1))
+                (Expr)map.get(ctx.expression(1)),
+                new SourcePosition(ctx.expression(0)),
+                new SourcePosition(ctx.expression(1))
         ));
     }
 
@@ -288,7 +321,9 @@ public class ASTBuilder extends MillBaseListener {
     public void exitMemberAccess(MillParser.MemberAccessContext ctx) {
         map.put(ctx, new MemberAccess(
                 (Expr)map.get(ctx.expression()),
-                ctx.Identifier().getText()
+                ctx.Identifier().getText(),
+                new SourcePosition(ctx.expression()),
+                new SourcePosition(ctx.Identifier())
         ));
     }
 
@@ -310,7 +345,9 @@ public class ASTBuilder extends MillBaseListener {
         }
         map.put(ctx, new UnaryExpr(
                 op,
-                (Expr)map.get(ctx.expression())
+                (Expr)map.get(ctx.expression()),
+                new SourcePosition(ctx.op),
+                new SourcePosition(ctx.expression())
         ));
     }
 
@@ -361,14 +398,17 @@ public class ASTBuilder extends MillBaseListener {
         map.put(ctx, new BinaryExpr(
                 op,
                 (Expr)map.get(ctx.expression(0)),
-                (Expr)map.get(ctx.expression(1))
+                (Expr)map.get(ctx.expression(1)),
+                new SourcePosition(ctx.op),
+                new SourcePosition(ctx.expression(0)),
+                new SourcePosition(ctx.expression(1))
         ));
     }
 
     // expression: Identifier
     @Override
     public void exitIdentifier(MillParser.IdentifierContext ctx) {
-        map.put(ctx, new Identifier(ctx.Identifier().getText()));
+        map.put(ctx, new Identifier(ctx.Identifier().getText(), new SourcePosition(ctx.Identifier())));
     }
 
     private String unescape(String s) {
@@ -434,12 +474,32 @@ public class ASTBuilder extends MillBaseListener {
         map.put(ctx, map.get(ctx.expression()));
     }
 
-    // creator: nonArrayTypeSpecifier ('[' expression ']')*
+    // creator: nonArrayTypeSpecifier ('[' expression ']')+ ('[' ']')+ ('[' expression ']')+
     @Override
-    public void exitCreator(MillParser.CreatorContext ctx) {
+    public void exitCreatorError(MillParser.CreatorErrorContext ctx) {
+        throw new ParseCancellationException("Array dimension specification in new expression should be left aligned.");
+    }
+
+    // creator: nonArrayTypeSpecifier ('[' expression ']')+ ('[' ']')*
+    @Override
+    public void exitCreatorArray(MillParser.CreatorArrayContext ctx) {
         NewExpr.Builder builder = new NewExpr.Builder();
         builder.setType((TypeNode)map.get(ctx.nonArrayTypeSpecifier()));
         ctx.expression().stream().map(map::get).forEachOrdered(builder::addDimension);
+        ctx.expression().stream().forEachOrdered(x -> builder.addPosDimension(new SourcePosition(x)));
+        int unspecified = ctx.getTokens(MillParser.LBracket).size() - ctx.expression().size();
+        for (int i = 0; i < unspecified; ++i) {
+            builder.addDimension(null);
+            builder.addPosDimension(null);
+        }
+        map.put(ctx, builder.build());
+    }
+
+    // creator: nonArrayTypeSpecifier
+    @Override
+    public void exitCreatorNonArray(MillParser.CreatorNonArrayContext ctx) {
+        NewExpr.Builder builder = new NewExpr.Builder();
+        builder.setType((TypeNode)map.get(ctx.nonArrayTypeSpecifier()));
         map.put(ctx, builder.build());
     }
 }

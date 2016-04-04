@@ -5,9 +5,11 @@ package com.abcdabcd987.compiler2016.AST;
  */
 public class SelfIncrement extends Expr {
     public final Expr self;
+    public final SourcePosition posSelf;
 
-    public SelfIncrement(Expr self) {
+    public SelfIncrement(Expr self, SourcePosition posSelf) {
         this.self = self;
+        this.posSelf = posSelf;
     }
 
     @Override

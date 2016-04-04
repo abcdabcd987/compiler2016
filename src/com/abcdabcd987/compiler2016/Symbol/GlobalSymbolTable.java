@@ -37,6 +37,12 @@ public class GlobalSymbolTable {
         put("ord", stringOrd);
     }};
 
+    // Builtin array function
+    private final static FunctionType arraySize = new FunctionType(intType, "array.size");
+    public final static Map<String, FunctionType> arrayBuiltinMethods = new HashMap<String, FunctionType>() {{
+        put("size", arraySize);
+    }};
+
     // Builtin function
     private final static FunctionType printFunc = new FunctionType(voidType, "print") {{
         argTypes.add(stringType);

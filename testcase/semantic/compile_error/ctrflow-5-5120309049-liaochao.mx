@@ -1,0 +1,6 @@
+
+int main() {
+    string institute = "zhiyuan";
+    for (; institute; ) {
+    }
+}

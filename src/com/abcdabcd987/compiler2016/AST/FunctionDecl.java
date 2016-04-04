@@ -11,12 +11,16 @@ public class FunctionDecl extends Decl {
     public final String name;
     public final List<VariableDecl> argTypes;
     public final CompoundStmt body;
+    public final SourcePosition posReturnType;
+    public final SourcePosition posName;
 
     public static class Builder {
         private TypeNode returnType;
         private String name;
         private List<VariableDecl> argTypes = new ArrayList<>();
         private CompoundStmt body;
+        private SourcePosition posReturnType;
+        private SourcePosition posName;
 
         public void setReturnType(TypeNode returnType) {
             this.returnType = returnType;
@@ -27,21 +31,30 @@ public class FunctionDecl extends Decl {
         public void setBody(CompoundStmt body) {
             this.body = body;
         }
+        public void setPosReturnType(SourcePosition posReturnType) {
+            this.posReturnType = posReturnType;
+        }
+        public void setPosName(SourcePosition posName) {
+            this.posName = posName;
+        }
+
         public void addArgType(Object node) {
             if (node instanceof VariableDecl) argTypes.add((VariableDecl)node);
             else throw new RuntimeException("Invalid type");
         }
 
         public FunctionDecl build() {
-            return new FunctionDecl(returnType, name, argTypes, body);
+            return new FunctionDecl(returnType, name, argTypes, body, posReturnType, posName);
         }
     }
 
-    public FunctionDecl(TypeNode returnType, String name, List<VariableDecl> argTypes, CompoundStmt body) {
+    public FunctionDecl(TypeNode returnType, String name, List<VariableDecl> argTypes, CompoundStmt body, SourcePosition posReturnType, SourcePosition posName) {
         this.returnType = returnType;
         this.name = name;
         this.argTypes = argTypes;
         this.body = body;
+        this.posReturnType = posReturnType;
+        this.posName = posName;
     }
 
     @Override
