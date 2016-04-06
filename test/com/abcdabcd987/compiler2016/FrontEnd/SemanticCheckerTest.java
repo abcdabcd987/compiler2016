@@ -79,7 +79,7 @@ public class SemanticCheckerTest {
             if (!shouldPass) fail("Should not pass.");
         } catch (Exception e) {
             if (shouldPass) throw e;
-            else e.printStackTrace();
+            else e.printStackTrace(System.err);
         }
     }
 }

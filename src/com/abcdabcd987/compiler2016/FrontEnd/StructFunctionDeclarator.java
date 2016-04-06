@@ -1,10 +1,7 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
-import com.abcdabcd987.compiler2016.Symbol.FunctionType;
-import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
-import com.abcdabcd987.compiler2016.Symbol.StructType;
-import com.abcdabcd987.compiler2016.Symbol.VariableType;
+import com.abcdabcd987.compiler2016.Symbol.*;
 
 /**
  * Created by abcdabcd987 on 2016-03-31.
@@ -58,6 +55,10 @@ public class StructFunctionDeclarator implements IASTVisitor {
         VariableType returnType = symbolTable.resolveVariableTypeFromAST(node.returnType);
         if (returnType == null) {
             ce.add(node.posReturnType, "Cannot resolve type");
+            return;
+        }
+        if (node.name.equals("main") && (returnType.type != Type.Types.INT || node.argTypes.size() != 0)) {
+            ce.add(node.posName, "`main` function is only allowed to have `int main();`.");
             return;
         }
         FunctionType func = new FunctionType(returnType, node.name);
