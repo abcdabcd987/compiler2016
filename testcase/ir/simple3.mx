@@ -1,14 +1,15 @@
 int main() {
     int a = 5, b = 0;
     int c;
-    bool d = b != 0;// && a/b != 1;
+    bool d = b != 0 && a/b != 1;
     if (d) {
         c = 10;
     } else {
         c = 20;
     }
 
-    bool e = !(c == 10 && a/b == 0 && a == 5);
+    bool e;
+    e = !(c == 10 && a/b == 0 && a == 5);
     if (e)
         c = 30;
 

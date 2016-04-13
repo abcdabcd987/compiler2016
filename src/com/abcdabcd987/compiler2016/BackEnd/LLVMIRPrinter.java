@@ -136,7 +136,14 @@ public class LLVMIRPrinter implements IIRVisitor {
         String cond = valueMap.get(node.cond);
         String ifTrue = labelId(node.then);
         String ifFalse = labelId(node.otherwise);
-        System.out.println("    " + "br i1 " + cond + ", label %" + ifTrue + ", label %" + ifFalse);
+        if (node.cond instanceof IntComparison) {
+            System.out.println("    " + "br i1 " + cond + ", label %" + ifTrue + ", label %" + ifFalse);
+        } else {
+            // convert i32 to i1
+            String i1 = "%" + newId("i32toi1");
+            System.out.println("    " + i1 + " = trunc i32 " + cond + " to i1");
+            System.out.println("    " + "br i1 " + i1 + ", label %" + ifTrue + ", label %" + ifFalse);
+        }
         System.out.println();
         visit(node.then);
         visit(node.otherwise);
@@ -182,7 +189,14 @@ public class LLVMIRPrinter implements IIRVisitor {
         visit(node.value.getIRNode());
         String addr = valueMap.get(node.address);
         String val = valueMap.get(node.value);
-        System.out.println("    store i32 " + val + ", i32* " + addr);
+        if (node.value instanceof IntComparison) {
+            // convert i1 to i32
+            String i32 = "%" + newId("i1toi32");
+            System.out.println("    " + i32 + " = sext i1 " + val + " to i32");
+            System.out.println("    store i32 " + i32 + ", i32* " + addr);
+        } else {
+            System.out.println("    store i32 " + val + ", i32* " + addr);
+        }
     }
 
     @Override

@@ -109,7 +109,7 @@ public class IRBuilder implements IASTVisitor {
     public void visit(CompoundStmt node) {
         node.stmts.forEach(x -> {
             x.accept(this);
-            if (x instanceof Expr) {
+            if (x instanceof Expr && !(x instanceof BinaryExpr && ((BinaryExpr) x).op == BinaryExpr.BinaryOp.ASSIGN)) {
                 Expr expr = (Expr) x;
                 curBB.append(expr.wordValue.getIRNode());
             }
