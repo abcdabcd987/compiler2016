@@ -10,7 +10,7 @@ public class BasicBlock {
     public String hintName;
 
     public BasicBlock(String hintName) {
-        this.hintName = hintName;
+        this.hintName = hintName != null ? hintName : "block";
     }
 
     public void append(IRNode next) {
@@ -36,5 +36,9 @@ public class BasicBlock {
 
     public IRNode getLast() {
         return last;
+    }
+
+    public void accept(IIRVisitor visitor) {
+        visitor.visit(this);
     }
 }

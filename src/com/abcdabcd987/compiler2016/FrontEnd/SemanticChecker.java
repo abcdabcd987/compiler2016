@@ -39,7 +39,7 @@ public class SemanticChecker implements IASTVisitor {
     @Override
     public void visit(VariableDecl node) {
         node.scope = currentScope;
-        if (currentScope.resolveCurrent(node.name) != null) {
+        if (currentScope.getTypeCurrent(node.name) != null) {
             ce.add(node.posName, node.name + " has already been declared.");
             return;
         }
@@ -68,7 +68,7 @@ public class SemanticChecker implements IASTVisitor {
     public void visit(FunctionDecl node) {
         node.scope = currentScope;
         currentFunction = node.body;
-        currentFunctionType = (FunctionType) globalSymbolTable.globals.resolve(node.name);
+        currentFunctionType = (FunctionType) globalSymbolTable.globals.getType(node.name);
         currentScope = new SymbolTable(globalSymbolTable.globals);
         node.argTypes.stream().forEachOrdered(x ->
                 currentScope.define(x.name, globalSymbolTable.resolveVariableTypeFromAST(x.type)));
@@ -411,7 +411,7 @@ public class SemanticChecker implements IASTVisitor {
         Type.Types recordType = node.record.exprType.type;
         if (recordType == Type.Types.STRUCT) {
             StructType s = (StructType) node.record.exprType;
-            VariableType t = (VariableType) s.members.resolveCurrent(node.member);
+            VariableType t = (VariableType) s.members.getTypeCurrent(node.member);
             if (t == null) {
                 ce.add(node.posMember, "Struct " + s + " has no member named " + node.member + ".");
                 return;
@@ -475,7 +475,7 @@ public class SemanticChecker implements IASTVisitor {
     @Override
     public void visit(Identifier node) {
         node.scope = currentScope;
-        Type t = currentScope.resolve(node.name);
+        Type t = currentScope.getType(node.name);
         if (t == null) {
             ce.add(node.pos, "Cannot resolve symbol `" + node.name + "`.");
             return;

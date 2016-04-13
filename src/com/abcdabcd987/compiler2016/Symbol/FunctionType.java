@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.Symbol;
 
+import com.abcdabcd987.compiler2016.CompilerOptions;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,14 +38,16 @@ public class FunctionType extends Type {
 
     @Override
     public boolean isSameType(Type rhs) {
-        /*if (!(rhs instanceof FunctionType)) return false;
-        FunctionType t = (FunctionType) rhs;
-        if (!returnType.isSameType(t.returnType)) return false;
-        if (argTypes.size() != t.argTypes.size()) return false;
-        for (int i = 0; i < argTypes.size(); ++i)
-            if (!argTypes.get(i).isSameType(t.argTypes.get(i)))
-                return false;
-        return true;*/
         return this == rhs;
+    }
+
+    @Override
+    public int getSize() {
+        return CompilerOptions.SIZE_POINTER;
+    }
+
+    @Override
+    public boolean isPointerType() {
+        return true;
     }
 }

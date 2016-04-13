@@ -28,7 +28,7 @@ public class StructFunctionDeclarator implements IASTVisitor {
                 ce.add(x.posInit, "Initializer is not allowed in struct declaration.");
                 return;
             }
-            if (s.members.resolveCurrent(x.name) != null) {
+            if (s.members.getTypeCurrent(x.name) != null) {
                 ce.add(x.posName, node.name + " has already been declared.");
                 return;
             }
@@ -48,7 +48,7 @@ public class StructFunctionDeclarator implements IASTVisitor {
 
     @Override
     public void visit(FunctionDecl node) {
-        if (symbolTable.globals.resolve(node.name) != null) {
+        if (symbolTable.globals.getType(node.name) != null) {
             ce.add(node.posName, node.name + " has already been declared.");
             return;
         }

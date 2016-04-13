@@ -9,4 +9,9 @@ public class Jump extends BranchInstruction {
     public Jump(BasicBlock target) {
         this.target = target;
     }
+
+    @Override
+    public void accept(IIRVisitor visitor) {
+        visitor.visit(this);
+    }
 }

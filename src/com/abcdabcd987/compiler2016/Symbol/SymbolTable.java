@@ -7,26 +7,36 @@ import java.util.Map;
  * Created by abcdabcd987 on 2016-03-31.
  */
 public class SymbolTable {
-    private Map<String, Type> map = new LinkedHashMap<>();
+    private Map<String, SymbolInfo> map = new LinkedHashMap<>();
     private SymbolTable enclosingScope;
+    private int offset = 0;
 
     public SymbolTable(SymbolTable enclosingScope) {
         this.enclosingScope = enclosingScope;
     }
 
     public void define(String name, Type type) {
-        map.put(name, type);
+        map.put(name, new SymbolInfo(type, offset));
+        offset += type.getSize();
     }
 
-    public Type resolveCurrent(String name) {
-        return map.get(name);
-    }
+    public SymbolInfo getInfoCurrent(String name) { return map.get(name); }
 
-    public Type resolve(String name) {
-        Type t = map.get(name);
+    public SymbolInfo getInfo(String name) {
+        SymbolInfo t = map.get(name);
         if (t != null) return t;
-        if (enclosingScope != null) return enclosingScope.resolve(name);
+        if (enclosingScope != null) return enclosingScope.getInfo(name);
         return null;
+    }
+
+    public Type getTypeCurrent(String name) {
+        SymbolInfo info = getInfoCurrent(name);
+        return info != null ? info.getType() : null;
+    }
+
+    public Type getType(String name) {
+        SymbolInfo info = getInfo(name);
+        return info != null ? info.getType() : null;
     }
 
     public SymbolTable getEnclosingScope() {

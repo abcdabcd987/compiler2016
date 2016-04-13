@@ -13,4 +13,8 @@ public abstract class Type {
     public abstract String toStructureString(String indent);
 
     public abstract boolean isSameType(Type rhs);
+
+    public abstract int getSize();
+
+    public abstract boolean isPointerType();
 }

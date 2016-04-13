@@ -3,11 +3,13 @@ package com.abcdabcd987.compiler2016.IR;
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
-public class IntImmediate extends IRNode implements WordValue {
-    public int value;
+public class Load extends IRNode implements WordValue {
+    public WordValue address;
+    public String hintName;
 
-    public IntImmediate(int value) {
-        this.value = value;
+    public Load(WordValue address, String hintName) {
+        this.address = address;
+        this.hintName = hintName;
     }
 
     @Override

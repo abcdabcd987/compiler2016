@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.Symbol;
 
+import com.abcdabcd987.compiler2016.CompilerOptions;
+
 /**
  * Created by abcdabcd987 on 2016-03-31.
  */
@@ -30,5 +32,15 @@ public class StructType extends VariableType {
     @Override
     public boolean isSameType(Type rhs) {
         return rhs.type == Types.NULL || this == rhs;
+    }
+
+    @Override
+    public int getSize() {
+        return CompilerOptions.SIZE_POINTER;
+    }
+
+    @Override
+    public boolean isPointerType() {
+        return true;
     }
 }

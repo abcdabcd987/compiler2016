@@ -1,0 +1,27 @@
+package com.abcdabcd987.compiler2016.IR;
+
+/**
+ * Created by abcdabcd987 on 2016-04-11.
+ */
+public interface IIRVisitor {
+    void visit(IRRoot node);
+    void visit(BasicBlock node);
+    void visit(Function node);
+
+    void visit(BinaryOperation node);
+    void visit(UnaryOperation node);
+    void visit(IntComparison node);
+    void visit(IntImmediate node);
+    void visit(PhiNode node);
+
+    void visit(Branch node);
+    void visit(Return node);
+    void visit(Jump node);
+
+    void visit(Alloca node);
+    void visit(Load node);
+    void visit(Store node);
+
+    void visit(BranchInstruction node);
+    void visit(IRNode node);
+}
