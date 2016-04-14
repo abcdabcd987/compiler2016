@@ -17,7 +17,7 @@ public class SymbolTable {
 
     public void define(String name, Type type) {
         map.put(name, new SymbolInfo(type, offset));
-        offset += type.getSize();
+        offset += type.getAllocateSize();
     }
 
     public SymbolInfo getInfoCurrent(String name) { return map.get(name); }

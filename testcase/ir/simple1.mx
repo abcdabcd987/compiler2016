@@ -5,3 +5,5 @@ int main() {
     int c = a * 2 + b;
     return c;
 }
+// assert: exitcode
+// 15

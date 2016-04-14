@@ -7,7 +7,7 @@ import java.util.Map;
  * Created by abcdabcd987 on 2016-04-11.
  */
 public class Function {
-    private Map<String, WordValue> varAddr = new HashMap<>();
+    private Map<String, IntValue> varAddr = new HashMap<>();
     private String name;
     private BasicBlock startBB;
 
@@ -16,11 +16,11 @@ public class Function {
         this.startBB = new BasicBlock(name + "_start");
     }
 
-    public void defineVarAddr(String name, WordValue addr) {
+    public void defineVarAddr(String name, IntValue addr) {
         varAddr.put(name, addr);
     }
 
-    public WordValue getVarAddr(String name) {
+    public IntValue getVarAddr(String name) {
         return varAddr.get(name);
     }
 

@@ -27,14 +27,14 @@ public class PrimitiveType extends VariableType {
     }
 
     @Override
-    public int getSize() {
+    public int getAllocateSize() {
         switch (type) {
             case INT:
-                return CompilerOptions.SIZE_INT;
+                return CompilerOptions.getSizeInt();
             case BOOL:
-                return CompilerOptions.SIZE_BOOL;
+                return CompilerOptions.getSizeBool();
             default:
-                return CompilerOptions.SIZE_POINTER;
+                return CompilerOptions.getSizePointer();
         }
     }
 

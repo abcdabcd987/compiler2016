@@ -1,6 +1,7 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
+import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.IR.BinaryOperation.BinaryOp;
 import com.abcdabcd987.compiler2016.IR.IntComparison.Condition;
@@ -46,7 +47,8 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(VariableDecl node) {
-        Alloca addr = new Alloca(node.name);
+        Type t = node.scope.getType(node.name);
+        Allocate addr = new Allocate(t.getAllocateSize(), node.name);
         curFunction.defineVarAddr(node.name, addr);
         curBB.append(addr);
         if (node.init != null) {
@@ -92,7 +94,7 @@ public class IRBuilder implements IASTVisitor {
     @Override
     public void visit(ReturnStmt node) {
         visit(node.value);
-        curBB.end(new Return(node.value.wordValue));
+        curBB.end(new Return(node.value.intValue));
     }
 
     @Override
@@ -111,7 +113,7 @@ public class IRBuilder implements IASTVisitor {
             x.accept(this);
             if (x instanceof Expr && !(x instanceof BinaryExpr && ((BinaryExpr) x).op == BinaryExpr.BinaryOp.ASSIGN)) {
                 Expr expr = (Expr) x;
-                curBB.append(expr.wordValue.getIRNode());
+                curBB.append(expr.intValue.getIRNode());
             }
         });
     }
@@ -225,10 +227,10 @@ public class IRBuilder implements IASTVisitor {
     public void visit(ArrayAccess node) {
         visit(node.array);
         visit(node.subscript);
-        WordValue tmp1 = new IntImmediate(((ArrayType)node.array.exprType).bodyType.getSize());
-        WordValue tmp2 = new BinaryOperation(BinaryOp.MUL, node.subscript.wordValue, tmp1);
-        WordValue tmp3 = new BinaryOperation(BinaryOp.ADD, node.array.wordValue, tmp2);
-        node.wordValue = new Load(tmp3, null);
+        IntValue tmp1 = new IntImmediate(CompilerOptions.getSizePointer(), ((ArrayType)node.array.exprType).bodyType.getAllocateSize());
+        IntValue tmp2 = new BinaryOperation(BinaryOp.MUL, node.subscript.intValue.toPointerSize(), tmp1);
+        IntValue tmp3 = new BinaryOperation(BinaryOp.ADD, node.array.intValue.toPointerSize(), tmp2);
+        node.intValue = new Load(node.exprType.getAllocateSize(), tmp3, null);
     }
 
     @Override
@@ -245,24 +247,24 @@ public class IRBuilder implements IASTVisitor {
         visit(node.body);
         switch (node.op) {
             case INC:
-                node.wordValue = new BinaryOperation(BinaryOp.ADD,
-                        node.body.wordValue, new IntImmediate(1));
+                node.intValue = new BinaryOperation(BinaryOp.ADD,
+                        node.body.intValue, new IntImmediate(node.body.intValue.getSize(), 1));
                 break;
             case DEC:
-                node.wordValue = new BinaryOperation(BinaryOp.SUB,
-                        node.body.wordValue, new IntImmediate(1));
+                node.intValue = new BinaryOperation(BinaryOp.SUB,
+                        node.body.intValue, new IntImmediate(node.body.intValue.getSize(), 1));
                 break;
 
             case POS:
-                node.wordValue = node.body.wordValue;
+                node.intValue = node.body.intValue;
                 break;
             case NEG:
-                node.wordValue = new UnaryOperation(UnaryOp.NEG, node.body.wordValue, null);
+                node.intValue = new UnaryOperation(UnaryOp.NEG, node.body.intValue, null);
                 break;
 
             case BITWISE_NOT:
             default:
-                node.wordValue = new UnaryOperation(UnaryOp.NOT, node.body.wordValue, null);
+                node.intValue = new UnaryOperation(UnaryOp.NOT, node.body.intValue, null);
                 break;
         }
     }
@@ -302,13 +304,13 @@ public class IRBuilder implements IASTVisitor {
         }
 
         // generate cmp and br instructions
-        WordValue cmp = new IntComparison(cond, node.lhs.wordValue, node.rhs.wordValue);
+        IntValue cmp = new IntComparison(cond, node.lhs.intValue, node.rhs.intValue);
         if (node.ifTrue != null) {
             // if the expression is in a condition part
             curBB.end(new Branch(cmp, node.ifTrue, node.ifFalse));
         } else {
             // if the expression is in an assignment
-            node.wordValue = cmp;
+            node.intValue = cmp;
         }
     }
 
@@ -332,20 +334,20 @@ public class IRBuilder implements IASTVisitor {
             case BITWISE_OR: op = BinaryOp.OR; break;
             case BITWISE_AND: op = BinaryOp.AND; break;
         }
-        node.wordValue = new BinaryOperation(op, node.lhs.wordValue, node.rhs.wordValue);
+        node.intValue = new BinaryOperation(op, node.lhs.intValue, node.rhs.intValue);
     }
 
-    private void assign(WordValue addr, Expr rhs) {
+    private void assign(IntValue addr, Expr rhs) {
         if (rhs.ifTrue != null) {
             // for short-circuit evaluation
             BasicBlock merge = new BasicBlock(null);
-            rhs.ifTrue.append(new Store(addr, new IntImmediate(1)));
+            rhs.ifTrue.append(new Store(addr, new IntImmediate(CompilerOptions.getSizeBool(), 1)));
             rhs.ifTrue.end(new Jump(merge));
-            rhs.ifFalse.append(new Store(addr, new IntImmediate(0)));
+            rhs.ifFalse.append(new Store(addr, new IntImmediate(CompilerOptions.getSizeBool(), 0)));
             rhs.ifFalse.end(new Jump(merge));
             curBB = merge;
         } else {
-            curBB.append(new Store(addr, rhs.wordValue));
+            curBB.append(new Store(addr, rhs.intValue));
         }
     }
 
@@ -363,8 +365,8 @@ public class IRBuilder implements IASTVisitor {
         getAddress = false;
 
         // build assignment
-        assign(node.lhs.wordValue, node.rhs);
-        node.wordValue = node.rhs.wordValue;
+        assign(node.lhs.intValue, node.rhs);
+        node.intValue = node.rhs.intValue;
     }
 
     @Override
@@ -437,11 +439,11 @@ public class IRBuilder implements IASTVisitor {
     @Override
     public void visit(Identifier node) {
         if (getAddress) {
-            node.wordValue = curFunction.getVarAddr(node.name);
+            node.intValue = curFunction.getVarAddr(node.name);
         } else {
-            node.wordValue = new Load(curFunction.getVarAddr(node.name), node.name);
+            node.intValue = new Load(node.exprType.getAllocateSize(), curFunction.getVarAddr(node.name), node.name);
             if (node.ifTrue != null) {
-                curBB.end(new Branch(node.wordValue, node.ifTrue, node.ifFalse));
+                curBB.end(new Branch(node.intValue, node.ifTrue, node.ifFalse));
             }
         }
     }
@@ -453,7 +455,7 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(IntConst node) {
-        node.wordValue = new IntImmediate(node.value);
+        node.intValue = new IntImmediate(CompilerOptions.getSizeInt(), node.value);
     }
 
     @Override

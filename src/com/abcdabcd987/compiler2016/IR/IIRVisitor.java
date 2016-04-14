@@ -18,9 +18,10 @@ public interface IIRVisitor {
     void visit(Return node);
     void visit(Jump node);
 
-    void visit(Alloca node);
+    void visit(Allocate node);
     void visit(Load node);
     void visit(Store node);
+    void visit(IntConvert node);
 
     void visit(BranchInstruction node);
     void visit(IRNode node);

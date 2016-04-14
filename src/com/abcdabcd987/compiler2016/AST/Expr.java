@@ -1,7 +1,7 @@
 package com.abcdabcd987.compiler2016.AST;
 
 import com.abcdabcd987.compiler2016.IR.BasicBlock;
-import com.abcdabcd987.compiler2016.IR.WordValue;
+import com.abcdabcd987.compiler2016.IR.IntValue;
 import com.abcdabcd987.compiler2016.Symbol.Type;
 
 /**
@@ -17,5 +17,5 @@ public abstract class Expr extends Stmt {
     public BasicBlock ifFalse;
 
     // for IR: expr value
-    public WordValue wordValue;
+    public IntValue intValue;
 }

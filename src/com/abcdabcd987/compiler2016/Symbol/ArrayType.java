@@ -31,8 +31,8 @@ public class ArrayType extends VariableType {
     }
 
     @Override
-    public int getSize() {
-        return CompilerOptions.SIZE_POINTER;
+    public int getAllocateSize() {
+        return CompilerOptions.getSizePointer();
     }
 
     @Override

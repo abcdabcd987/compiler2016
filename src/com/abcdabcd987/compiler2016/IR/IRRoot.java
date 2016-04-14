@@ -6,10 +6,9 @@ import java.util.List;
 /**
  * Created by abcdabcd987 on 2016-04-13.
  */
-public class IRRoot extends IRNode {
+public class IRRoot {
     public List<Function> functions = new ArrayList<>();
 
-    @Override
     public void accept(IIRVisitor visitor) {
         visitor.visit(this);
     }

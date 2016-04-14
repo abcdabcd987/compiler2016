@@ -1,15 +1,19 @@
 package com.abcdabcd987.compiler2016.IR;
 
 /**
- * Created by abcdabcd987 on 2016-04-07.
+ * Created by abcdabcd987 on 2016-04-14.
  */
-public class IntImmediate extends IRNode implements IntValue {
-    private int value;
+public class IntConvert extends IRNode implements IntValue {
     private int size;
+    private IntValue source;
 
-    public IntImmediate(int size, int value) {
+    public IntConvert(int size, IntValue source) {
         this.size = size;
-        this.value = value;
+        this.source = source;
+    }
+
+    public IntValue getSource() {
+        return source;
     }
 
     @Override
@@ -25,9 +29,5 @@ public class IntImmediate extends IRNode implements IntValue {
     @Override
     public int getSize() {
         return size;
-    }
-
-    public int getValue() {
-        return value;
     }
 }

@@ -12,3 +12,5 @@ int main() {
 
     return c;
 }
+// assert: exitcode
+// 30
