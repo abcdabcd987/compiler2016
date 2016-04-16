@@ -16,5 +16,7 @@ public abstract class Type {
 
     public abstract int getAllocateSize();
 
+    public abstract int getActualSize();
+
     public abstract boolean isPointerType();
 }

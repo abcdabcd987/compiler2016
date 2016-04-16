@@ -1,5 +1,6 @@
 package com.abcdabcd987.compiler2016.BackEnd;
 
+import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 
 import java.io.PrintStream;
@@ -16,22 +17,29 @@ public class LLVMIRPrinter implements IIRVisitor {
     private Map<IntValue, String> valueMap = new IdentityHashMap<>();
     private Map<BasicBlock, String> labelMap = new IdentityHashMap<>();
     private Map<BasicBlock, Boolean> BBVisited = new IdentityHashMap<>();
+    private Map<String, String> llvmType = new HashMap<>();
+    private String ptrLLVMSize = "i" + (CompilerOptions.getSizePointer()*8);
 
     public LLVMIRPrinter(PrintStream out) {
         this.out = out;
     }
 
-    private String newId(String name) {
+    private String getLLVMType(String name) {
+        return llvmType.get(name.replace("%", ""));
+    }
+
+    private String newId(String name, String llvmtype) {
         int cnt = counter.getOrDefault(name, 0) + 1;
         counter.put(name, cnt);
-        if (cnt == 1) return name;
-        return name + "_" + cnt;
+        if (cnt != 1) name = name + "_" + cnt;
+        llvmType.put(name, llvmtype);
+        return name;
     }
 
     private String labelId(BasicBlock BB) {
         String id = labelMap.get(BB);
         if (id == null) {
-            id = newId(BB.getHintName());
+            id = newId(BB.getHintName(), null);
             labelMap.put(BB, id);
         }
         return id;
@@ -39,7 +47,9 @@ public class LLVMIRPrinter implements IIRVisitor {
 
     @Override
     public void visit(IRRoot node) {
-        node.functions.forEach(x -> x.accept(this));
+        node.functions.values().forEach(x -> x.accept(this));
+        out.println("declare i8* @malloc(i64)");
+        out.println();
     }
 
     @Override
@@ -81,10 +91,25 @@ public class LLVMIRPrinter implements IIRVisitor {
 
         String lhs = valueMap.get(node.lhs);
         String rhs = valueMap.get(node.rhs);
-        String id = "%" + newId("t");
+
+        String lhsLLVMType = getLLVMType(lhs);
+        if (lhsLLVMType != null && lhsLLVMType.endsWith("*")) {
+            String ptrtoint = "%" + newId("ptrtoint", ptrLLVMSize);
+            out.printf("    %s = ptrtoint %s %s to %s\n", ptrtoint, lhsLLVMType, lhs, ptrLLVMSize);
+            lhs = ptrtoint;
+        }
+
+        String rhsLLVMType = getLLVMType(rhs);
+        if (rhsLLVMType != null && rhsLLVMType.endsWith("*")) {
+            String ptrtoint = "%" + newId("ptrtoint", ptrLLVMSize);
+            out.printf("    %s = ptrtoint %s %s to %s\n", ptrtoint, rhsLLVMType, rhs, ptrLLVMSize);
+            rhs = ptrtoint;
+        }
+
+        String id = "%" + newId("t", lhsLLVMType);
         valueMap.put(node, id);
 
-        out.println("    " + id + " = " + op + " i" + node.getSize() + " " + lhs + ", " + rhs);
+        out.println("    " + id + " = " + op + " i" + (node.getSize()*8) + " " + lhs + ", " + rhs);
     }
 
     @Override
@@ -93,7 +118,7 @@ public class LLVMIRPrinter implements IIRVisitor {
         visit(node.getOperand().getIRNode());
 
         String o = valueMap.get(node.getOperand());
-        String id = "%" + newId("t");
+        String id = "%" + newId("t", "i32");
         valueMap.put(node, id);
         switch (node.getOp()) {
             case NEG: out.println("    " + id + " = sub i" + node.getOperand().getSize() + " 0, " + o); break;
@@ -119,16 +144,21 @@ public class LLVMIRPrinter implements IIRVisitor {
 
         String lhs = valueMap.get(node.lhs);
         String rhs = valueMap.get(node.rhs);
-        String id = "%" + newId("t");
+        String id = "%" + newId("t", "i1");
         valueMap.put(node, id);
 
-        out.println("    " + id + " = icmp " + op + " i" + node.lhs.getSize() + " " + lhs + ", " + rhs);
+        out.printf("    %s = icmp %s %s %s, %s\n", id, op, getLLVMType(lhs), lhs, rhs);
     }
 
     @Override
     public void visit(IntImmediate node) {
         if (valueMap.containsKey(node)) return;
         valueMap.put(node, String.valueOf(node.getValue()));
+    }
+
+    @Override
+    public void visit(Call node) {
+
     }
 
     @Override
@@ -140,6 +170,11 @@ public class LLVMIRPrinter implements IIRVisitor {
     public void visit(Branch node) {
         visit(node.cond.getIRNode());
         String cond = valueMap.get(node.cond);
+        if (!getLLVMType(valueMap.get(node.cond)).equals("i1")) {
+            String iconv = "%" + newId("iconv", "i1");
+            out.printf("    %s = trunc %s %s to i1\n", iconv, getLLVMType(valueMap.get(node.cond)), cond);
+            cond = iconv;
+        }
         String ifTrue = labelId(node.then);
         String ifFalse = labelId(node.otherwise);
         out.println("    " + "br i1 " + cond + ", label %" + ifTrue + ", label %" + ifFalse);
@@ -150,10 +185,9 @@ public class LLVMIRPrinter implements IIRVisitor {
 
     @Override
     public void visit(Return node) {
-        if (valueMap.containsKey(node)) return;
         visit(node.ret.getIRNode());
         String ret = valueMap.get(node.ret);
-        out.println("    ret i" + node.ret.getSize() + " " + ret);
+        out.println("    ret i" + (node.ret.getSize()*8) + " " + ret);
         out.println();
     }
 
@@ -165,11 +199,22 @@ public class LLVMIRPrinter implements IIRVisitor {
     }
 
     @Override
-    public void visit(Allocate node) {
+    public void visit(StackAllocate node) {
         if (valueMap.containsKey(node)) return;
-        String id = "%" + newId(node.getHintName());
+        String llvmSize = "i" + (node.getSize()*8);
+        String id = "%" + newId(node.getHintName(), llvmSize + "*");
         valueMap.put(node, id);
-        out.println("    " + id + " = alloca i" + node.getSize());
+        out.println("    " + id + " = alloca " + llvmSize);
+    }
+
+    @Override
+    public void visit(HeapAllocate node) {
+        if (valueMap.containsKey(node)) return;
+        String mallocid = "%" + newId("malloc", "i8");
+        String id = "%" + newId("ptrtoint", ptrLLVMSize);
+        out.printf("    %s = call i8* @malloc(i64 %d)\n", mallocid, node.getAllocSize());
+        out.printf("    %s = ptrtoint i8* %s to %s\n", id, mallocid, ptrLLVMSize);
+        valueMap.put(node, id);
     }
 
     @Override
@@ -177,9 +222,15 @@ public class LLVMIRPrinter implements IIRVisitor {
         if (valueMap.containsKey(node)) return;
         visit(node.getAddress().getIRNode());
         String addr = valueMap.get(node.getAddress());
-        String id = "%" + newId(node.getHintName());
+        String id = "%" + newId(node.getHintName(), "i" + (node.getSize()*8));
         valueMap.put(node, id);
-        out.println("    " + id + " = load i" + node.getSize() + "* " + addr);
+        if (!getLLVMType(addr).endsWith("*")) {
+            String target = "i" + (node.getSize()*8) + "*";
+            String inttoptr = "%" + newId("inttoptr", target);
+            out.printf("    %s = inttoptr %s %s to %s\n", inttoptr, getLLVMType(addr), addr, target);
+            addr = inttoptr;
+        }
+        out.println("    " + id + " = load i" + (node.getSize()*8) + "* " + addr);
     }
 
     @Override
@@ -188,20 +239,27 @@ public class LLVMIRPrinter implements IIRVisitor {
         visit(node.value.getIRNode());
         String addr = valueMap.get(node.address);
         String val = valueMap.get(node.value);
-        out.println("    store i" + node.value.getSize() + " " + val + ", i" + node.value.getSize() + "* " + addr);
-    }
-
-    @Override
-    public void visit(IntConvert node) {
-        String id = "%" + newId("iconv");
-        valueMap.put(node, id);
-        int src = node.getSource().getSize();
-        int tar = node.getSize();
-        if (src > tar) {
-            out.println("    trunc i" + src + " to i" + tar);
-        } else {
-            out.println("    sext i" + src + " to i" + tar);
+        if (!getLLVMType(addr).endsWith("*")) {
+            String target = getLLVMType(addr) + "*";
+            String inttoptr = "%" + newId("inttoptr", target);
+            out.printf("    %s = inttoptr %s %s to %s\n", inttoptr, getLLVMType(addr), addr, target);
+            addr = inttoptr;
         }
+        String addrSize = getLLVMType(addr);
+        String valSize = node.value instanceof IntImmediate ? addrSize.replace("*", "") : getLLVMType(val);
+        if (!valSize.equals(addrSize.replace("*", ""))) {
+            int src = Integer.parseInt(valSize.replace("i", ""));
+            int tar = Integer.parseInt(addrSize.replace("*", "").replace("i", ""));
+            String iconv = "%" + newId("iconv", "i" + tar);
+            if (src > tar) {
+                out.printf("    %s = trunc i%d %s to i%d\n", iconv, src, val, tar);
+            } else {
+                out.printf("    %s = sext i%d %s to i%d\n", iconv, src, val, tar);
+            }
+            valSize = "i" + tar;
+            val = iconv;
+        }
+        out.println("    store " + valSize + " " + val + ", " + addrSize + " " + addr);
     }
 
     @Override

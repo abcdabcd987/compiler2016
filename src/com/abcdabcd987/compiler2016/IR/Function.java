@@ -6,12 +6,14 @@ import java.util.Map;
 /**
  * Created by abcdabcd987 on 2016-04-11.
  */
-public class Function {
+public class Function extends IRNode {
     private Map<String, IntValue> varAddr = new HashMap<>();
     private String name;
     private BasicBlock startBB;
+    private int retSize;
 
-    public Function(String name) {
+    public Function(int retSize, String name) {
+        this.retSize = retSize;
         this.name = name;
         this.startBB = new BasicBlock(name + "_start");
     }
@@ -30,6 +32,10 @@ public class Function {
 
     public BasicBlock getStartBB() {
         return startBB;
+    }
+
+    public int getRetSize() {
+        return retSize;
     }
 
     public void setStartBB(BasicBlock startBB) {

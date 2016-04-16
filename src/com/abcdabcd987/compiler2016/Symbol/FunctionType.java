@@ -47,6 +47,11 @@ public class FunctionType extends Type {
     }
 
     @Override
+    public int getActualSize() {
+        return CompilerOptions.getSizePointer();
+    }
+
+    @Override
     public boolean isPointerType() {
         return true;
     }

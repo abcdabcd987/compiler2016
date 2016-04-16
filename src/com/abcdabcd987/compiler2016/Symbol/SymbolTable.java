@@ -29,6 +29,10 @@ public class SymbolTable {
         return null;
     }
 
+    public int getSize() {
+        return offset;
+    }
+
     public Type getTypeCurrent(String name) {
         SymbolInfo info = getInfoCurrent(name);
         return info != null ? info.getType() : null;

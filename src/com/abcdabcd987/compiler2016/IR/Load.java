@@ -11,7 +11,7 @@ public class Load extends IRNode implements IntValue {
     public Load(int size, IntValue address, String hintName) {
         this.size = size;
         this.address = address;
-        this.hintName = hintName;
+        this.hintName = hintName != null ? hintName : "t";
     }
 
     @Override

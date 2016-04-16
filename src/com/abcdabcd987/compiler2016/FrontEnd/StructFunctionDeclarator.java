@@ -77,6 +77,7 @@ public class StructFunctionDeclarator implements IASTVisitor {
             func.argTypes.add(type);
         }
         if (success) {
+            node.functionType = func;
             symbolTable.globals.define(node.name, func);
         }
     }

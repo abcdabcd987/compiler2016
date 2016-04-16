@@ -9,13 +9,4 @@ public interface IntValue {
     IRNode getIRNode();
 
     int getSize();
-
-    default IntValue toSize(int sz) {
-        if (sz == getSize()) return this;
-        return new IntConvert(sz, this);
-    }
-
-    default IntValue toPointerSize() {
-        return toSize(CompilerOptions.getSizePointer());
-    }
 }

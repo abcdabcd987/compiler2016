@@ -6,8 +6,10 @@ import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.IR.BinaryOperation.BinaryOp;
 import com.abcdabcd987.compiler2016.IR.IntComparison.Condition;
 import com.abcdabcd987.compiler2016.IR.UnaryOperation.UnaryOp;
-import com.abcdabcd987.compiler2016.Symbol.ArrayType;
-import com.abcdabcd987.compiler2016.Symbol.Type;
+import com.abcdabcd987.compiler2016.Symbol.*;
+
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Created by abcdabcd987 on 2016-04-08.
@@ -19,9 +21,14 @@ public class IRBuilder implements IASTVisitor {
     private Function curFunction;
     private boolean getAddress = false;
     private IRRoot irRoot = new IRRoot();
+    private GlobalSymbolTable sym;
 
     public IRRoot getIRRoot() {
         return irRoot;
+    }
+
+    private void registerBuiltinFunction(FunctionType func) {
+
     }
 
     private boolean isLogicalExpression(Expr node) {
@@ -42,13 +49,13 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(StructDecl node) {
-
+        // no actions
     }
 
     @Override
     public void visit(VariableDecl node) {
         Type t = node.scope.getType(node.name);
-        Allocate addr = new Allocate(t.getAllocateSize(), node.name);
+        StackAllocate addr = new StackAllocate(t.getAllocateSize(), node.name);
         curFunction.defineVarAddr(node.name, addr);
         curBB.append(addr);
         if (node.init != null) {
@@ -63,8 +70,8 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(FunctionDecl node) {
-        curFunction = new Function(node.name);
-        irRoot.functions.add(curFunction);
+        curFunction = new Function(node.functionType.returnType.getAllocateSize(), node.name);
+        irRoot.functions.put(node.name, curFunction);
         curBB = curFunction.getStartBB();
         node.argTypes.forEach(x -> x.accept(this));
         node.body.accept(this);
@@ -73,12 +80,12 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(ArrayTypeNode node) {
-
+        // no actions
     }
 
     @Override
     public void visit(PrimitiveTypeNode node) {
-
+        // no actions
     }
 
     @Override
@@ -99,12 +106,12 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(FunctionTypeNode node) {
-
+        // no actions
     }
 
     @Override
     public void visit(StructTypeNode node) {
-
+        // no actions
     }
 
     @Override
@@ -228,8 +235,8 @@ public class IRBuilder implements IASTVisitor {
         visit(node.array);
         visit(node.subscript);
         IntValue tmp1 = new IntImmediate(CompilerOptions.getSizePointer(), ((ArrayType)node.array.exprType).bodyType.getAllocateSize());
-        IntValue tmp2 = new BinaryOperation(BinaryOp.MUL, node.subscript.intValue.toPointerSize(), tmp1);
-        IntValue tmp3 = new BinaryOperation(BinaryOp.ADD, node.array.intValue.toPointerSize(), tmp2);
+        IntValue tmp2 = new BinaryOperation(BinaryOp.MUL, node.subscript.intValue, tmp1);
+        IntValue tmp3 = new BinaryOperation(BinaryOp.ADD, node.array.intValue, tmp2);
         node.intValue = new Load(node.exprType.getAllocateSize(), tmp3, null);
     }
 
@@ -418,12 +425,31 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(NewExpr node) {
+        Type type = node.exprType;
+        if (type.type == Type.Types.STRUCT) {
+            StructType t = (StructType) type;
+            node.intValue = new HeapAllocate(t.getActualSize());
+        } else {
 
+        }
     }
 
     @Override
     public void visit(MemberAccess node) {
+        boolean getaddr = getAddress;
+        getAddress = false;
+        visit(node.record);
+        getAddress = getaddr;
 
+        IntValue addr = node.record.intValue;
+        StructType t = (StructType) node.record.exprType;
+        SymbolInfo info = t.members.getInfo(node.member);
+        addr = new BinaryOperation(BinaryOp.ADD, addr, new IntImmediate(CompilerOptions.getSizePointer(), info.getOffset()));
+        node.intValue = getaddr ? addr : new Load(info.getType().getAllocateSize(), addr, null);
+
+        if (node.ifTrue != null) {
+            curBB.end(new Branch(node.intValue, node.ifTrue, node.ifFalse));
+        }
     }
 
     @Override

@@ -1,0 +1,16 @@
+class C2 {
+    int x;
+    int y;
+    int z;
+}
+
+int main() {
+    C2 obj = new C2;
+    obj.x = 10;
+    obj.y = 20;
+    obj.z = 40;
+    return obj.x + obj.y + obj.z;
+}
+
+// assert: exitcode
+// 70

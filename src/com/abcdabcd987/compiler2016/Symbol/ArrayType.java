@@ -36,6 +36,11 @@ public class ArrayType extends VariableType {
     }
 
     @Override
+    public int getActualSize() {
+        return CompilerOptions.getSizePointer();
+    }
+
+    @Override
     public boolean isPointerType() {
         return true;
     }

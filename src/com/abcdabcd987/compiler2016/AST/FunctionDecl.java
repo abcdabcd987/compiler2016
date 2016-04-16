@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.AST;
 
+import com.abcdabcd987.compiler2016.Symbol.FunctionType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,7 @@ public class FunctionDecl extends Decl {
     public final CompoundStmt body;
     public final SourcePosition posReturnType;
     public final SourcePosition posName;
+    public FunctionType functionType;
 
     public static class Builder {
         private TypeNode returnType;

@@ -39,6 +39,11 @@ public class PrimitiveType extends VariableType {
     }
 
     @Override
+    public int getActualSize() {
+        return getAllocateSize();
+    }
+
+    @Override
     public boolean isPointerType() {
         switch (type) {
             case INT:

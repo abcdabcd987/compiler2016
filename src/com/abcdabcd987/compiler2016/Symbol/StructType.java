@@ -40,6 +40,11 @@ public class StructType extends VariableType {
     }
 
     @Override
+    public int getActualSize() {
+        return members.getSize();
+    }
+
+    @Override
     public boolean isPointerType() {
         return true;
     }
