@@ -8,5 +8,6 @@ int main() {
     return 2 * c1.x;
 }
 
-// assert: exitcode
-// 20
+/*! assert: exitcode
+20
+*/

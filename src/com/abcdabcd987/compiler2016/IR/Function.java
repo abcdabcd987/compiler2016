@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import com.abcdabcd987.compiler2016.Symbol.FunctionType;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,11 +12,17 @@ public class Function extends IRNode {
     private Map<String, IntValue> varAddr = new HashMap<>();
     private String name;
     private BasicBlock startBB;
+    private FunctionType type;
     private int retSize;
 
-    public Function(int retSize, String name) {
-        this.retSize = retSize;
-        this.name = name;
+    public FunctionType getType() {
+        return type;
+    }
+
+    public Function(FunctionType type) {
+        this.retSize = type.returnType.getAllocateSize();
+        this.name = type.name;
+        this.type = type;
         this.startBB = new BasicBlock(name + "_start");
     }
 

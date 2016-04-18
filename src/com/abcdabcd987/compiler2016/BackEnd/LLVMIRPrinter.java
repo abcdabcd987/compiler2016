@@ -2,6 +2,8 @@ package com.abcdabcd987.compiler2016.BackEnd;
 
 import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
+import com.abcdabcd987.compiler2016.Symbol.Type;
+import com.abcdabcd987.compiler2016.Symbol.VariableType;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -26,6 +28,15 @@ public class LLVMIRPrinter implements IIRVisitor {
 
     private String getLLVMType(String name) {
         return llvmType.get(name.replace("%", ""));
+    }
+
+    private String toLLVMType(Type type) {
+        switch (type.type) {
+            case INT: return "i" + (CompilerOptions.getSizeInt()*8);
+            case BOOL: return "i" + (CompilerOptions.getSizeBool()*8);
+            case VOID: return "void";
+            default: return "i" + (CompilerOptions.getSizePointer()*8);
+        }
     }
 
     private String newId(String name, String llvmtype) {
@@ -57,13 +68,34 @@ public class LLVMIRPrinter implements IIRVisitor {
         if (BBVisited.containsKey(node)) return;
         BBVisited.put(node, true);
         out.println(labelId(node) + ":");
-        for (IRNode i = node.getHead(); i != null; i = i.next)
+        for (IRNode i = node.getHead(); i != null; i = i.next) {
             i.accept(this);
+        }
     }
 
     @Override
     public void visit(Function node) {
-        out.println("define i32 @" + node.getName() + "() {");
+        out.print("define " + toLLVMType(node.getType().returnType) + " @" + node.getName() + "(");
+        for (int i = 0; i < node.getType().argTypes.size(); ++i) {
+            String type = toLLVMType(node.getType().argTypes.get(i));
+            if (i != 0) out.print(", ");
+            out.printf("%s %%op%d", type, i);
+        }
+        out.println(") {");
+
+        IRNode x = node.getStartBB().getHead();
+        IRNode arg = node.getStartBB().getHead();
+        for (int i = 1; i < node.getType().argTypes.size(); ++i) x = x.next;
+        for (int i = 0; i < node.getType().argTypes.size(); ++i) {
+            IntValue hack = new IntImmediate(0, 0);
+            valueMap.put(hack, "%op" + i);
+            IRNode next = x.next;
+            x.next = new Store((StackAllocate) arg, hack);
+            x.next.next = next;
+            x = x.next;
+            arg = arg.next;
+        }
+
         visit(node.getStartBB());
         out.println("}");
         out.println();
@@ -106,7 +138,7 @@ public class LLVMIRPrinter implements IIRVisitor {
             rhs = ptrtoint;
         }
 
-        String id = "%" + newId("t", lhsLLVMType);
+        String id = "%" + newId("t", "i" + node.getSize()*8);
         valueMap.put(node, id);
 
         out.println("    " + id + " = " + op + " i" + (node.getSize()*8) + " " + lhs + ", " + rhs);
@@ -158,7 +190,20 @@ public class LLVMIRPrinter implements IIRVisitor {
 
     @Override
     public void visit(Call node) {
-
+        if (valueMap.containsKey(node)) return;
+        node.getArgs().forEach(x -> visit(x.getIRNode()));
+        String retType = toLLVMType(node.getFunc().getType().returnType);
+        String id = retType.equals("void") ? null : "%" + newId("call", retType);
+        valueMap.put(node, id);
+        out.print("    ");
+        if (id != null) out.print(id + " = ");
+        out.printf("call %s @%s(", retType, node.getFunc().getName());
+        for (int i = 0; i < node.getArgs().size(); ++i) {
+            String op = valueMap.get(node.getArgs().get(i));
+            if (i != 0) out.print(", ");
+            out.print(getLLVMType(op) + " " + op);
+        }
+        out.println(")");
     }
 
     @Override
@@ -210,9 +255,11 @@ public class LLVMIRPrinter implements IIRVisitor {
     @Override
     public void visit(HeapAllocate node) {
         if (valueMap.containsKey(node)) return;
+        visit(node.getAllocSize().getIRNode());
         String mallocid = "%" + newId("malloc", "i8");
         String id = "%" + newId("ptrtoint", ptrLLVMSize);
-        out.printf("    %s = call i8* @malloc(i64 %d)\n", mallocid, node.getAllocSize());
+        String size = valueMap.get(node.getAllocSize());
+        out.printf("    %s = call i8* @malloc(i64 %s)\n", mallocid, size);
         out.printf("    %s = ptrtoint i8* %s to %s\n", id, mallocid, ptrLLVMSize);
         valueMap.put(node, id);
     }
@@ -260,6 +307,21 @@ public class LLVMIRPrinter implements IIRVisitor {
             val = iconv;
         }
         out.println("    store " + valSize + " " + val + ", " + addrSize + " " + addr);
+    }
+
+    @Override
+    public void visit(IntConvert node) {
+        int src = node.getSource().getSize() * 8;
+        int tar = node.getSize() * 8;
+        visit(node.getSource().getIRNode());
+        String val = valueMap.get(node.getSource());
+        String id = "%" + newId("iconv", "i" + tar);
+        valueMap.put(node, id);
+        if (src > tar) {
+            out.printf("    %s = trunc i%d %s to i%d\n", id, src, val, tar);
+        } else {
+            out.printf("    %s = sext i%d %s to i%d\n", id, src, val, tar);
+        }
     }
 
     @Override

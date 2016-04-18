@@ -12,4 +12,5 @@ int main() {
 
     return c;
 }
-// assert: exception
+/*! assert: exception
+*/

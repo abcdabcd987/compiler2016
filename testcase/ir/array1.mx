@@ -1,0 +1,10 @@
+int main() {
+    int[] a;
+    int[] b = new int[10];
+    int[][] c = new int [2][];
+    return 0;
+}
+
+/*! assert: exitcode
+0
+*/

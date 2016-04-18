@@ -6,13 +6,13 @@ import com.abcdabcd987.compiler2016.CompilerOptions;
  * Created by abcdabcd987 on 2016-04-14.
  */
 public class HeapAllocate extends IRNode implements IntValue {
-    private int allocSize;
+    private IntValue allocSize;
 
-    public HeapAllocate(int allocSize) {
+    public HeapAllocate(IntValue allocSize) {
         this.allocSize = allocSize;
     }
 
-    public int getAllocSize() {
+    public IntValue getAllocSize() {
         return allocSize;
     }
 

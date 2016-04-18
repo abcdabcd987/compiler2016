@@ -70,8 +70,10 @@ public class SemanticChecker implements IASTVisitor {
         currentFunction = node.body;
         currentFunctionType = (FunctionType) globalSymbolTable.globals.getType(node.name);
         currentScope = new SymbolTable(globalSymbolTable.globals);
-        node.argTypes.stream().forEachOrdered(x ->
-                currentScope.define(x.name, globalSymbolTable.resolveVariableTypeFromAST(x.type)));
+        node.argTypes.stream().forEachOrdered(x -> {
+            currentScope.define(x.name, globalSymbolTable.resolveVariableTypeFromAST(x.type));
+            x.scope = currentScope;
+        });
 
         visit(node.body);
 

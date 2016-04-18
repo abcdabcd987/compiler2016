@@ -70,7 +70,7 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(FunctionDecl node) {
-        curFunction = new Function(node.functionType.returnType.getAllocateSize(), node.name);
+        curFunction = new Function(node.functionType);
         irRoot.functions.put(node.name, curFunction);
         curBB = curFunction.getStartBB();
         node.argTypes.forEach(x -> x.accept(this));
@@ -133,20 +133,20 @@ public class IRBuilder implements IASTVisitor {
 
         // branch instruction should be added by logical expression
         node.cond.ifTrue = BBTrue;
-        node.cond.ifFalse = BBFalse;
+        node.cond.ifFalse = node.otherwise != null ? BBFalse : BBMerge;
         visit(node.cond);
 
         // generate then
         curBB = BBTrue;
         visit(node.then);
-        BBTrue.append(new Jump(BBMerge));
+        if (!BBTrue.isEnded()) BBTrue.append(new Jump(BBMerge));
 
         // generate else
         if (node.otherwise != null) {
             curBB = BBFalse;
             visit(node.otherwise);
         }
-        BBFalse.append(new Jump(BBMerge));
+        if (!BBTrue.isEnded()) BBFalse.append(new Jump(BBMerge));
 
         // merge
         curBB = BBMerge;
@@ -174,19 +174,22 @@ public class IRBuilder implements IASTVisitor {
 
         // generate condition check
         curBB = BBCond;
-        node.cond.ifTrue = BBStep;
+        node.cond.ifTrue = BBLoop;
         node.cond.ifFalse = BBAfter;
         visit(node.cond);
 
         // generate loop
         curBB = BBLoop;
         visit(node.body);
+        curBB.end(new Jump(BBStep));
 
         // generate step
+        curBB = BBStep;
         if (node.step != null) {
-            curBB = BBStep;
             visit(node.step);
+            curBB.append(node.step.intValue.getIRNode());
         }
+        curBB.end(new Jump(BBCond));
 
         // exit loop
         curLoopStepBB = oldLoopCondBB;
@@ -218,6 +221,7 @@ public class IRBuilder implements IASTVisitor {
         // generate loop
         curBB = BBLoop;
         visit(node.body);
+        curBB.end(new Jump(BBCond));
 
         // exit loop
         curLoopStepBB = oldLoopCondBB;
@@ -232,12 +236,16 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(ArrayAccess node) {
+        boolean getaddr = getAddress;
+        getAddress = false;
         visit(node.array);
         visit(node.subscript);
+        getAddress = getaddr;
+
         IntValue tmp1 = new IntImmediate(CompilerOptions.getSizePointer(), ((ArrayType)node.array.exprType).bodyType.getAllocateSize());
-        IntValue tmp2 = new BinaryOperation(BinaryOp.MUL, node.subscript.intValue, tmp1);
-        IntValue tmp3 = new BinaryOperation(BinaryOp.ADD, node.array.intValue, tmp2);
-        node.intValue = new Load(node.exprType.getAllocateSize(), tmp3, null);
+        IntValue tmp2 = new BinaryOperation(BinaryOp.MUL, node.subscript.intValue.toPointerSize(), tmp1);
+        IntValue tmp3 = new BinaryOperation(BinaryOp.ADD, node.array.intValue.toPointerSize(), tmp2);
+        node.intValue = getAddress ? tmp3 : new Load(node.exprType.getAllocateSize(), tmp3, null);
     }
 
     @Override
@@ -254,12 +262,10 @@ public class IRBuilder implements IASTVisitor {
         visit(node.body);
         switch (node.op) {
             case INC:
-                node.intValue = new BinaryOperation(BinaryOp.ADD,
-                        node.body.intValue, new IntImmediate(node.body.intValue.getSize(), 1));
+                processSelfIncDec(node.body, node, true, false);
                 break;
             case DEC:
-                node.intValue = new BinaryOperation(BinaryOp.SUB,
-                        node.body.intValue, new IntImmediate(node.body.intValue.getSize(), 1));
+                processSelfIncDec(node.body, node, false, false);
                 break;
 
             case POS:
@@ -420,17 +426,33 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(FunctionCall node) {
-
+        node.parameters.forEach(x -> x.accept(this));
+        FunctionType type = (FunctionType) node.name.exprType;
+        Function func = irRoot.functions.get(type.name);
+        Call call = new Call(func);
+        node.parameters.forEach(x -> call.appendArg(x.intValue));
+        node.intValue = call;
     }
 
     @Override
     public void visit(NewExpr node) {
         Type type = node.exprType;
         if (type.type == Type.Types.STRUCT) {
+            // struct
             StructType t = (StructType) type;
-            node.intValue = new HeapAllocate(t.getActualSize());
+            node.intValue = new HeapAllocate(new IntImmediate(CompilerOptions.getSizePointer(), t.getActualSize()));
         } else {
+            // array
+            Expr dim = node.dim.get(0);
+            boolean getaddr = getAddress;
+            getAddress = false;
+            visit(dim);
+            getAddress = getaddr;
 
+            ArrayType t = (ArrayType) type;
+            IntValue size = new IntImmediate(CompilerOptions.getSizePointer(), t.bodyType.getAllocateSize());
+            size = new BinaryOperation(BinaryOp.MUL, dim.intValue.toPointerSize(), size);
+            node.intValue = new HeapAllocate(size);
         }
     }
 
@@ -452,14 +474,31 @@ public class IRBuilder implements IASTVisitor {
         }
     }
 
+    private void processSelfIncDec(Expr body, Expr node, boolean isInc, boolean isPostfix) {
+        boolean getaddr = getAddress;
+        getAddress = true;
+        visit(body);
+        getAddress = getaddr;
+        IntValue addr = body.intValue;
+
+        visit(body);
+
+        IntValue delta = new BinaryOperation(isInc ? BinaryOp.ADD : BinaryOp.SUB,
+                body.intValue, new IntImmediate(body.intValue.getSize(), 1));
+        Store store = new Store(addr, delta);
+        curBB.append(store);
+
+        node.intValue = isPostfix ? body.intValue : delta;
+    }
+
     @Override
     public void visit(SelfDecrement node) {
-
+        processSelfIncDec(node.self, node, false, true);
     }
 
     @Override
     public void visit(SelfIncrement node) {
-
+        processSelfIncDec(node.self, node, true, true);
     }
 
     @Override
@@ -476,7 +515,7 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(BoolConst node) {
-
+        node.intValue = new IntImmediate(CompilerOptions.getSizeBool(), node.value ? 1 : 0);
     }
 
     @Override

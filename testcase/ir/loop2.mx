@@ -1,0 +1,11 @@
+int main() {
+    int n = 10;
+    int sum = 0;
+    for (int i = 1; i <= n; ++i) sum = sum + i;
+    int j;
+    for (j = 1; j <= n; ++j) sum = sum + 10 + j;
+    return sum;
+}
+/*! assert: exitcode
+210
+*/

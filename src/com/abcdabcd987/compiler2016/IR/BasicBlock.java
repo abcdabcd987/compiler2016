@@ -13,6 +13,10 @@ public class BasicBlock {
         this.hintName = hintName != null ? hintName : "block";
     }
 
+    public boolean isEnded() {
+        return ended;
+    }
+
     public void append(IRNode next) {
         if (ended) {
             throw new RuntimeException("Cannot append instruction after a basic block ends.");

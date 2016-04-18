@@ -6,6 +6,7 @@ import com.abcdabcd987.compiler2016.IR.IRRoot;
 import com.abcdabcd987.compiler2016.Parser.MillLexer;
 import com.abcdabcd987.compiler2016.Parser.MillParser;
 import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
+import com.abcdabcd987.compiler2016.Utility.TeeOutputStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -52,7 +53,8 @@ public class LLVMIRPrinterTest {
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start();
-        PrintStream out = new PrintStream(lli.getOutputStream());
+        TeeOutputStream tee = new TeeOutputStream(System.out, lli.getOutputStream());
+        PrintStream out = new PrintStream(tee);
 
         InputStream is = new FileInputStream(filename);
         ANTLRInputStream input = new ANTLRInputStream(is);
@@ -75,7 +77,6 @@ public class LLVMIRPrinterTest {
         SemanticChecker semanticChecker = new SemanticChecker(sym, ce);
         IRBuilder irBuilder = new IRBuilder();
         LLVMIRPrinter llvmirPrinter = new LLVMIRPrinter(out);
-        LLVMIRPrinter llvmirPrinterStdout = new LLVMIRPrinter(System.out);
 
         ast.accept(structSymbolScanner);
         ast.accept(structFunctionDeclarator);
@@ -85,20 +86,19 @@ public class LLVMIRPrinterTest {
         IRRoot ir = irBuilder.getIRRoot();
 
         ir.accept(llvmirPrinter);
-        ir.accept(llvmirPrinterStdout);
 
         out.flush();
-        out.close();
+        lli.getOutputStream().close();
         int exitcode = lli.waitFor();
 
         BufferedReader br = new BufferedReader(new FileReader(filename));
         String line;
         do {
             line = br.readLine();
-        } while (!line.startsWith("// assert: "));
-        String assertion = line.replace("// assert: ", "").trim();
+        } while (!line.startsWith("/*! assert:"));
+        String assertion = line.replace("/*! assert:", "").trim();
         if (assertion.equals("exitcode")) {
-            int expected = Integer.valueOf(br.readLine().replace("// ", "").trim());
+            int expected = Integer.valueOf(br.readLine().trim());
             if (exitcode != expected)
                 throw new RuntimeException("exitcode = " + exitcode + ", expected: " + expected);
         } else if (assertion.equals("exception")) {

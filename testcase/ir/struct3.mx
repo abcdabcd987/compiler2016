@@ -15,5 +15,6 @@ int main() {
     return obj.x + obj.y + obj.z;
 }
 
-// assert: exitcode
-// 110
+/*! assert: exitcode
+110
+*/

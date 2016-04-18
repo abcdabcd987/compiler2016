@@ -1,0 +1,14 @@
+int min(int a, int b) {
+    if (a <= b) return a;
+    return b;
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    return min(x, y);
+}
+
+/*! assert: exitcode
+10
+*/

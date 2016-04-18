@@ -23,6 +23,7 @@ public interface IIRVisitor {
     void visit(HeapAllocate node);
     void visit(Load node);
     void visit(Store node);
+    void visit(IntConvert node);
 
     void visit(BranchInstruction node);
     void visit(IRNode node);

@@ -1,19 +1,12 @@
 int main() {
     int a = 5, b = 0;
     int c;
-    bool d = b != 0 && a/b != 1;
-    if (d) {
+    if (a/b != 1) {
         c = 10;
     } else {
         c = 20;
     }
-
-    bool e;
-    e = !(c == 10 && a/b == 0 && a == 5);
-    if (e)
-        c = 30;
-
     return c;
 }
-// assert: exitcode
-// 30
+/*! assert: exception
+*/
