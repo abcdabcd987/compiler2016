@@ -3,19 +3,20 @@ package com.abcdabcd987.compiler2016.IR;
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
-public class UnaryOperation extends IRNode implements IntValue {
+public class UnaryOperation extends IRInstruction {
     public enum UnaryOp {
         NEG, NOT
     }
 
+    private VirtualRegister dest;
     private UnaryOp op;
     private IntValue operand;
-    private String hintName;
 
-    public UnaryOperation(UnaryOp op, IntValue operand, String hintName) {
+    public UnaryOperation(BasicBlock BB, VirtualRegister dest, UnaryOp op, IntValue operand) {
+        super(BB);
+        this.dest = dest;
         this.op = op;
         this.operand = operand;
-        this.hintName = hintName;
     }
 
     @Override
@@ -23,14 +24,8 @@ public class UnaryOperation extends IRNode implements IntValue {
         visitor.visit(this);
     }
 
-    @Override
-    public IRNode getIRNode() {
-        return this;
-    }
-
-    @Override
-    public int getSize() {
-        return operand.getSize();
+    public VirtualRegister getDest() {
+        return dest;
     }
 
     public UnaryOp getOp() {
@@ -39,9 +34,5 @@ public class UnaryOperation extends IRNode implements IntValue {
 
     public IntValue getOperand() {
         return operand;
-    }
-
-    public String getHintName() {
-        return hintName;
     }
 }

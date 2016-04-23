@@ -14,9 +14,9 @@ public abstract class Type {
 
     public abstract boolean isSameType(Type rhs);
 
-    public abstract int getAllocateSize();
+    public abstract int getRegisterSize();
 
-    public abstract int getActualSize();
+    public abstract int getMemorySize();
 
     public abstract boolean isPointerType();
 }

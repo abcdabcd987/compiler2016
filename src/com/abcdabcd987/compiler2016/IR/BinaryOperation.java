@@ -3,22 +3,39 @@ package com.abcdabcd987.compiler2016.IR;
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
-public class BinaryOperation extends IRNode implements IntValue {
+public class BinaryOperation extends IRInstruction {
     public enum BinaryOp {
         ADD, SUB, MUL, DIV, MOD,
         SHL, SHR, AND, OR, XOR
     }
 
-    public BinaryOp op;
-    public IntValue lhs;
-    public IntValue rhs;
+    private VirtualRegister dest;
+    private BinaryOp op;
+    private IntValue lhs;
+    private IntValue rhs;
 
-    public BinaryOperation(BinaryOp op, IntValue lhs, IntValue rhs) {
-        if (lhs.getSize() != rhs.getSize())
-            throw new RuntimeException("Operands of a binary operation should have the same size.");
+    public BinaryOperation(BasicBlock BB, VirtualRegister dest, BinaryOp op, IntValue lhs, IntValue rhs) {
+        super(BB);
+        this.dest = dest;
         this.op = op;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    public VirtualRegister getDest() {
+        return dest;
+    }
+
+    public BinaryOp getOp() {
+        return op;
+    }
+
+    public IntValue getLhs() {
+        return lhs;
+    }
+
+    public IntValue getRhs() {
+        return rhs;
     }
 
     @Override
@@ -26,13 +43,4 @@ public class BinaryOperation extends IRNode implements IntValue {
         visitor.visit(this);
     }
 
-    @Override
-    public IRNode getIRNode() {
-        return this;
-    }
-
-    @Override
-    public int getSize() {
-        return lhs.getSize();
-    }
 }

@@ -26,7 +26,7 @@ import static org.junit.Assert.fail;
  * Created by abcdabcd987 on 2016-04-13.
  */
 @RunWith(Parameterized.class)
-public class LLVMIRPrinterTest {
+public class IRBuilderTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         Collection<Object[]> params = new ArrayList<>();
@@ -40,21 +40,13 @@ public class LLVMIRPrinterTest {
 
     private String filename;
 
-    public LLVMIRPrinterTest(String filename) {
+    public IRBuilderTest(String filename) {
         this.filename = filename;
     }
 
     @Test
     public void testPass() throws IOException, InterruptedException {
         System.out.println(filename);
-
-        Process lli = new ProcessBuilder()
-                .command("lli")
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .start();
-        TeeOutputStream tee = new TeeOutputStream(System.out, lli.getOutputStream());
-        PrintStream out = new PrintStream(tee);
 
         InputStream is = new FileInputStream(filename);
         ANTLRInputStream input = new ANTLRInputStream(is);
@@ -68,7 +60,7 @@ public class LLVMIRPrinterTest {
         ASTBuilder astBuilder = new ASTBuilder();
         walker.walk(astBuilder, tree);
         Program ast = astBuilder.getProgram();
-        ASTPrintVisitor printer = new ASTPrintVisitor();
+        ASTPrinter printer = new ASTPrinter();
 
         CompilationError ce = new CompilationError();
         GlobalSymbolTable sym = new GlobalSymbolTable();
@@ -76,7 +68,7 @@ public class LLVMIRPrinterTest {
         StructFunctionDeclarator structFunctionDeclarator = new StructFunctionDeclarator(sym, ce);
         SemanticChecker semanticChecker = new SemanticChecker(sym, ce);
         IRBuilder irBuilder = new IRBuilder();
-        LLVMIRPrinter llvmirPrinter = new LLVMIRPrinter(out);
+        IRPrinter llvmirPrinter = new IRPrinter(System.out);
 
         ast.accept(structSymbolScanner);
         ast.accept(structFunctionDeclarator);
@@ -86,27 +78,5 @@ public class LLVMIRPrinterTest {
         IRRoot ir = irBuilder.getIRRoot();
 
         ir.accept(llvmirPrinter);
-
-        out.flush();
-        lli.getOutputStream().close();
-        int exitcode = lli.waitFor();
-
-        BufferedReader br = new BufferedReader(new FileReader(filename));
-        String line;
-        do {
-            line = br.readLine();
-        } while (!line.startsWith("/*! assert:"));
-        String assertion = line.replace("/*! assert:", "").trim();
-        if (assertion.equals("exitcode")) {
-            int expected = Integer.valueOf(br.readLine().trim());
-            if (exitcode != expected)
-                throw new RuntimeException("exitcode = " + exitcode + ", expected: " + expected);
-        } else if (assertion.equals("exception")) {
-            if (exitcode == 0)
-                throw new RuntimeException("exitcode = 0, expected an exception.");
-        } else {
-            throw new RuntimeException("unknown assertion.");
-        }
-        br.close();
     }
 }

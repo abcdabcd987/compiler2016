@@ -1,8 +1,6 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.Program;
-import com.abcdabcd987.compiler2016.FrontEnd.ASTBuilder;
-import com.abcdabcd987.compiler2016.FrontEnd.ASTPrintVisitor;
 import com.abcdabcd987.compiler2016.Parser.MillLexer;
 import com.abcdabcd987.compiler2016.Parser.MillParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -58,8 +56,8 @@ public class ASTBuilderTest {
         ParseTreeWalker walker = new ParseTreeWalker();
         ASTBuilder astBuilder = new ASTBuilder();
         walker.walk(astBuilder, tree);
-        ASTPrintVisitor astPrintVisitor = new ASTPrintVisitor();
+        ASTPrinter astPrinter = new ASTPrinter();
         Program program = astBuilder.getProgram();
-        program.accept(astPrintVisitor);
+        program.accept(astPrinter);
     }
 }

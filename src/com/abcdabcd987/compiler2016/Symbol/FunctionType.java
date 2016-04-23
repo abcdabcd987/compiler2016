@@ -42,12 +42,12 @@ public class FunctionType extends Type {
     }
 
     @Override
-    public int getAllocateSize() {
+    public int getRegisterSize() {
         return CompilerOptions.getSizePointer();
     }
 
     @Override
-    public int getActualSize() {
+    public int getMemorySize() {
         return CompilerOptions.getSizePointer();
     }
 

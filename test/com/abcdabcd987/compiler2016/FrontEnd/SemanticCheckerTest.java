@@ -65,7 +65,7 @@ public class SemanticCheckerTest {
             ASTBuilder astBuilder = new ASTBuilder();
             walker.walk(astBuilder, tree);
             Program program = astBuilder.getProgram();
-            ASTPrintVisitor printer = new ASTPrintVisitor();
+            ASTPrinter printer = new ASTPrinter();
 
             CompilationError ce = new CompilationError();
             GlobalSymbolTable sym = new GlobalSymbolTable();

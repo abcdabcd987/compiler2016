@@ -3,15 +3,16 @@ package com.abcdabcd987.compiler2016.IR;
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
-public class Load extends IRNode implements IntValue {
+public class Load extends IRInstruction {
+    private VirtualRegister dest;
     private int size;
     private IntValue address;
-    private String hintName;
 
-    public Load(int size, IntValue address, String hintName) {
+    public Load(BasicBlock BB, VirtualRegister dest, int size, IntValue address) {
+        super(BB);
+        this.dest = dest;
         this.size = size;
         this.address = address;
-        this.hintName = hintName != null ? hintName : "t";
     }
 
     @Override
@@ -19,21 +20,15 @@ public class Load extends IRNode implements IntValue {
         visitor.visit(this);
     }
 
-    @Override
-    public IRNode getIRNode() {
-        return this;
+    public VirtualRegister getDest() {
+        return dest;
     }
 
-    @Override
     public int getSize() {
         return size;
     }
 
     public IntValue getAddress() {
         return address;
-    }
-
-    public String getHintName() {
-        return hintName;
     }
 }

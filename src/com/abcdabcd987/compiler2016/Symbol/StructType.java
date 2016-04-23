@@ -35,12 +35,12 @@ public class StructType extends VariableType {
     }
 
     @Override
-    public int getAllocateSize() {
+    public int getRegisterSize() {
         return CompilerOptions.getSizePointer();
     }
 
     @Override
-    public int getActualSize() {
+    public int getMemorySize() {
         return members.getSize();
     }
 

@@ -5,28 +5,38 @@ import com.abcdabcd987.compiler2016.CompilerOptions;
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
-public class IntComparison extends IRNode implements IntValue {
+public class IntComparison extends IRInstruction {
     public enum Condition {
         EQ, NE, GT, GE, LT, LE
     }
-    public Condition cond;
-    public IntValue lhs;
-    public IntValue rhs;
 
-    public IntComparison(Condition cond, IntValue lhs, IntValue rhs) {
+    private VirtualRegister dest;
+    private Condition cond;
+    private IntValue lhs;
+    private IntValue rhs;
+
+    public IntComparison(BasicBlock BB, VirtualRegister dest, Condition cond, IntValue lhs, IntValue rhs) {
+        super(BB);
+        this.dest = dest;
         this.cond = cond;
         this.lhs = lhs;
         this.rhs = rhs;
     }
 
-    @Override
-    public IRNode getIRNode() {
-        return this;
+    public VirtualRegister getDest() {
+        return dest;
     }
 
-    @Override
-    public int getSize() {
-        return CompilerOptions.getSizeBool();
+    public Condition getCond() {
+        return cond;
+    }
+
+    public IntValue getLhs() {
+        return lhs;
+    }
+
+    public IntValue getRhs() {
+        return rhs;
     }
 
     @Override

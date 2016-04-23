@@ -5,7 +5,7 @@ import com.abcdabcd987.compiler2016.AST.*;
 /**
  * Created by abcdabcd987 on 2016-03-28.
  */
-public class ASTPrintVisitor implements IASTVisitor {
+public class ASTPrinter implements IASTVisitor {
     private StringBuilder sb = new StringBuilder();
 
     private void indent() {

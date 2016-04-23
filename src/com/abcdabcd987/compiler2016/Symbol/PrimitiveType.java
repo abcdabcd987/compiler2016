@@ -27,7 +27,7 @@ public class PrimitiveType extends VariableType {
     }
 
     @Override
-    public int getAllocateSize() {
+    public int getRegisterSize() {
         switch (type) {
             case INT:
                 return CompilerOptions.getSizeInt();
@@ -39,8 +39,8 @@ public class PrimitiveType extends VariableType {
     }
 
     @Override
-    public int getActualSize() {
-        return getAllocateSize();
+    public int getMemorySize() {
+        return getRegisterSize();
     }
 
     @Override
