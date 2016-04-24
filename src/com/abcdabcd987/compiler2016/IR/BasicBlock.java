@@ -1,5 +1,10 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
@@ -8,6 +13,39 @@ public class BasicBlock {
     private IRInstruction last = null;
     private boolean ended = false;
     private String hintName;
+    public Map<VirtualRegister, PhiInstruction> phi = new IdentityHashMap<>();
+
+    //==== graph information
+
+    /**
+     * control flow graph predecessor set
+     */
+    private Set<BasicBlock> pred = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    /**
+     * control flow graph successor set
+     */
+    private Set<BasicBlock> succ = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    /**
+     * dominance frontier set
+     */
+    public Set<BasicBlock> DF;
+
+    /**
+     * immediate dominator
+     */
+    public BasicBlock IDom;
+
+    /**
+     * children in the dominance tree
+     */
+    public Set<BasicBlock> DTChildren;
+
+    /**
+     * number in the post order traverse of control flow graph
+     */
+    public int postOrderNumber;
 
     public BasicBlock(String hintName) {
         this.hintName = hintName != null ? hintName : "block";
@@ -29,9 +67,21 @@ public class BasicBlock {
         }
     }
 
+    private void addSucc(BasicBlock BB) {
+        if (BB == null) return;
+        succ.add(BB);
+        BB.pred.add(this);
+    }
+
     public void end(BranchInstruction next) {
         append(next);
         ended = true;
+        if (next instanceof Branch) {
+            addSucc(((Branch) next).getThen());
+            addSucc(((Branch) next).getElse());
+        } else if (next instanceof Jump) {
+            addSucc(((Jump) next).getTarget());
+        }
     }
 
     public void setHead(IRInstruction head) {
@@ -56,5 +106,13 @@ public class BasicBlock {
 
     public String getHintName() {
         return hintName;
+    }
+
+    public Set<BasicBlock> getPred() {
+        return pred;
+    }
+
+    public Set<BasicBlock> getSucc() {
+        return succ;
     }
 }

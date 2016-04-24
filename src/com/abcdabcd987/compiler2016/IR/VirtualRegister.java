@@ -5,9 +5,29 @@ package com.abcdabcd987.compiler2016.IR;
  */
 public class VirtualRegister extends IntValue {
     private String hintName;
+    private int ssaId = -1;
+    private VirtualRegister oldName = null;
 
     public VirtualRegister(String hintName) {
         this.hintName = hintName;
+    }
+
+    private VirtualRegister(String hintName, int ssaId, VirtualRegister oldName) {
+        this.hintName = hintName;
+        this.ssaId = ssaId;
+        this.oldName = oldName;
+    }
+
+    public VirtualRegister newSSARenamedRegister(int id) {
+        return new VirtualRegister(hintName, id, this);
+    }
+
+    public int getSSAId() {
+        return ssaId;
+    }
+
+    public VirtualRegister getOldName() {
+        return oldName;
     }
 
     @Override

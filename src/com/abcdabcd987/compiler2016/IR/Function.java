@@ -2,8 +2,7 @@ package com.abcdabcd987.compiler2016.IR;
 
 import com.abcdabcd987.compiler2016.Symbol.FunctionType;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by abcdabcd987 on 2016-04-11.
@@ -15,6 +14,10 @@ public class Function {
     private FunctionType type;
     private int retSize;
 
+    // control flow graph information
+    private List<BasicBlock> reversePostOrder = null;
+    private Set<BasicBlock> visited = null;
+
     public FunctionType getType() {
         return type;
     }
@@ -23,7 +26,7 @@ public class Function {
         this.retSize = type.returnType.getRegisterSize();
         this.name = type.name;
         this.type = type;
-        this.startBB = new BasicBlock(name + "_start");
+        this.startBB = new BasicBlock(name + ".entry");
     }
 
     public void defineVarReg(String name, VirtualRegister reg) {
@@ -32,6 +35,95 @@ public class Function {
 
     public VirtualRegister getVarReg(String name) {
         return varReg.get(name);
+    }
+
+    // traverse basic blocks using post order
+    private void dfsPostOrder(BasicBlock node) {
+        if (visited.contains(node)) return;
+        visited.add(node);
+        node.getSucc().forEach(this::dfsPostOrder);
+        reversePostOrder.add(node);
+    }
+
+    // calc reverse post order
+    private void calcReversePostOrder() {
+        reversePostOrder = new ArrayList<>();
+        visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        dfsPostOrder(startBB);
+        for (int i = 0; i < reversePostOrder.size(); ++i)
+            reversePostOrder.get(i).postOrderNumber = i;
+        Collections.reverse(reversePostOrder);
+    }
+
+    public List<BasicBlock> getReversePostOrder() {
+        if (reversePostOrder == null) calcReversePostOrder();
+        return reversePostOrder;
+    }
+
+    /**
+     * calc dominance tree
+     * see K.D. Cooper, T. J. Harvey and K.Kennedy. A simple, fast dominance algorithm.
+     */
+    public void calcDominanceTree() {
+        List<BasicBlock> RPO = getReversePostOrder();
+        List<BasicBlock> blocks = RPO.subList(1, RPO.size()); // startBB not included
+        blocks.forEach(x -> x.IDom = null);
+        startBB.IDom = startBB;
+
+        // calc IDom
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (BasicBlock block : blocks) {
+                BasicBlock newIDom = null;
+                for (BasicBlock pred : block.getPred())
+                    if (pred.IDom != null) {
+                        newIDom = pred;
+                        break;
+                    }
+                assert newIDom != null;
+                for (BasicBlock pred : block.getPred())
+                    if (pred != newIDom && pred.IDom != null)
+                        newIDom = intersect(pred, newIDom);
+                if (block.IDom != newIDom) {
+                    block.IDom = newIDom;
+                    changed = true;
+                }
+            }
+        }
+
+        // calc successors
+        RPO.forEach(x -> x.DTChildren = Collections.newSetFromMap(new IdentityHashMap<>()));
+        RPO.forEach(x -> x.IDom.DTChildren.add(x));
+    }
+
+    private BasicBlock intersect(BasicBlock b1, BasicBlock b2) {
+        BasicBlock finger1 = b1;
+        BasicBlock finger2 = b2;
+        while (finger1 != finger2) {
+            while (finger1.postOrderNumber < finger2.postOrderNumber) finger1 = finger1.IDom;
+            while (finger1.postOrderNumber > finger2.postOrderNumber) finger2 = finger2.IDom;
+        }
+        return finger1;
+    }
+
+    /**
+     * calc dominance frontier
+     * see K.D. Cooper, T. J. Harvey and K.Kennedy. A simple, fast dominance algorithm.
+     */
+    public void calcDominanceFrontier() {
+        List<BasicBlock> blocks = getReversePostOrder();
+        blocks.forEach(x -> x.DF = Collections.newSetFromMap(new IdentityHashMap<>()));
+        for (BasicBlock block : blocks) {
+            if (block.getPred().size() < 2) continue;
+            for (BasicBlock pred : block.getPred()) {
+                BasicBlock runner = pred;
+                while (runner != block.IDom) {
+                    runner.DF.add(block);
+                    runner = runner.IDom;
+                }
+            }
+        }
     }
 
     public String getName() {

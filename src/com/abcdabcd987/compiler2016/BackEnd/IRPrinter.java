@@ -32,7 +32,11 @@ public class IRPrinter implements IIRVisitor {
     private String regId(VirtualRegister reg) {
         String id = regMap.get(reg);
         if (id == null) {
-            id = newId(reg.getHintName() == null ? "t" : reg.getHintName(), counterReg);
+            if (reg.getOldName() != null) {
+                id = regId(reg.getOldName()) + "." + reg.getSSAId();
+            } else {
+                id = newId(reg.getHintName() == null ? "t" : reg.getHintName(), counterReg);
+            }
             regMap.put(reg, id);
         }
         return id;
@@ -108,8 +112,8 @@ public class IRPrinter implements IIRVisitor {
         out.print("    ");
         String op = null;
         switch (node.getOp()) {
-            case NEG: op = "neg";
-            case NOT: op = "not";
+            case NEG: op = "neg"; break;
+            case NOT: op = "not"; break;
         }
 
         visit(node.getDest());
@@ -161,7 +165,11 @@ public class IRPrinter implements IIRVisitor {
 
     @Override
     public void visit(PhiInstruction node) {
-
+        out.print("    ");
+        visit(node.dest);
+        out.print(" = phi");
+        node.paths.forEach((BB, reg) -> out.printf(" $%s %%%s", regId(reg), labelId(BB)));
+        out.println();
     }
 
     @Override
@@ -210,7 +218,7 @@ public class IRPrinter implements IIRVisitor {
         visit(node.getDest());
         out.printf(" = load %d ", node.getSize());
         node.getAddress().accept(this);
-        out.println();
+        out.println(" 0");
     }
 
     @Override
@@ -219,7 +227,7 @@ public class IRPrinter implements IIRVisitor {
         node.getAddress().accept(this);
         out.print(" ");
         node.getValue().accept(this);
-        out.println();
+        out.println(" 0");
     }
 
     @Override

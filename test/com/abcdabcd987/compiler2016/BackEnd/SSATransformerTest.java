@@ -2,6 +2,7 @@ package com.abcdabcd987.compiler2016.BackEnd;
 
 import com.abcdabcd987.compiler2016.AST.Program;
 import com.abcdabcd987.compiler2016.FrontEnd.*;
+import com.abcdabcd987.compiler2016.IR.Function;
 import com.abcdabcd987.compiler2016.IR.IRRoot;
 import com.abcdabcd987.compiler2016.Parser.MillLexer;
 import com.abcdabcd987.compiler2016.Parser.MillParser;
@@ -21,13 +22,11 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.junit.Assert.fail;
-
 /**
  * Created by abcdabcd987 on 2016-04-13.
  */
 @RunWith(Parameterized.class)
-public class IRBuilderTest {
+public class SSATransformerTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         Collection<Object[]> params = new ArrayList<>();
@@ -41,7 +40,7 @@ public class IRBuilderTest {
 
     private String filename;
 
-    public IRBuilderTest(String filename) {
+    public SSATransformerTest(String filename) {
         this.filename = filename;
     }
 
@@ -73,7 +72,7 @@ public class IRBuilderTest {
         StructFunctionDeclarator structFunctionDeclarator = new StructFunctionDeclarator(sym, ce);
         SemanticChecker semanticChecker = new SemanticChecker(sym, ce);
         IRBuilder irBuilder = new IRBuilder();
-        IRPrinter llvmirPrinter = new IRPrinter(out);
+        IRPrinter irPrinter = new IRPrinter(out);
 
         ast.accept(structSymbolScanner);
         ast.accept(structFunctionDeclarator);
@@ -81,33 +80,37 @@ public class IRBuilderTest {
         ast.accept(irBuilder);
 
         IRRoot ir = irBuilder.getIRRoot();
-
-        ir.accept(llvmirPrinter);
-
-        out.flush();
-        irTextOut.close();
-
-        byte[] irText = irTextOut.toByteArray();
-        ByteInputStream vmIn = new ByteInputStream(irText, irText.length);
-        LLIRInterpreter vm = new LLIRInterpreter(vmIn);
-        vm.run();
-
-        BufferedReader br = new BufferedReader(new FileReader(filename));
-        String line;
-        do {
-            line = br.readLine();
-        } while (!line.startsWith("/*! assert:"));
-        String assertion = line.replace("/*! assert:", "").trim();
-        if (assertion.equals("exitcode")) {
-            int expected = Integer.valueOf(br.readLine().trim());
-            if (vm.getExitcode() != expected)
-                throw new RuntimeException("exitcode = " + vm.getExitcode() + ", expected: " + expected);
-        } else if (assertion.equals("exception")) {
-            if (!vm.exitException())
-                throw new RuntimeException("exit successfully, expected an exception.");
-        } else {
-            throw new RuntimeException("unknown assertion.");
+        for (Function func : ir.functions.values()) {
+            SSATransformer ssaTransformer = new SSATransformer(func);
+            ssaTransformer.executeConstruct();
         }
-        br.close();
+
+        ir.accept(irPrinter);
+
+//        out.flush();
+//        irTextOut.close();
+//
+//        byte[] irText = irTextOut.toByteArray();
+//        ByteInputStream vmIn = new ByteInputStream(irText, irText.length);
+//        LLIRInterpreter vm = new LLIRInterpreter(vmIn);
+//        vm.run();
+//
+//        BufferedReader br = new BufferedReader(new FileReader(filename));
+//        String line;
+//        do {
+//            line = br.readLine();
+//        } while (!line.startsWith("/*! assert:"));
+//        String assertion = line.replace("/*! assert:", "").trim();
+//        if (assertion.equals("exitcode")) {
+//            int expected = Integer.valueOf(br.readLine().trim());
+//            if (vm.getExitcode() != expected)
+//                throw new RuntimeException("exitcode = " + vm.getExitcode() + ", expected: " + expected);
+//        } else if (assertion.equals("exception")) {
+//            if (!vm.exitException())
+//                throw new RuntimeException("exit successfully, expected an exception.");
+//        } else {
+//            throw new RuntimeException("unknown assertion.");
+//        }
+//        br.close();
     }
 }

@@ -9,13 +9,14 @@ import java.util.*;
 /**
  * Created by abcdabcd987 on 2016-04-23.
  */
-public class IRTextInterpreter {
+public class LLIRInterpreter {
     private static class Instruction {
         String operator;
         String dest;        // used as `cond` for `br`
         String op1;
         String op2;
         int size;           // for `load` / `store`
+        int offset;         // for `load` / `store`
         List<String> args;  // for `call`
 
         int lineno;
@@ -113,11 +114,13 @@ public class IRTextInterpreter {
                 inst.op1 = words.get(2);
                 inst.op2 = words.get(3);
                 inst.size = Integer.valueOf(words.get(1));
+                inst.offset = Integer.valueOf(words.get(4));
                 return;
             case "load":
                 inst.dest = split[0].trim();
                 inst.op1 = words.get(2);
                 inst.size = Integer.valueOf(words.get(1));
+                inst.offset = Integer.valueOf(words.get(3));
                 return;
             case "alloc":
                 inst.dest = split[0].trim();
@@ -164,6 +167,7 @@ public class IRTextInterpreter {
     private int heapTop = 0;
     private int retValue;
     private boolean ret;
+    private int cntInst = 0;
 
     private final Set<String> opjump = new HashSet<>(Arrays.asList(
             "br", "jump", "ret"
@@ -204,16 +208,17 @@ public class IRTextInterpreter {
     }
 
     private void runInstruction() throws RuntimeError {
+        if (++cntInst >= instLimit) throw new RuntimeError("instruction limit exceeded");
         switch (curInst.operator) {
             case "load":
-                int addr = readSrc(curInst.op1);
+                int addr = readSrc(curInst.op1) + curInst.offset;
                 int res = 0;
                 for (int i = 0; i < curInst.size; ++i) res = (res << 8) | memoryRead(addr+i);
                 registerWrite(curInst.dest, res);
                 return;
 
             case "store":
-                int address = readSrc(curInst.op1);
+                int address = readSrc(curInst.op1) + curInst.offset;
                 int data = readSrc(curInst.op2);
                 for (int i = curInst.size-1; i >= 0; --i) {
                     memoryWrite(address+i, (byte)(data & 0xFF));
@@ -329,10 +334,12 @@ public class IRTextInterpreter {
 
     //====== public methods
 
-    private int exitcode;
-    private boolean exception;
+    private boolean isReady = false;
+    private int exitcode = -1;
+    private boolean exception = false;
+    private int instLimit = Integer.MAX_VALUE;
 
-    public IRTextInterpreter(InputStream in) throws IOException {
+    public LLIRInterpreter(InputStream in) throws IOException {
         try {
             br = new BufferedReader(new InputStreamReader(in));
             while (readLine() != null) {
@@ -340,6 +347,7 @@ public class IRTextInterpreter {
                     readFunction();
                 }
             }
+            isReady = true;
         } catch (SemanticError e) {
             System.err.println("Semantic Error");
             System.err.println("    " + e.getMessage());
@@ -350,6 +358,7 @@ public class IRTextInterpreter {
 
     public void run() {
         try {
+            if (!isReady) throw new RuntimeException("not ready");
             Function main = functions.get("main");
             if (main == null) throw new RuntimeError("cannot find `main` function");
             registers = new HashMap<>();
@@ -362,6 +371,23 @@ public class IRTextInterpreter {
             exitcode = -1;
             exception = true;
         }
+        isReady = false;
+    }
+
+    public void setInstructionLimit(int instLimit) {
+        this.instLimit = instLimit;
+    }
+
+    public boolean isReady() {
+        return isReady;
+    }
+
+    public static void main(String[] args) throws IOException {
+        LLIRInterpreter vm = new LLIRInterpreter(System.in);
+        vm.setInstructionLimit(1<<26);
+        vm.run();
+        System.out.println("exitcode:  " + vm.getExitcode());
+        System.out.println("exception: " + vm.exitException());
     }
 
     public int getExitcode() {
