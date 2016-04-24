@@ -119,7 +119,7 @@ public class IRBuilder implements IASTVisitor {
     public void visit(CompoundStmt node) {
         node.stmts.forEach(x -> {
             x.accept(this);
-//            if (x instanceof Expr && !(x instanceof BinaryExpr && ((BinaryExpr) x).op == BinaryExpr.BinaryOp.ASSIGN)) {
+//            if (x instanceof Expr && !(x instanceof BinaryExpr && ((BinaryExpr) x).operator == BinaryExpr.BinaryOp.ASSIGN)) {
 //                Expr expr = (Expr) x;
 //                curBB.append(expr.intValue.getIRNode());
 //            }
@@ -518,15 +518,28 @@ public class IRBuilder implements IASTVisitor {
         visit(body);
         getAddress = getaddr;
 
-        // inc/dec
-        VirtualRegister reg = new VirtualRegister(null);
+        // stuffs
         BinaryOp op = isInc ? BinaryOp.ADD : BinaryOp.SUB;
-        curBB.append(new BinaryOperation(curBB, reg, op, body.intValue, new IntImmediate(1)));
-        if (isMemOp) {
-            curBB.append(new Store(curBB, body.exprType.getMemorySize(), addr, reg));
+        IntImmediate one = new IntImmediate(1);
+        VirtualRegister reg;
+
+        // if postfix, backup old value
+        if (isPostfix) {
+            reg = new VirtualRegister(null);
+            curBB.append(new Move(curBB, reg, body.intValue));
+            node.intValue = reg;
+        } else {
+            node.intValue = body.intValue;
         }
 
-        node.intValue = isPostfix ? body.intValue : reg;
+        // if need memory operation, introduce temporary register
+        if (isMemOp) {
+            reg = new VirtualRegister(null);
+            curBB.append(new BinaryOperation(curBB, reg, op, body.intValue, one));
+            curBB.append(new Store(curBB, body.exprType.getMemorySize(), addr, reg));
+        } else {
+            curBB.append(new BinaryOperation(curBB, (VirtualRegister) body.intValue, op, body.intValue, one));
+        }
     }
 
     @Override

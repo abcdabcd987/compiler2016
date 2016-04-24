@@ -14,23 +14,25 @@ public class IRPrinter implements IIRVisitor {
     private PrintStream out;
     private Map<BasicBlock, Boolean> BBVisited = new IdentityHashMap<>();
     private Map<BasicBlock, String> labelMap = new IdentityHashMap<>();
-    private Map<VirtualRegister, String> regMap = new IdentityHashMap<>();
-    private Map<String, Integer> counter = new HashMap<>();
+    private Map<VirtualRegister, String> regMap;
+    private Map<String, Integer> counterReg;
+    private Map<String, Integer> counterBB = new HashMap<>();
 
     public IRPrinter(PrintStream out) {
         this.out = out;
     }
 
-    private String newId(String name) {
+    private String newId(String name, Map<String, Integer> counter) {
         int cnt = counter.getOrDefault(name, 0) + 1;
         counter.put(name, cnt);
+        if (cnt == 1) return name;
         return name + "_" + cnt;
     }
 
     private String regId(VirtualRegister reg) {
         String id = regMap.get(reg);
         if (id == null) {
-            id = newId(reg.getHintName() == null ? "t" : reg.getHintName());
+            id = newId(reg.getHintName() == null ? "t" : reg.getHintName(), counterReg);
             regMap.put(reg, id);
         }
         return id;
@@ -39,7 +41,7 @@ public class IRPrinter implements IIRVisitor {
     private String labelId(BasicBlock BB) {
         String id = labelMap.get(BB);
         if (id == null) {
-            id = newId(BB.getHintName());
+            id = newId(BB.getHintName(), counterBB);
             labelMap.put(BB, id);
         }
         return id;
@@ -62,10 +64,13 @@ public class IRPrinter implements IIRVisitor {
 
     @Override
     public void visit(Function node) {
+        regMap = new IdentityHashMap<>();
+        counterReg = new HashMap<>();
         out.printf("func %s ", node.getName());
-        for (int i = 0; i < node.getType().argTypes.size(); ++i) {
-            out.printf("$op%d ", i);
-        }
+        node.getType().argNames.forEach(x -> {
+            VirtualRegister reg = node.getVarReg(x);
+            out.printf("$%s ", regId(reg));
+        });
         out.printf("{\n");
 
         visit(node.getStartBB());
@@ -151,6 +156,7 @@ public class IRPrinter implements IIRVisitor {
             x.accept(this);
             out.print(" ");
         });
+        out.println();
     }
 
     @Override

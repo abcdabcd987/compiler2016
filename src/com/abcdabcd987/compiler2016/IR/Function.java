@@ -30,7 +30,7 @@ public class Function {
         varReg.put(name, reg);
     }
 
-    public IntValue getVarReg(String name) {
+    public VirtualRegister getVarReg(String name) {
         return varReg.get(name);
     }
 

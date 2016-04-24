@@ -12,6 +12,7 @@ public class FunctionType extends Type {
     public VariableType returnType;
     public String name;
     public List<VariableType> argTypes = new ArrayList<>();
+    public List<String> argNames = new ArrayList<>();
 
     public FunctionType(VariableType returnType, String name) {
         this.returnType = returnType;

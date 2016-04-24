@@ -7,6 +7,7 @@ import com.abcdabcd987.compiler2016.Parser.MillLexer;
 import com.abcdabcd987.compiler2016.Parser.MillParser;
 import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
 import com.abcdabcd987.compiler2016.Utility.TeeOutputStream;
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -48,6 +49,10 @@ public class IRBuilderTest {
     public void testPass() throws IOException, InterruptedException {
         System.out.println(filename);
 
+        ByteArrayOutputStream irTextOut = new ByteArrayOutputStream();
+        OutputStream tee = new TeeOutputStream(System.out, irTextOut);
+        PrintStream out = new PrintStream(tee);
+
         InputStream is = new FileInputStream(filename);
         ANTLRInputStream input = new ANTLRInputStream(is);
         MillLexer lexer = new MillLexer(input);
@@ -68,7 +73,7 @@ public class IRBuilderTest {
         StructFunctionDeclarator structFunctionDeclarator = new StructFunctionDeclarator(sym, ce);
         SemanticChecker semanticChecker = new SemanticChecker(sym, ce);
         IRBuilder irBuilder = new IRBuilder();
-        IRPrinter llvmirPrinter = new IRPrinter(System.out);
+        IRPrinter llvmirPrinter = new IRPrinter(out);
 
         ast.accept(structSymbolScanner);
         ast.accept(structFunctionDeclarator);
@@ -78,5 +83,31 @@ public class IRBuilderTest {
         IRRoot ir = irBuilder.getIRRoot();
 
         ir.accept(llvmirPrinter);
+
+        out.flush();
+        irTextOut.close();
+
+        byte[] irText = irTextOut.toByteArray();
+        ByteInputStream vmIn = new ByteInputStream(irText, irText.length);
+        IRTextInterpreter vm = new IRTextInterpreter(vmIn);
+        vm.run();
+
+        BufferedReader br = new BufferedReader(new FileReader(filename));
+        String line;
+        do {
+            line = br.readLine();
+        } while (!line.startsWith("/*! assert:"));
+        String assertion = line.replace("/*! assert:", "").trim();
+        if (assertion.equals("exitcode")) {
+            int expected = Integer.valueOf(br.readLine().trim());
+            if (vm.getExitcode() != expected)
+                throw new RuntimeException("exitcode = " + vm.getExitcode() + ", expected: " + expected);
+        } else if (assertion.equals("exception")) {
+            if (!vm.exitException())
+                throw new RuntimeException("exit successfully, expected an exception.");
+        } else {
+            throw new RuntimeException("unknown assertion.");
+        }
+        br.close();
     }
 }

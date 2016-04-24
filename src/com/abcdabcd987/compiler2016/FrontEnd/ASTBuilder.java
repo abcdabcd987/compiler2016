@@ -279,7 +279,7 @@ public class ASTBuilder extends MillBaseListener {
         ));
     }
 
-    // expression: expression op=('++' | '--')
+    // expression: expression operator=('++' | '--')
     @Override
     public void exitPostfixIncDec(MillParser.PostfixIncDecContext ctx) {
         Expr expr = (Expr)map.get(ctx.expression());
@@ -328,9 +328,9 @@ public class ASTBuilder extends MillBaseListener {
     }
 
     // expression
-    //     :   <assoc=right> op=('++'|'--') expression
-    //     |   <assoc=right> op=('+' | '-') expression
-    //     |   <assoc=right> op=('!' | '~') expression
+    //     :   <assoc=right> operator=('++'|'--') expression
+    //     |   <assoc=right> operator=('+' | '-') expression
+    //     |   <assoc=right> operator=('!' | '~') expression
     @Override
     public void exitUnaryExpr(MillParser.UnaryExprContext ctx) {
         UnaryExpr.UnaryOp op;
@@ -341,7 +341,7 @@ public class ASTBuilder extends MillBaseListener {
             case MillParser.Minus: op = UnaryExpr.UnaryOp.NEG; break;
             case MillParser.Not: op = UnaryExpr.UnaryOp.LOGICAL_NOT; break;
             case MillParser.Tilde: op = UnaryExpr.UnaryOp.BITWISE_NOT; break;
-            default: throw new RuntimeException("Unknown unary op.");
+            default: throw new RuntimeException("Unknown unary operator.");
         }
         map.put(ctx, new UnaryExpr(
                 op,
@@ -358,18 +358,18 @@ public class ASTBuilder extends MillBaseListener {
     }
 
     // expression
-    //     :   expression op=('*' | '/' | '%') expression
-    //     |   expression op=('+' | '-') expression
-    //     |   expression op=('<<'|'>>') expression
-    //     |   expression op=('<' | '>') expression
-    //     |   expression op=('<='|'>=') expression
-    //     |   expression op=('=='|'!=') expression
-    //     |   expression op='&' expression
-    //     |   expression op='^' expression
-    //     |   expression op='|' expression
-    //     |   expression op='&&' expression
-    //     |   expression op='||' expression
-    //     |   <assoc=right> expression op='=' expression
+    //     :   expression operator=('*' | '/' | '%') expression
+    //     |   expression operator=('+' | '-') expression
+    //     |   expression operator=('<<'|'>>') expression
+    //     |   expression operator=('<' | '>') expression
+    //     |   expression operator=('<='|'>=') expression
+    //     |   expression operator=('=='|'!=') expression
+    //     |   expression operator='&' expression
+    //     |   expression operator='^' expression
+    //     |   expression operator='|' expression
+    //     |   expression operator='&&' expression
+    //     |   expression operator='||' expression
+    //     |   <assoc=right> expression operator='=' expression
     @Override
     public void exitBinaryExpr(MillParser.BinaryExprContext ctx) {
         BinaryExpr.BinaryOp op;
@@ -393,7 +393,7 @@ public class ASTBuilder extends MillBaseListener {
             case MillParser.AndAnd: op = BinaryExpr.BinaryOp.LOGICAL_AND; break;
             case MillParser.OrOr: op = BinaryExpr.BinaryOp.LOGICAL_OR; break;
             case MillParser.Assign: op = BinaryExpr.BinaryOp.ASSIGN; break;
-            default: throw new RuntimeException("Unknown binary op.");
+            default: throw new RuntimeException("Unknown binary operator.");
         }
         map.put(ctx, new BinaryExpr(
                 op,
