@@ -59,4 +59,12 @@ public class Branch extends BranchInstruction {
     public BasicBlock getElse() {
         return otherwise;
     }
+
+    @Override
+    public void insertSplitedBlock(BasicBlock toBB, BasicBlock insertedBB) {
+        if (then == toBB) then = insertedBB;
+        if (otherwise == toBB) otherwise = insertedBB;
+        updateConnectivity(curBB.getSucc(), toBB, insertedBB);
+        updateConnectivity(toBB.getPred(), curBB, insertedBB);
+    }
 }

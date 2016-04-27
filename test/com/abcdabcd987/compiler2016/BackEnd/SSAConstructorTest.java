@@ -26,7 +26,7 @@ import java.util.Collection;
  * Created by abcdabcd987 on 2016-04-13.
  */
 @RunWith(Parameterized.class)
-public class SSATransformerTest {
+public class SSAConstructorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         Collection<Object[]> params = new ArrayList<>();
@@ -40,7 +40,7 @@ public class SSATransformerTest {
 
     private String filename;
 
-    public SSATransformerTest(String filename) {
+    public SSAConstructorTest(String filename) {
         this.filename = filename;
     }
 
@@ -82,7 +82,7 @@ public class SSATransformerTest {
         IRRoot ir = irBuilder.getIRRoot();
         for (Function func : ir.functions.values()) {
             SSATransformer ssaTransformer = new SSATransformer(func);
-            ssaTransformer.executeConstruct();
+            ssaTransformer.construct();
         }
 
         ir.accept(irPrinter);

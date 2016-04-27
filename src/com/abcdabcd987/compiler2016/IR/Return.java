@@ -47,4 +47,9 @@ public class Return extends BranchInstruction {
     public IntValue getRet() {
         return ret;
     }
+
+    @Override
+    public void insertSplitedBlock(BasicBlock toBB, BasicBlock insertedBB) {
+        // do nothing
+    }
 }

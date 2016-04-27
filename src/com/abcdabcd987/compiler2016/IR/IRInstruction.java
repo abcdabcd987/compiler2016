@@ -1,29 +1,26 @@
 package com.abcdabcd987.compiler2016.IR;
 
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
 public abstract class IRInstruction {
-    private BasicBlock BB;
+    protected BasicBlock curBB;
     private IRInstruction prev = null;
     private IRInstruction next = null;
 
-    public IRInstruction(BasicBlock BB, IRInstruction prev, IRInstruction next) {
-        this.BB = BB;
+    public IRInstruction(BasicBlock curBB, IRInstruction prev, IRInstruction next) {
+        this.curBB = curBB;
         this.prev = prev;
         this.next = next;
     }
 
-    public IRInstruction(BasicBlock BB) {
-        this.BB = BB;
+    public IRInstruction(BasicBlock curBB) {
+        this.curBB = curBB;
     }
 
     public void linkNext(IRInstruction node) {
-        assert next == null;
-        assert node.prev == null;
         next = node;
         node.prev = this;
     }
@@ -31,8 +28,8 @@ public abstract class IRInstruction {
     public void remove() {
         if (prev != null) prev.next = next;
         if (next != null) next.prev = prev;
-        if (BB.getHead() == this) BB.setHead(next);
-        if (BB.getLast() == this) BB.setLast(prev);
+        if (curBB.getHead() == this) curBB.setHead(next);
+        if (curBB.getLast() == this) curBB.setLast(prev);
     }
 
     public abstract void accept(IIRVisitor visitor);
@@ -51,6 +48,6 @@ public abstract class IRInstruction {
     }
 
     public BasicBlock getBasicBlock() {
-        return BB;
+        return curBB;
     }
 }

@@ -64,6 +64,18 @@ public class BasicBlock {
         }
     }
 
+    public void appendBeforeJump(IRInstruction next) {
+        if (!ended) {
+            throw new RuntimeException("The block has not been finished yet.");
+        }
+        if (last.getPrev() == null) {
+            head = next;
+        } else {
+            last.getPrev().linkNext(next);
+        }
+        next.linkNext(last);
+    }
+
     private void addSucc(BasicBlock BB) {
         if (BB == null) return;
         succ.add(BB);

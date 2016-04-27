@@ -43,4 +43,12 @@ public class Jump extends BranchInstruction {
     public BasicBlock getTarget() {
         return target;
     }
+
+    @Override
+    public void insertSplitedBlock(BasicBlock toBB, BasicBlock insertedBB) {
+        if (target != toBB) return;
+        target = insertedBB;
+        updateConnectivity(curBB.getSucc(), toBB, insertedBB);
+        updateConnectivity(toBB.getPred(), curBB, insertedBB);
+    }
 }

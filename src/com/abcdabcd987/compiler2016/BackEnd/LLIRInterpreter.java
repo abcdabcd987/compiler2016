@@ -1,5 +1,4 @@
 package com.abcdabcd987.compiler2016.BackEnd;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,7 +110,7 @@ public class LLIRInterpreter {
             if (curFunc.blocks.containsKey(curBB.name)) throw new SemanticError("label `" + curBB.name + "` has already been defined");
             curFunc.blocks.put(curBB.name, curBB);
             if (curFunc.entry == null) curFunc.entry = curBB;
-            allowPhi = true;
+            allowPhi = isSSAMode;
             return;
         }
 
@@ -485,16 +484,17 @@ public class LLIRInterpreter {
         this.instLimit = instLimit;
     }
 
-    public void setSSAMode(boolean SSAMode) {
-        isSSAMode = SSAMode;
-    }
-
     public boolean isReady() {
         return isReady;
     }
 
     public static void main(String[] args) throws IOException {
-        LLIRInterpreter vm = new LLIRInterpreter(System.in, true);
+        boolean ssa = args.length > 0 && args[0].trim().equals("+ssa");
+        LLIRInterpreter vm = new LLIRInterpreter(System.in, ssa);
+        if (ssa)
+            System.out.println("running with SSA mode");
+        else
+            System.out.println("running without SSA mode");
         vm.setInstructionLimit(1<<26);
         vm.run();
         System.out.println("exitcode:  " + vm.getExitcode());
