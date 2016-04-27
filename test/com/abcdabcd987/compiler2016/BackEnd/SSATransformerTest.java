@@ -87,30 +87,30 @@ public class SSATransformerTest {
 
         ir.accept(irPrinter);
 
-//        out.flush();
-//        irTextOut.close();
-//
-//        byte[] irText = irTextOut.toByteArray();
-//        ByteInputStream vmIn = new ByteInputStream(irText, irText.length);
-//        LLIRInterpreter vm = new LLIRInterpreter(vmIn);
-//        vm.run();
-//
-//        BufferedReader br = new BufferedReader(new FileReader(filename));
-//        String line;
-//        do {
-//            line = br.readLine();
-//        } while (!line.startsWith("/*! assert:"));
-//        String assertion = line.replace("/*! assert:", "").trim();
-//        if (assertion.equals("exitcode")) {
-//            int expected = Integer.valueOf(br.readLine().trim());
-//            if (vm.getExitcode() != expected)
-//                throw new RuntimeException("exitcode = " + vm.getExitcode() + ", expected: " + expected);
-//        } else if (assertion.equals("exception")) {
-//            if (!vm.exitException())
-//                throw new RuntimeException("exit successfully, expected an exception.");
-//        } else {
-//            throw new RuntimeException("unknown assertion.");
-//        }
-//        br.close();
+        out.flush();
+        irTextOut.close();
+
+        byte[] irText = irTextOut.toByteArray();
+        ByteInputStream vmIn = new ByteInputStream(irText, irText.length);
+        LLIRInterpreter vm = new LLIRInterpreter(vmIn, true);
+        vm.run();
+
+        BufferedReader br = new BufferedReader(new FileReader(filename));
+        String line;
+        do {
+            line = br.readLine();
+        } while (!line.startsWith("/*! assert:"));
+        String assertion = line.replace("/*! assert:", "").trim();
+        if (assertion.equals("exitcode")) {
+            int expected = Integer.valueOf(br.readLine().trim());
+            if (vm.getExitcode() != expected)
+                throw new RuntimeException("exitcode = " + vm.getExitcode() + ", expected: " + expected);
+        } else if (assertion.equals("exception")) {
+            if (!vm.exitException())
+                throw new RuntimeException("exit successfully, expected an exception.");
+        } else {
+            throw new RuntimeException("unknown assertion.");
+        }
+        br.close();
     }
 }

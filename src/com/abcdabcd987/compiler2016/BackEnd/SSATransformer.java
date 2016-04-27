@@ -9,21 +9,20 @@ import java.util.*;
  */
 public class SSATransformer {
     private Function func;
-    private List<BasicBlock> blocks;
-    private Set<VirtualRegister> globals = Collections.newSetFromMap(new IdentityHashMap<>());
-    private Set<VirtualRegister> varKill = Collections.newSetFromMap(new IdentityHashMap<>());
-    private Map<VirtualRegister, Set<BasicBlock>> container = new IdentityHashMap<>();
-    private Map<VirtualRegister, Integer> counter = new IdentityHashMap<>();
-    private Map<VirtualRegister, Stack<Integer>> stack = new IdentityHashMap<>();
+    private List<BasicBlock> blocksRPO;
+    private Set<VirtualRegister> globals = new HashSet<>();
+    private Map<VirtualRegister, Set<BasicBlock>> container = new HashMap<>();
+    private Map<VirtualRegister, Integer> counter = new HashMap<>();
+    private Map<VirtualRegister, Stack<Integer>> stack = new HashMap<>();
 
     public SSATransformer(Function func) {
         this.func = func;
-        blocks = func.getReversePostOrder();
     }
 
     public void executeConstruct() {
         func.calcDominanceTree();
         func.calcDominanceFrontier();
+        blocksRPO = func.getReversePostOrder();
         buildGlobalSet();
         insertPhiInstruction();
         renameAll();
@@ -34,8 +33,12 @@ public class SSATransformer {
      * see Engineer a Compiler: Figure 9-9
      */
     private void buildGlobalSet() {
-        for (BasicBlock block : blocks) {
+        Set<VirtualRegister> varKill = new HashSet<>();
+        for (BasicBlock block : blocksRPO) {
             varKill.clear();
+            if (block == func.getStartBB()) {
+                varKill.addAll(func.argVarReg.values());
+            }
             for (IRInstruction i = block.getHead(); i != null; i = i.getNext()) {
                 Set<VirtualRegister> used = i.getUsedRegister();
                 VirtualRegister dest = i.getDefinedRegister();
@@ -48,7 +51,7 @@ public class SSATransformer {
                     varKill.add(dest);
                     Set<BasicBlock> s = container.get(dest);
                     if (s == null) {
-                        s = Collections.newSetFromMap(new IdentityHashMap<>());
+                        s = new HashSet<>();
                         container.put(dest, s);
                     }
                     s.add(block);
@@ -62,27 +65,35 @@ public class SSATransformer {
      * see Engineer a Compiler: Figure 9-9
      */
     private void insertPhiInstruction() {
+        Queue<BasicBlock> workList = new LinkedList<>();
+        Set<BasicBlock> visited = new HashSet<>();
         for (VirtualRegister x : globals) {
-            Set<BasicBlock> workList = Collections.newSetFromMap(new IdentityHashMap<>());
+            if (!container.containsKey(x)) container.put(x, new HashSet<>());
+            workList.clear();
+            visited.clear();
             workList.addAll(container.get(x));
-            for (BasicBlock b : workList)
-                for (BasicBlock d : b.DF) {
-                    PhiInstruction phi = d.phi.get(x);
-                    if (phi == null) {
-                        phi = new PhiInstruction(d, x);
-                        d.phi.put(null, phi);
+            while (!workList.isEmpty()) {
+                BasicBlock b = workList.remove();
+                if (visited.contains(b)) continue;
+                visited.add(b);
+                for (BasicBlock d : b.DF)
+                    if (!d.phi.containsKey(x)) {
+                        d.phi.put(x, new PhiInstruction(d, x));
+                        workList.add(d);
                     }
-                    if (!phi.paths.containsKey(b)) {
-                        phi.add(x, b);
-                    }
-                }
+            }
         }
     }
 
     private int newId(VirtualRegister reg) {
         int idx = counter.getOrDefault(reg, 0) + 1;
         counter.put(reg, idx);
-        stack.get(reg).push(idx);
+        Stack<Integer> s = stack.get(reg);
+        if (s == null) {
+            s = new Stack<>();
+            stack.put(reg, s);
+        }
+        s.push(idx);
         return idx;
     }
 
@@ -91,22 +102,18 @@ public class SSATransformer {
 
         java.util.function.Function<VirtualRegister, Integer> idSuplierForUsed = x -> stack.get(x).peek();
         java.util.function.Function<VirtualRegister, Integer> idSuplierForDefined = this::newId;
-        Map<VirtualRegister, VirtualRegister> latestDefinedName = new IdentityHashMap<>();
         for (IRInstruction i = BB.getHead(); i != null; i = i.getNext()) {
             i.renameUsedRegister(idSuplierForUsed);
             i.renameDefinedRegister(idSuplierForDefined);
-            VirtualRegister defined = i.getDefinedRegister();
-            if (defined != null) {
-                latestDefinedName.put(defined.getOldName(), defined);
-            }
         }
 
         for (BasicBlock succ : BB.getSucc()) {
             for (Map.Entry<VirtualRegister, PhiInstruction> entry : succ.phi.entrySet()) {
-                VirtualRegister oldName = entry.getKey();
                 PhiInstruction phi = entry.getValue();
-                if (phi.paths.containsKey(BB))
-                    phi.paths.put(BB, latestDefinedName.get(oldName));
+                VirtualRegister oldName = entry.getKey();
+                Stack<Integer> s = stack.get(oldName);
+                VirtualRegister newName = s != null ? oldName.newSSARenamedRegister(s.peek()) : null;
+                phi.paths.put(BB, newName);
             }
         }
 
@@ -125,7 +132,13 @@ public class SSATransformer {
      * see Engineer a Compiler: Figure 9-12
      */
     private void renameAll() {
-        globals.forEach(x -> stack.put(x, new Stack<>()));
+        // rename function arguments
+        func.argVarReg.entrySet().forEach(e -> func.argVarReg.put(e.getKey(), e.getValue().newSSARenamedRegister(newId(e.getValue()))));
+
+        // rename all basic blocks
         rename(func.getStartBB());
+
+        // rename function arguments
+        func.argVarReg.entrySet().forEach(e -> stack.get(e.getValue().getOldName()).pop());
     }
 }

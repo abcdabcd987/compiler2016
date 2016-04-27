@@ -3,7 +3,6 @@ package com.abcdabcd987.compiler2016.IR;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.function.*;
 import java.util.function.Function;
 
 /**

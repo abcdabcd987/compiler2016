@@ -5,6 +5,7 @@ import com.abcdabcd987.compiler2016.IR.*;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,6 +62,7 @@ public class IRPrinter implements IIRVisitor {
         if (BBVisited.containsKey(node)) return;
         BBVisited.put(node, true);
         out.println("%" + labelId(node) + ":");
+        node.phi.values().forEach(this::visit);
         for (IRInstruction i = node.getHead(); i != null; i = i.getNext()) {
             i.accept(this);
         }
@@ -77,7 +79,8 @@ public class IRPrinter implements IIRVisitor {
         });
         out.printf("{\n");
 
-        visit(node.getStartBB());
+        List<BasicBlock> RPO = node.getReversePostOrder();
+        RPO.forEach(this::visit);
 
         out.printf("}\n\n");
     }
@@ -168,7 +171,7 @@ public class IRPrinter implements IIRVisitor {
         out.print("    ");
         visit(node.dest);
         out.print(" = phi");
-        node.paths.forEach((BB, reg) -> out.printf(" $%s %%%s", regId(reg), labelId(BB)));
+        node.paths.forEach((BB, reg) -> out.printf(" %%%s %s", labelId(BB), reg != null ? "$"+regId(reg) : "undef"));
         out.println();
     }
 
@@ -178,9 +181,6 @@ public class IRPrinter implements IIRVisitor {
         node.getCond().accept(this);
         out.println(" %" + labelId(node.getThen()) + " %" + labelId(node.getElse()));
         out.println();
-
-        visit(node.getThen());
-        visit(node.getElse());
     }
 
     @Override
@@ -194,8 +194,6 @@ public class IRPrinter implements IIRVisitor {
     @Override
     public void visit(Jump node) {
         out.printf("    jump %%%s\n\n", labelId(node.getTarget()));
-
-        visit(node.getTarget());
     }
 
     @Override

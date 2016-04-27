@@ -89,7 +89,7 @@ public class IRBuilderTest {
 
         byte[] irText = irTextOut.toByteArray();
         ByteInputStream vmIn = new ByteInputStream(irText, irText.length);
-        LLIRInterpreter vm = new LLIRInterpreter(vmIn);
+        LLIRInterpreter vm = new LLIRInterpreter(vmIn, false);
         vm.run();
 
         BufferedReader br = new BufferedReader(new FileReader(filename));

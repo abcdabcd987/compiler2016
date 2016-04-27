@@ -1,7 +1,6 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
-import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.IR.BinaryOperation.BinaryOp;
 import com.abcdabcd987.compiler2016.IR.IntComparison.Condition;
@@ -17,6 +16,7 @@ public class IRBuilder implements IASTVisitor {
     private BasicBlock curLoopAfterBB;
     private Function curFunction;
     private boolean getAddress = false;
+    private boolean isFunctionArgDecl = false;
     private IRRoot irRoot = new IRRoot();
     private GlobalSymbolTable sym;
 
@@ -58,7 +58,7 @@ public class IRBuilder implements IASTVisitor {
     public void visit(VariableDecl node) {
         Type t = node.scope.getType(node.name);
         VirtualRegister reg = new VirtualRegister(node.name);
-        curFunction.defineVarReg(node.name, reg);
+        curFunction.defineVarReg(node.name, reg, isFunctionArgDecl);
         if (node.init != null) {
             if (isLogicalExpression(node.init)) {
                 node.init.ifTrue = new BasicBlock(null);
@@ -66,6 +66,9 @@ public class IRBuilder implements IASTVisitor {
             }
             node.init.accept(this);
             assign(false, node.init.exprType.getMemorySize(), reg, node.init);
+        } else if (!isFunctionArgDecl) {
+            // set 0 if no initial value
+            curBB.append(new Move(curBB, reg, new IntImmediate(0)));
         }
     }
 
@@ -74,7 +77,9 @@ public class IRBuilder implements IASTVisitor {
         curFunction = new Function(node.functionType);
         irRoot.functions.put(node.name, curFunction);
         curBB = curFunction.getStartBB();
+        isFunctionArgDecl = true;
         node.argTypes.forEach(x -> x.accept(this));
+        isFunctionArgDecl = false;
         node.body.accept(this);
         curFunction = null;
     }
@@ -129,7 +134,7 @@ public class IRBuilder implements IASTVisitor {
     @Override
     public void visit(IfStmt node) {
         BasicBlock BBTrue = new BasicBlock("if_true");
-        BasicBlock BBFalse = new BasicBlock("if_false");
+        BasicBlock BBFalse = node.otherwise != null ? new BasicBlock("if_false") : null;
         BasicBlock BBMerge = new BasicBlock("if_merge");
 
         // branch instruction should be added by logical expression
@@ -147,7 +152,7 @@ public class IRBuilder implements IASTVisitor {
             curBB = BBFalse;
             visit(node.otherwise);
         }
-        if (!BBFalse.isEnded()) BBFalse.end(new Jump(curBB, BBMerge));
+        if (BBFalse != null && !BBFalse.isEnded()) BBFalse.end(new Jump(curBB, BBMerge));
 
         // merge
         curBB = BBMerge;

@@ -1,9 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by abcdabcd987 on 2016-04-07.
@@ -13,19 +10,19 @@ public class BasicBlock {
     private IRInstruction last = null;
     private boolean ended = false;
     private String hintName;
-    public Map<VirtualRegister, PhiInstruction> phi = new IdentityHashMap<>();
+    public Map<VirtualRegister, PhiInstruction> phi = new HashMap<>();
 
     //==== graph information
 
     /**
      * control flow graph predecessor set
      */
-    private Set<BasicBlock> pred = Collections.newSetFromMap(new IdentityHashMap<>());
+    private Set<BasicBlock> pred = new HashSet<>();
 
     /**
      * control flow graph successor set
      */
-    private Set<BasicBlock> succ = Collections.newSetFromMap(new IdentityHashMap<>());
+    private Set<BasicBlock> succ = new HashSet<>();
 
     /**
      * dominance frontier set
@@ -114,5 +111,10 @@ public class BasicBlock {
 
     public Set<BasicBlock> getSucc() {
         return succ;
+    }
+
+    @Override
+    public String toString() {
+        return hintName;
     }
 }

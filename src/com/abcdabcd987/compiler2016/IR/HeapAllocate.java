@@ -1,7 +1,8 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
-import java.util.function.*;
 import java.util.function.Function;
 
 /**
@@ -37,7 +38,9 @@ public class HeapAllocate extends IRInstruction {
 
     @Override
     public Set<VirtualRegister> getUsedRegister() {
-        return null;
+        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
+        if (allocSize instanceof VirtualRegister) s.add((VirtualRegister) allocSize);
+        return s;
     }
 
     @Override
@@ -47,6 +50,7 @@ public class HeapAllocate extends IRInstruction {
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        // do nothing
+        if (allocSize instanceof VirtualRegister)
+            allocSize = ((VirtualRegister) allocSize).newSSARenamedRegister(idSupplier.apply((VirtualRegister) allocSize));
     }
 }

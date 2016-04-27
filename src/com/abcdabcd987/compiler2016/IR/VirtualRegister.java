@@ -36,6 +36,11 @@ public class VirtualRegister extends IntValue {
     }
 
     public String getHintName() {
+        return ssaId == -1 ? hintName : hintName + "." + ssaId;
+    }
+
+    @Override
+    public String toString() {
         return hintName;
     }
 }

@@ -9,6 +9,7 @@ import java.util.*;
  */
 public class Function {
     private Map<String, VirtualRegister> varReg = new HashMap<>();
+    public Map<String, VirtualRegister> argVarReg = new HashMap<>();
     private String name;
     private BasicBlock startBB;
     private FunctionType type;
@@ -16,6 +17,8 @@ public class Function {
 
     // control flow graph information
     private List<BasicBlock> reversePostOrder = null;
+    private List<BasicBlock> preOrder = null;
+    private List<BasicBlock> DTPreOrder = null;
     private Set<BasicBlock> visited = null;
 
     public FunctionType getType() {
@@ -29,12 +32,15 @@ public class Function {
         this.startBB = new BasicBlock(name + ".entry");
     }
 
-    public void defineVarReg(String name, VirtualRegister reg) {
-        varReg.put(name, reg);
+    public void defineVarReg(String name, VirtualRegister reg, boolean isArg) {
+        if (isArg) argVarReg.put(name, reg);
+        else varReg.put(name, reg);
     }
 
     public VirtualRegister getVarReg(String name) {
-        return varReg.get(name);
+        VirtualRegister reg = varReg.get(name);
+        if (reg == null) reg = argVarReg.get(name);
+        return reg;
     }
 
     // traverse basic blocks using post order
@@ -48,16 +54,59 @@ public class Function {
     // calc reverse post order
     private void calcReversePostOrder() {
         reversePostOrder = new ArrayList<>();
-        visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        visited = new HashSet<>();
         dfsPostOrder(startBB);
         for (int i = 0; i < reversePostOrder.size(); ++i)
             reversePostOrder.get(i).postOrderNumber = i;
         Collections.reverse(reversePostOrder);
+        visited = null;
     }
 
     public List<BasicBlock> getReversePostOrder() {
         if (reversePostOrder == null) calcReversePostOrder();
         return reversePostOrder;
+    }
+
+    // traverse basic blocks using pre order
+    private void dfsPreOrder(BasicBlock node) {
+        if (visited.contains(node)) return;
+        visited.add(node);
+        preOrder.add(node);
+        node.getSucc().forEach(this::dfsPreOrder);
+    }
+    
+    // calc pre order
+    private void calcPreOrder() {
+        preOrder = new ArrayList<>();
+        visited = new HashSet<>();
+        dfsPreOrder(startBB);
+        visited = null;
+    }
+
+    public List<BasicBlock> getPreOrder() {
+        if (preOrder == null) calcPreOrder();
+        return preOrder;
+    }
+
+    // traverse dominance tree using pre order
+    private void dfsDTPreOrder(BasicBlock node) {
+        if (visited.contains(node)) return;
+        visited.add(node);
+        DTPreOrder.add(node);
+        node.DTChildren.forEach(this::dfsDTPreOrder);
+    }
+
+    // calc pre order
+    private void calcDTPreOrder() {
+        DTPreOrder = new ArrayList<>();
+        visited = new HashSet<>();
+        dfsDTPreOrder(startBB);
+        visited = null;
+    }
+
+    public List<BasicBlock> getDTPreOrder() {
+        if (DTPreOrder == null) calcDTPreOrder();
+        return DTPreOrder;
     }
 
     /**
@@ -93,8 +142,8 @@ public class Function {
         }
 
         // calc successors
-        RPO.forEach(x -> x.DTChildren = Collections.newSetFromMap(new IdentityHashMap<>()));
-        RPO.forEach(x -> x.IDom.DTChildren.add(x));
+        RPO.forEach(x -> x.DTChildren = new HashSet<>());
+        blocks.forEach(x -> x.IDom.DTChildren.add(x));
     }
 
     private BasicBlock intersect(BasicBlock b1, BasicBlock b2) {
@@ -113,7 +162,7 @@ public class Function {
      */
     public void calcDominanceFrontier() {
         List<BasicBlock> blocks = getReversePostOrder();
-        blocks.forEach(x -> x.DF = Collections.newSetFromMap(new IdentityHashMap<>()));
+        blocks.forEach(x -> x.DF = new HashSet<>());
         for (BasicBlock block : blocks) {
             if (block.getPred().size() < 2) continue;
             for (BasicBlock pred : block.getPred()) {

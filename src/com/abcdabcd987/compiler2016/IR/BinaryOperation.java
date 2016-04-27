@@ -3,7 +3,6 @@ package com.abcdabcd987.compiler2016.IR;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.function.*;
 import java.util.function.Function;
 
 /**
@@ -71,7 +70,7 @@ public class BinaryOperation extends IRInstruction {
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (lhs instanceof VirtualRegister)
             lhs = ((VirtualRegister) lhs).newSSARenamedRegister(idSupplier.apply((VirtualRegister) lhs));
-        if (lhs instanceof VirtualRegister)
+        if (rhs instanceof VirtualRegister)
             rhs = ((VirtualRegister) rhs).newSSARenamedRegister(idSupplier.apply((VirtualRegister) rhs));
     }
 
