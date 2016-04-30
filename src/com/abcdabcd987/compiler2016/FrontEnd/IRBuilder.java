@@ -122,13 +122,7 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(CompoundStmt node) {
-        node.stmts.forEach(x -> {
-            x.accept(this);
-//            if (x instanceof Expr && !(x instanceof BinaryExpr && ((BinaryExpr) x).operator == BinaryExpr.BinaryOp.ASSIGN)) {
-//                Expr expr = (Expr) x;
-//                curBB.append(expr.intValue.getIRNode());
-//            }
-        });
+        node.stmts.forEach(x -> x.accept(this));
     }
 
     @Override
@@ -193,7 +187,6 @@ public class IRBuilder implements IASTVisitor {
         curBB = BBStep;
         if (node.step != null) {
             visit(node.step);
-//            curBB.append(node.step.intValue.getIRNode());
         }
         curBB.end(new Jump(curBB, BBCond));
 

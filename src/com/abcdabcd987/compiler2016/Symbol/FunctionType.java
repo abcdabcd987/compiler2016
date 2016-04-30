@@ -1,6 +1,6 @@
 package com.abcdabcd987.compiler2016.Symbol;
 
-import com.abcdabcd987.compiler2016.CompilerOptions;
+import com.abcdabcd987.compiler2016.Utility.CompilerOptions;
 
 import java.util.ArrayList;
 import java.util.List;

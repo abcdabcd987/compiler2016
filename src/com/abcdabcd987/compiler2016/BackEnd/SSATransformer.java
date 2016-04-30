@@ -51,6 +51,7 @@ public class SSATransformer {
     private Set<VirtualRegister> globals = new HashSet<>();
     private Map<VirtualRegister, RegisterInformation> regInfo = new HashMap<>();
     private Map<BasicBlock, BlockInformation> blockInfo = new HashMap<>();
+    private VirtualRegister tmpReg = new VirtualRegister("breaker");
 
     public SSATransformer(Function func) {
         this.func = func;
@@ -239,7 +240,6 @@ public class SSATransformer {
             pred.clear();
             location.clear();
             List<ParallelCopy> PC = blockInfo.get(BB).pc;
-            VirtualRegister tmpReg = new VirtualRegister("breaker");
 
             pred.put(tmpReg, null);
             for (ParallelCopy i : PC) {
