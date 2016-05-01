@@ -1,8 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -14,20 +12,22 @@ public class BinaryOperation extends IRInstruction {
         SHL, SHR, AND, OR, XOR
     }
 
-    private VirtualRegister dest;
+    private Register dest;
     private BinaryOp op;
-    private IntValue lhs;
+    public IntValue lhs;
     private IntValue rhs;
 
-    public BinaryOperation(BasicBlock BB, VirtualRegister dest, BinaryOp op, IntValue lhs, IntValue rhs) {
+    public BinaryOperation(BasicBlock BB, Register dest, BinaryOp op, IntValue lhs, IntValue rhs) {
         super(BB);
         this.dest = dest;
         this.op = op;
         this.lhs = lhs;
         this.rhs = rhs;
+        if (lhs instanceof Register) usedRegister.add((Register) lhs);
+        if (rhs instanceof Register) usedRegister.add((Register) rhs);
     }
 
-    public VirtualRegister getDest() {
+    public Register getDest() {
         return dest;
     }
 
@@ -49,21 +49,25 @@ public class BinaryOperation extends IRInstruction {
     }
 
     @Override
-    public VirtualRegister getDefinedRegister() {
+    public Register getDefinedRegister() {
         return dest;
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (lhs instanceof VirtualRegister) s.add((VirtualRegister) lhs);
-        if (rhs instanceof VirtualRegister) s.add((VirtualRegister) rhs);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        dest = newReg;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (lhs instanceof Register) lhs = regMap.get(lhs);
+        if (rhs instanceof Register) rhs = regMap.get(rhs);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        dest = dest.newSSARenamedRegister(idSupplier.apply(dest));
+        dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override

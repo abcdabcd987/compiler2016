@@ -64,26 +64,27 @@ public class SSADestructorTest {
         ASTBuilder astBuilder = new ASTBuilder();
         walker.walk(astBuilder, tree);
         Program ast = astBuilder.getProgram();
-        ASTPrinter printer = new ASTPrinter();
 
         CompilationError ce = new CompilationError();
         GlobalSymbolTable sym = new GlobalSymbolTable();
         StructSymbolScanner structSymbolScanner = new StructSymbolScanner(sym, ce);
         StructFunctionDeclarator structFunctionDeclarator = new StructFunctionDeclarator(sym, ce);
         SemanticChecker semanticChecker = new SemanticChecker(sym, ce);
-        IRBuilder irBuilder = new IRBuilder();
+        GlobalVariableInitializationHacker hacker = new GlobalVariableInitializationHacker(sym);
+        IRBuilder irBuilder = new IRBuilder(sym);
         IRPrinter irPrinter = new IRPrinter(out);
 
         ast.accept(structSymbolScanner);
         ast.accept(structFunctionDeclarator);
         ast.accept(semanticChecker);
+        ast.accept(hacker);
         ast.accept(irBuilder);
 
         IRRoot ir = irBuilder.getIRRoot();
         for (Function func : ir.functions.values()) {
             SSATransformer ssaTransformer = new SSATransformer(func);
             ssaTransformer.construct();
-            ssaTransformer.destruct();
+            ssaTransformer.destroy();
         }
 
         ir.accept(irPrinter);

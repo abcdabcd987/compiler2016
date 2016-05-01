@@ -1,8 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -13,7 +11,7 @@ public class UnaryOperation extends IRInstruction {
         NEG, NOT
     }
 
-    private VirtualRegister dest;
+    private Register dest;
     private UnaryOp op;
     private IntValue operand;
 
@@ -22,6 +20,7 @@ public class UnaryOperation extends IRInstruction {
         this.dest = dest;
         this.op = op;
         this.operand = operand;
+        if (operand instanceof Register) usedRegister.add((Register) operand);
     }
 
     @Override
@@ -30,20 +29,25 @@ public class UnaryOperation extends IRInstruction {
     }
 
     @Override
-    public VirtualRegister getDefinedRegister() {
+    public Register getDefinedRegister() {
         return dest;
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (operand instanceof VirtualRegister) s.add((VirtualRegister) operand);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        dest = newReg;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (operand instanceof Register) operand = regMap.get(operand);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        dest = dest.newSSARenamedRegister(idSupplier.apply(dest));
+        if (dest instanceof VirtualRegister)
+            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
@@ -52,7 +56,7 @@ public class UnaryOperation extends IRInstruction {
             operand = ((VirtualRegister) operand).newSSARenamedRegister(idSupplier.apply((VirtualRegister) operand));
     }
 
-    public VirtualRegister getDest() {
+    public Register getDest() {
         return dest;
     }
 

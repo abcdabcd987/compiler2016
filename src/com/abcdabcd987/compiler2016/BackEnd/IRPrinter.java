@@ -13,11 +13,14 @@ import java.util.Map;
  */
 public class IRPrinter implements IIRVisitor {
     private PrintStream out;
-    private Map<BasicBlock, Boolean> BBVisited = new IdentityHashMap<>();
-    private Map<BasicBlock, String> labelMap = new IdentityHashMap<>();
+    private Map<BasicBlock, Boolean> BBVisited = new HashMap<>();
+    private Map<BasicBlock, String> labelMap = new HashMap<>();
+    private Map<StaticData, String> dataMap = new HashMap<>();
     private Map<VirtualRegister, String> regMap;
     private Map<String, Integer> counterReg;
     private Map<String, Integer> counterBB = new HashMap<>();
+    private Map<String, Integer> counterData = new HashMap<>();
+    private boolean definingStatic = true;
 
     public IRPrinter(PrintStream out) {
         this.out = out;
@@ -52,8 +55,21 @@ public class IRPrinter implements IIRVisitor {
         return id;
     }
 
+    private String dataId(StaticData data) {
+        String id = dataMap.get(data);
+        if (id == null) {
+            id = newId(data.getHintName(), counterBB);
+            dataMap.put(data, id);
+        }
+        return id;
+    }
+
     @Override
     public void visit(IRRoot node) {
+        node.dataList.forEach(x -> x.accept(this));
+        node.stringPool.values().forEach(this::visit);
+        if (!node.dataList.isEmpty() || !node.stringPool.isEmpty()) out.println();
+        definingStatic = false;
         node.functions.values().forEach(this::visit);
     }
 
@@ -74,7 +90,7 @@ public class IRPrinter implements IIRVisitor {
         counterReg = new HashMap<>();
         out.printf("func %s ", node.getName());
         node.getType().argNames.forEach(x -> {
-            VirtualRegister reg = node.getVarReg(x);
+            VirtualRegister reg = node.argVarReg.get(x);
             out.printf("$%s ", regId(reg));
         });
         out.printf("{\n");
@@ -102,7 +118,7 @@ public class IRPrinter implements IIRVisitor {
             case XOR: op = "xor"; break;
         }
 
-        visit(node.getDest());
+        node.getDest().accept(this);
         out.printf(" = %s ", op);
         node.getLhs().accept(this);
         out.printf(" ");
@@ -119,7 +135,7 @@ public class IRPrinter implements IIRVisitor {
             case NOT: op = "not"; break;
         }
 
-        visit(node.getDest());
+        node.getDest().accept(this);
         out.printf(" = %s ", op);
         node.getOperand().accept(this);
         out.println();
@@ -138,7 +154,7 @@ public class IRPrinter implements IIRVisitor {
             case LE: op = "sle"; break;
         }
 
-        visit(node.getDest());
+        node.getDest().accept(this);
         out.printf(" = %s ", op);
         node.getLhs().accept(this);
         out.printf(" ");
@@ -155,7 +171,7 @@ public class IRPrinter implements IIRVisitor {
     public void visit(Call node) {
         out.print("    ");
         if (node.getDest() != null) {
-            visit(node.getDest());
+            node.getDest().accept(this);
             out.print(" = ");
         }
         out.printf("call %s ", node.getFunc().getName());
@@ -202,9 +218,19 @@ public class IRPrinter implements IIRVisitor {
     }
 
     @Override
+    public void visit(PhysicalRegister node) {
+        //TODO
+    }
+
+    @Override
+    public void visit(StackSlot node) {
+        //TODO
+    }
+
+    @Override
     public void visit(HeapAllocate node) {
         out.print("    ");
-        visit(node.getDest());
+        node.getDest().accept(this);
         out.print(" = alloc ");
         node.getAllocSize().accept(this);
         out.println();
@@ -213,7 +239,7 @@ public class IRPrinter implements IIRVisitor {
     @Override
     public void visit(Load node) {
         out.print("    ");
-        visit(node.getDest());
+        node.getDest().accept(this);
         out.printf(" = load %d ", node.getSize());
         node.getAddress().accept(this);
         out.println(" 0");
@@ -231,9 +257,21 @@ public class IRPrinter implements IIRVisitor {
     @Override
     public void visit(Move node) {
         out.print("    ");
-        visit(node.getDest());
+        node.getDest().accept(this);
         out.print(" = move ");
         node.getSource().accept(this);
         out.println();
+    }
+
+    @Override
+    public void visit(StaticSpace node) {
+        if (definingStatic) out.printf("space @%s %d\n", dataId(node), node.length);
+        else out.print("@" + dataId(node));
+    }
+
+    @Override
+    public void visit(StaticString node) {
+        if (definingStatic) out.printf("asciiz @%s %s\n", dataId(node), node.value);
+        else out.print("@" + dataId(node));
     }
 }

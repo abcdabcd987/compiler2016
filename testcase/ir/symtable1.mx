@@ -1,0 +1,13 @@
+int main() {
+    int x = 10;
+    int y = x;
+    if (x == 10) {
+        int x = 20;
+        y = x;
+    }
+    return y;
+}
+
+/*! assert: exitcode
+20
+*/

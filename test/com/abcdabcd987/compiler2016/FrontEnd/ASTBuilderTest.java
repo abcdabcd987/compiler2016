@@ -56,7 +56,7 @@ public class ASTBuilderTest {
         ParseTreeWalker walker = new ParseTreeWalker();
         ASTBuilder astBuilder = new ASTBuilder();
         walker.walk(astBuilder, tree);
-        ASTPrinter astPrinter = new ASTPrinter();
+        ASTPrinter astPrinter = new ASTPrinter(System.out);
         Program program = astBuilder.getProgram();
         program.accept(astPrinter);
     }

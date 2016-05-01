@@ -8,6 +8,12 @@ public class CompilerOptions {
     private static final int SIZE_BOOL = 1;
     private static final int SIZE_POINTER = 8;
 
+    public static boolean ifPrintAST;
+    public static boolean ifPrintRawIR;
+    public static boolean ifPrintSSAIR;
+    public static boolean enableSSA;
+    public static String registerAllocator;
+
     public static int getSizeInt() {
         return SIZE_INT;
     }

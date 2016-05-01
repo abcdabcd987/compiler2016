@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.AST;
 
+import com.abcdabcd987.compiler2016.Symbol.Type;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,7 @@ public class FunctionCall extends Expr {
     public final List<Expr> parameters;
     public final SourcePosition posName;
     public final List<SourcePosition> posArgs;
+    public Expr argThis = null; // for builtin string & array function
 
     public static class Builder {
         private Expr name;

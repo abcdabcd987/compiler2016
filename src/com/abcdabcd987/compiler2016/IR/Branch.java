@@ -1,8 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -18,6 +16,7 @@ public class Branch extends BranchInstruction {
         this.cond = cond;
         this.then = then;
         this.otherwise = otherwise;
+        if (cond instanceof Register) usedRegister.add((Register) cond);
     }
 
     @Override
@@ -31,15 +30,19 @@ public class Branch extends BranchInstruction {
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (cond instanceof VirtualRegister) s.add((VirtualRegister) cond);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        assert false;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (cond instanceof Register) cond = regMap.get(cond);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        // do nothing
+        assert false;
     }
 
     @Override
@@ -61,7 +64,7 @@ public class Branch extends BranchInstruction {
     }
 
     @Override
-    public void insertSplitedBlock(BasicBlock toBB, BasicBlock insertedBB) {
+    public void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB) {
         if (then == toBB) then = insertedBB;
         if (otherwise == toBB) otherwise = insertedBB;
         updateConnectivity(curBB.getSucc(), toBB, insertedBB);

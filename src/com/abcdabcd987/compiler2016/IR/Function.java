@@ -1,6 +1,7 @@
 package com.abcdabcd987.compiler2016.IR;
 
 import com.abcdabcd987.compiler2016.Symbol.FunctionType;
+import com.abcdabcd987.compiler2016.Symbol.Type;
 
 import java.util.*;
 
@@ -8,10 +9,20 @@ import java.util.*;
  * Created by abcdabcd987 on 2016-04-11.
  */
 public class Function {
-    private Map<String, VirtualRegister> varReg = new HashMap<>();
+    public static class Frame {
+        public int beginArg;
+        public int beginSavedReg;
+        public int beginRA;
+        public int beginLocal;
+        public int beginTempReg;
+        public int frameSize;
+    }
+
     public Map<String, VirtualRegister> argVarReg = new HashMap<>();
+    public List<Register> argVarRegList = new ArrayList<>();
     private String name;
     private BasicBlock startBB;
+    public BasicBlock exitBB;
     private FunctionType type;
     private int retSize;
 
@@ -20,6 +31,11 @@ public class Function {
     private List<BasicBlock> preOrder = null;
     private List<BasicBlock> DTPreOrder = null;
     private Set<BasicBlock> visited = null;
+    public List<Return> retInstruction = new ArrayList<>();
+
+    // register allocation information
+    public List<StackSlot> stackSlots = new ArrayList<>();
+    public Set<PhysicalRegister> usedPhysicalGeneralRegister = null;
 
     public FunctionType getType() {
         return type;
@@ -29,18 +45,7 @@ public class Function {
         this.retSize = type.returnType.getRegisterSize();
         this.name = type.name;
         this.type = type;
-        this.startBB = new BasicBlock(name + ".entry");
-    }
-
-    public void defineVarReg(String name, VirtualRegister reg, boolean isArg) {
-        if (isArg) argVarReg.put(name, reg);
-        else varReg.put(name, reg);
-    }
-
-    public VirtualRegister getVarReg(String name) {
-        VirtualRegister reg = varReg.get(name);
-        if (reg == null) reg = argVarReg.get(name);
-        return reg;
+        this.startBB = new BasicBlock(this, name + ".entry");
     }
 
     // traverse basic blocks using post order

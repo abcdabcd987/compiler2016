@@ -10,6 +10,7 @@ public class BasicBlock {
     private IRInstruction last = null;
     private boolean ended = false;
     private String hintName;
+    private Function parent;
     public Map<VirtualRegister, PhiInstruction> phi = new HashMap<>();
 
     //==== graph information
@@ -44,7 +45,8 @@ public class BasicBlock {
      */
     public int postOrderNumber;
 
-    public BasicBlock(String hintName) {
+    public BasicBlock(Function parent, String hintName) {
+        this.parent = parent;
         this.hintName = hintName != null ? hintName : "block";
     }
 
@@ -90,6 +92,10 @@ public class BasicBlock {
             addSucc(((Branch) next).getElse());
         } else if (next instanceof Jump) {
             addSucc(((Jump) next).getTarget());
+        } else if (next instanceof Return) {
+            parent.retInstruction.add((Return) next);
+        } else {
+            assert false;
         }
     }
 
@@ -123,6 +129,10 @@ public class BasicBlock {
 
     public Set<BasicBlock> getSucc() {
         return succ;
+    }
+
+    public Function getParent() {
+        return parent;
     }
 
     @Override

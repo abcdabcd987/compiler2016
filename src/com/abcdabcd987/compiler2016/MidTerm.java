@@ -29,7 +29,6 @@ public class MidTerm {
             ASTBuilder astBuilder = new ASTBuilder();
             walker.walk(astBuilder, tree);
             Program program = astBuilder.getProgram();
-            ASTPrinter printer = new ASTPrinter();
 
             CompilationError ce = new CompilationError();
             GlobalSymbolTable sym = new GlobalSymbolTable();

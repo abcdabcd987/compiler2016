@@ -1,6 +1,7 @@
 package com.abcdabcd987.compiler2016.AST;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ public class CompoundStmt extends Stmt {
     public final List<Stmt> stmts;
 
     public static class Builder {
-        private List<Stmt> stmts = new ArrayList<>();
+        private List<Stmt> stmts = new LinkedList<>();
 
         public void add(Object node) {
             if      (node instanceof Stmt) stmts.add((Stmt) node);

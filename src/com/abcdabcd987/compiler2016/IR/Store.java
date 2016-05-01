@@ -1,8 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -10,14 +8,18 @@ import java.util.function.Function;
  */
 public class Store extends IRInstruction {
     private int size;
-    private IntValue address;
+    public IntValue address;
+    public int offset;
     private IntValue value;
 
-    public Store(BasicBlock BB, int size, IntValue address, IntValue value) {
+    public Store(BasicBlock BB, int size, IntValue address, int offset, IntValue value) {
         super(BB);
         this.size = size;
         this.address = address;
+        this.offset = offset;
         this.value = value;
+        if (address instanceof Register) usedRegister.add((Register) address);
+        if (value instanceof Register) usedRegister.add((Register) value);
     }
 
     @Override
@@ -31,11 +33,15 @@ public class Store extends IRInstruction {
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (address instanceof VirtualRegister) s.add((VirtualRegister) address);
-        if (value instanceof VirtualRegister) s.add((VirtualRegister) value);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        assert false;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (address instanceof Register) address = regMap.get(address);
+        if (value instanceof Register) value = regMap.get(value);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
@@ -53,6 +59,10 @@ public class Store extends IRInstruction {
 
     public int getSize() {
         return size;
+    }
+
+    public int getOffset() {
+        return offset;
     }
 
     public IntValue getAddress() {

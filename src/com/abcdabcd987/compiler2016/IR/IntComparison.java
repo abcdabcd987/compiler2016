@@ -1,8 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -13,7 +11,7 @@ public class IntComparison extends IRInstruction {
         EQ, NE, GT, GE, LT, LE
     }
 
-    private VirtualRegister dest;
+    private Register dest;
     private Condition cond;
     private IntValue lhs;
     private IntValue rhs;
@@ -24,9 +22,11 @@ public class IntComparison extends IRInstruction {
         this.cond = cond;
         this.lhs = lhs;
         this.rhs = rhs;
+        if (lhs instanceof Register) usedRegister.add((VirtualRegister) lhs);
+        if (rhs instanceof Register) usedRegister.add((VirtualRegister) rhs);
     }
 
-    public VirtualRegister getDest() {
+    public Register getDest() {
         return dest;
     }
 
@@ -48,21 +48,26 @@ public class IntComparison extends IRInstruction {
     }
 
     @Override
-    public VirtualRegister getDefinedRegister() {
+    public Register getDefinedRegister() {
         return dest;
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (lhs instanceof VirtualRegister) s.add((VirtualRegister) lhs);
-        if (rhs instanceof VirtualRegister) s.add((VirtualRegister) rhs);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        dest = newReg;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (lhs instanceof Register) lhs = regMap.get(lhs);
+        if (rhs instanceof Register) rhs = regMap.get(rhs);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        dest = dest.newSSARenamedRegister(idSupplier.apply(dest));
+        if (dest instanceof VirtualRegister)
+            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override

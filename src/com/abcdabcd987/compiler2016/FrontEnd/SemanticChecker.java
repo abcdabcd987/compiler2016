@@ -382,6 +382,8 @@ public class SemanticChecker implements IASTVisitor {
                 return;
             }
         }
+        if (GlobalSymbolTable.arrayBuiltinMethods.containsValue(functionType) || GlobalSymbolTable.stringBuiltinMethods.containsValue(functionType))
+            node.argThis = ((MemberAccess)node.name).record;
 
         node.isLvalue = false;
         node.exprType = functionType.returnType;

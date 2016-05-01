@@ -1,28 +1,27 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
  * Created by abcdabcd987 on 2016-04-14.
  */
 public class HeapAllocate extends IRInstruction {
-    private VirtualRegister dest;
+    private Register dest;
     private IntValue allocSize;
 
     public HeapAllocate(BasicBlock BB, VirtualRegister dest, IntValue allocSize) {
         super(BB);
         this.dest = dest;
         this.allocSize = allocSize;
+        if (allocSize instanceof Register) usedRegister.add((Register) allocSize);
     }
 
     public IntValue getAllocSize() {
         return allocSize;
     }
 
-    public VirtualRegister getDest() {
+    public Register getDest() {
         return dest;
     }
 
@@ -32,20 +31,25 @@ public class HeapAllocate extends IRInstruction {
     }
 
     @Override
-    public VirtualRegister getDefinedRegister() {
+    public Register getDefinedRegister() {
         return dest;
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (allocSize instanceof VirtualRegister) s.add((VirtualRegister) allocSize);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        dest = newReg;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (allocSize instanceof Register) allocSize = regMap.get(allocSize);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        dest = dest.newSSARenamedRegister(idSupplier.apply(dest));
+        if (dest instanceof VirtualRegister)
+            dest = ((VirtualRegister)dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override

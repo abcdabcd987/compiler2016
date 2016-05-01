@@ -1,7 +1,7 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Set;
-import java.util.function.*;
+import java.util.Collection;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -26,18 +26,23 @@ public class Jump extends BranchInstruction {
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        return null;
+    public void setDefinedRegister(Register newReg) {
+        assert false;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        assert false;
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        // do nothing
+        assert false;
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        // do nothing
+        assert false;
     }
 
     public BasicBlock getTarget() {
@@ -45,7 +50,7 @@ public class Jump extends BranchInstruction {
     }
 
     @Override
-    public void insertSplitedBlock(BasicBlock toBB, BasicBlock insertedBB) {
+    public void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB) {
         if (target != toBB) return;
         target = insertedBB;
         updateConnectivity(curBB.getSucc(), toBB, insertedBB);

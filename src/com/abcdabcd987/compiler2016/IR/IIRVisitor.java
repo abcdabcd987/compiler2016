@@ -20,8 +20,13 @@ public interface IIRVisitor {
     void visit(Jump node);
 
     void visit(VirtualRegister node);
+    void visit(PhysicalRegister node);
+    void visit(StackSlot node);
     void visit(HeapAllocate node);
     void visit(Load node);
     void visit(Store node);
     void visit(Move node);
+
+    void visit(StaticSpace node);
+    void visit(StaticString node);
 }

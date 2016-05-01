@@ -3,7 +3,7 @@ package com.abcdabcd987.compiler2016.IR;
 /**
  * Created by abcdabcd987 on 2016-04-23.
  */
-public class VirtualRegister extends IntValue {
+public class VirtualRegister extends Register {
     private String hintName;
     private int ssaId = -1;
     private VirtualRegister oldName = null;

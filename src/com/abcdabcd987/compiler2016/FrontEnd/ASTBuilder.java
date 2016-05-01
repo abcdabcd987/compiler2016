@@ -92,8 +92,9 @@ public class ASTBuilder extends MillBaseListener {
     public void exitVardecl(MillParser.VardeclContext ctx) {
         Object node = map.get(ctx.variableDeclaration());
         if (node instanceof List) {
+            @SuppressWarnings("unchecked")
             List<VariableDeclStmt> decls = ((List<VariableDecl>)node).stream()
-                    .map(x -> new VariableDeclStmt(x)).collect(Collectors.toList());
+                    .map(VariableDeclStmt::new).collect(Collectors.toList());
             map.put(ctx, decls);
         } else {
             map.put(ctx, new VariableDeclStmt((VariableDecl) node));

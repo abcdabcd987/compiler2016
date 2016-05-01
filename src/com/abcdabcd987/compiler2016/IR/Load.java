@@ -1,23 +1,24 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
  * Created by abcdabcd987 on 2016-04-07.
  */
 public class Load extends IRInstruction {
-    private VirtualRegister dest;
+    private Register dest;
     private int size;
-    private IntValue address;
+    public IntValue address;
+    public int offset;
 
-    public Load(BasicBlock BB, VirtualRegister dest, int size, IntValue address) {
+    public Load(BasicBlock BB, Register dest, int size, IntValue address, int offset) {
         super(BB);
         this.dest = dest;
         this.size = size;
         this.address = address;
+        this.offset = offset;
+        if (address instanceof Register) usedRegister.add((Register) address);
     }
 
     @Override
@@ -26,20 +27,25 @@ public class Load extends IRInstruction {
     }
 
     @Override
-    public VirtualRegister getDefinedRegister() {
+    public Register getDefinedRegister() {
         return dest;
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        if (address instanceof VirtualRegister) s.add((VirtualRegister) address);
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        dest = newReg;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        if (address instanceof Register) address = regMap.get(address);
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        dest = dest.newSSARenamedRegister(idSupplier.apply(dest));
+        if (dest instanceof VirtualRegister)
+            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
@@ -48,7 +54,7 @@ public class Load extends IRInstruction {
             address = ((VirtualRegister) address).newSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
     }
 
-    public VirtualRegister getDest() {
+    public Register getDest() {
         return dest;
     }
 
@@ -58,5 +64,9 @@ public class Load extends IRInstruction {
 
     public IntValue getAddress() {
         return address;
+    }
+
+    public int getOffset() {
+        return offset;
     }
 }

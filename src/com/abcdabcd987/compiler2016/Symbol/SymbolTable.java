@@ -10,9 +10,16 @@ public class SymbolTable {
     private Map<String, SymbolInfo> map = new LinkedHashMap<>();
     private SymbolTable enclosingScope;
     private int offset = 0;
+    private boolean isGlobal = false;
 
     public SymbolTable(SymbolTable enclosingScope) {
         this.enclosingScope = enclosingScope;
+    }
+
+    public static SymbolTable createGlobalSymbolTable() {
+        SymbolTable sym = new SymbolTable(null);
+        sym.isGlobal = true;
+        return sym;
     }
 
     public void define(String name, Type type) {

@@ -6,7 +6,7 @@ import java.util.*;
  * Created by abcdabcd987 on 2016-04-14.
  */
 public class Call extends IRInstruction {
-    private VirtualRegister dest;
+    private Register dest;
     private Function func;
     private List<IntValue> args = new ArrayList<>();
 
@@ -14,9 +14,10 @@ public class Call extends IRInstruction {
         super(BB);
         this.dest = dest;
         this.func = func;
+        args.stream().filter(x -> x instanceof Register).forEachOrdered(x -> usedRegister.add((VirtualRegister) x));
     }
 
-    public VirtualRegister getDest() {
+    public Register getDest() {
         return dest;
     }
 
@@ -39,20 +40,28 @@ public class Call extends IRInstruction {
     }
 
     @Override
-    public VirtualRegister getDefinedRegister() {
+    public Register getDefinedRegister() {
         return dest;
     }
 
     @Override
-    public Set<VirtualRegister> getUsedRegister() {
-        Set<VirtualRegister> s = Collections.newSetFromMap(new HashMap<>());
-        args.stream().filter(x -> x instanceof  VirtualRegister).forEachOrdered(x -> s.add((VirtualRegister) x));
-        return s;
+    public void setDefinedRegister(Register newReg) {
+        dest = newReg;
+    }
+
+    @Override
+    public void setUsedRegister(Map<Register, Register> regMap) {
+        for (int i = 0; i < args.size(); ++i)
+            if (args.get(i) instanceof Register) {
+                args.set(i, regMap.get(args.get(i)));
+            }
+        updateUsedRegisterCollection(regMap);
     }
 
     @Override
     public void renameDefinedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier) {
-        dest = dest.newSSARenamedRegister(idSupplier.apply(dest));
+        if (dest instanceof VirtualRegister)
+            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override

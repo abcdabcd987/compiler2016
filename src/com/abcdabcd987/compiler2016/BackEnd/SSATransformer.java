@@ -65,7 +65,7 @@ public class SSATransformer {
         renameAll();
     }
 
-    public void destruct() {
+    public void destroy() {
         removePhiInstruction();
         sequentializeParallelCopy();
     }
@@ -82,8 +82,9 @@ public class SSATransformer {
                 varKill.addAll(func.argVarReg.values());
             }
             for (IRInstruction i = block.getHead(); i != null; i = i.getNext()) {
-                Set<VirtualRegister> used = i.getUsedRegister();
-                VirtualRegister dest = i.getDefinedRegister();
+                @SuppressWarnings("unchecked")
+                Collection<VirtualRegister> used = (Collection<VirtualRegister>)(Collection<?>)i.getUsedRegister();
+                VirtualRegister dest = (VirtualRegister)i.getDefinedRegister();
                 if (used != null) {
                     for (VirtualRegister reg : used)
                         if (!varKill.contains(reg)) {
@@ -158,7 +159,7 @@ public class SSATransformer {
         BB.DTChildren.forEach(this::rename);
 
         for (IRInstruction i = BB.getHead(); i != null; i = i.getNext()) {
-            VirtualRegister x = i.getDefinedRegister();
+            VirtualRegister x = (VirtualRegister)i.getDefinedRegister();
             if (x != null) regInfo.get(x.getOldName()).stack.pop();
         }
 
@@ -195,9 +196,9 @@ public class SSATransformer {
                 Set<BasicBlock> inSucc = in.getSucc();
                 BasicBlock toInsert = in;
                 if (inSucc.size() > 1) {
-                    toInsert = new BasicBlock("CEP");
+                    toInsert = new BasicBlock(func, "CEP");
                     blockInfo.put(toInsert, new BlockInformation());
-                    ((BranchInstruction) BB.getLast()).insertSplitedBlock(BB, toInsert);
+                    ((BranchInstruction) BB.getLast()).insertSplitBlock(BB, toInsert);
                 }
                 mapPC.put(in, blockInfo.get(toInsert).pc);
             }

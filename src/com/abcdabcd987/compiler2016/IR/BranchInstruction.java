@@ -27,10 +27,10 @@ public abstract class BranchInstruction extends IRInstruction {
      * @param insertedBB inserted jump destination
      * @see SSATransformer#removePhiInstruction()
      */
-    public abstract void insertSplitedBlock(BasicBlock toBB, BasicBlock insertedBB);
+    public abstract void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB);
 
     /**
-     * utility function for {@link #insertSplitedBlock(BasicBlock, BasicBlock)}.
+     * utility function for {@link #insertSplitBlock(BasicBlock, BasicBlock)}.
      * replace `old` with `new` from `info`.
      * @param info is either `curBB.getSucc()` or `toBB.getPred()`
      * @param old old jump destination
