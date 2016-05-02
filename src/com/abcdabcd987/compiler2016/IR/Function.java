@@ -57,7 +57,7 @@ public class Function {
     }
 
     // calc reverse post order
-    private void calcReversePostOrder() {
+    public void calcReversePostOrder() {
         reversePostOrder = new ArrayList<>();
         visited = new HashSet<>();
         dfsPostOrder(startBB);

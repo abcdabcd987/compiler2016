@@ -84,6 +84,12 @@ public class BasicBlock {
         BB.pred.add(this);
     }
 
+    private void delSucc(BasicBlock BB) {
+        if (BB == null) return;
+        succ.remove(BB);
+        BB.pred.remove(BB);
+    }
+
     public void end(BranchInstruction next) {
         append(next);
         ended = true;
@@ -94,6 +100,20 @@ public class BasicBlock {
             addSucc(((Jump) next).getTarget());
         } else if (next instanceof Return) {
             parent.retInstruction.add((Return) next);
+        } else {
+            assert false;
+        }
+    }
+
+    public void cleanEnd() {
+        ended = false;
+        if (last instanceof Branch) {
+            delSucc(((Branch) last).getThen());
+            delSucc(((Branch) last).getElse());
+        } else if (last instanceof Jump) {
+            delSucc(((Jump) last).getTarget());
+        } else if (last instanceof Return) {
+            parent.retInstruction.remove(last);
         } else {
             assert false;
         }

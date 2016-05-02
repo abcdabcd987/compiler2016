@@ -32,15 +32,18 @@ public abstract class IRInstruction {
 
     public void prepend(IRInstruction node) {
         if (prev != null) prev.linkNext(node);
+        else curBB.setHead(node);
         node.linkNext(this);
     }
 
     public void append(IRInstruction node) {
         if (next != null)  next.linkPrev(node);
+        else curBB.setLast(node);
         node.linkPrev(this);
     }
 
     public void remove() {
+        if (this instanceof BranchInstruction) curBB.cleanEnd();
         if (prev != null) prev.next = next;
         if (next != null) next.prev = prev;
         if (curBB.getHead() == this) curBB.setHead(next);

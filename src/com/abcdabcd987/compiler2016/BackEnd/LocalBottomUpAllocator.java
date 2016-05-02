@@ -28,6 +28,11 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
         PhysicalRegisterInfo(PhysicalRegister physicalRegister) {
             this.physicalRegister = physicalRegister;
         }
+
+        @Override
+        public String toString() {
+            return physicalRegister + ": " + virtualRegister;
+        }
     }
 
     private static class VirtualRegisterInfo {
@@ -57,13 +62,15 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
         this.func = func;
         func.usedPhysicalGeneralRegister = new HashSet<>();
         regs.forEach(x -> this.regs.add(new PhysicalRegisterInfo(x)));
+        this.regs.forEach(regStack::push);
     }
 
     private void numberInstruction() {
         instInfo.clear();
         int cnt = 0;
         for (IRInstruction inst = curBB.getHead(); inst != null; inst = inst.getNext()) {
-            InstructionInfo info = instInfo.get(inst);
+            InstructionInfo info = new InstructionInfo();
+            instInfo.put(inst, info);
             info.number = cnt;
             cnt += 2;
         }
@@ -72,7 +79,7 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
     private VirtualRegisterInfo ensureVirtualRegisterInfo(VirtualRegister vr) {
         VirtualRegisterInfo info = vrInfo.get(vr);
         if (info == null) {
-            info = new VirtualRegisterInfo(new StackSlot(vr.getHintName()));
+            info = new VirtualRegisterInfo(new StackSlot(func, vr.getHintName()));
             vrInfo.put(vr, info);
         }
         return info;
@@ -121,16 +128,17 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
     }
 
     private void free(VirtualRegisterInfo info) {
+        Store store = new Store(curBB, CompilerOptions.getSizeInt(), info.stackSlot, 0, info.currentPhysicalRegister.physicalRegister);
+        curInst.prepend(store);
         info.currentPhysicalRegister.clear();
         regStack.push(info.currentPhysicalRegister);
         info.currentPhysicalRegister = null;
     }
 
     private void clearAll() {
+        curInst = curBB.getLast();
         for (VirtualRegisterInfo info : vrInfo.values()) {
             if (info.currentPhysicalRegister != null) {
-                Store store = new Store(curBB, CompilerOptions.getSizeInt(), info.stackSlot, 0, info.currentPhysicalRegister.physicalRegister);
-                curBB.getLast().prepend(store);
                 free(info);
             }
             info.nextId.clear();
@@ -143,26 +151,34 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
 
             if (!(curInst instanceof Call)) {
                 Collection<Register> used = curInst.getUsedRegister();
-                used.stream().filter(x -> x instanceof VirtualRegister).forEach(x -> ensure((VirtualRegister) x));
-                regRenameMap.clear();
-                for (Register reg : used)
-                    if (reg instanceof VirtualRegister) {
-                        VirtualRegisterInfo info = vrInfo.get(reg);
-                        Queue<Integer> nextQueue = info.nextId;
-                        while (!nextQueue.isEmpty() && nextQueue.peek() <= number) nextQueue.remove();
-                        regRenameMap.put(reg, info.currentPhysicalRegister.physicalRegister);
-                        if (nextQueue.isEmpty())
-                            free(info);
-                        else
-                            info.currentPhysicalRegister.next = nextQueue.peek() - number;
-                    }
-                curInst.setUsedRegister(regRenameMap);
+                if (!used.isEmpty()) {
+                    used.stream().filter(x -> x instanceof VirtualRegister).forEach(x -> ensure((VirtualRegister) x));
+                    regRenameMap.clear();
+                    used.forEach(x -> regRenameMap.put(x, x));
+                    for (Register reg : used)
+                        if (reg instanceof VirtualRegister) {
+                            VirtualRegisterInfo info = vrInfo.get(reg);
+                            Queue<Integer> nextQueue = info.nextId;
+                            while (!nextQueue.isEmpty() && nextQueue.peek() <= number) nextQueue.remove();
+                            regRenameMap.put(reg, info.currentPhysicalRegister.physicalRegister);
+                            if (nextQueue.isEmpty())
+                                free(info);
+                            else
+                                info.currentPhysicalRegister.next = nextQueue.peek() - number;
+                        }
+                    curInst.setUsedRegister(regRenameMap);
+                }
             } else {
                 // call instruction don't deserve register allocation
                 List<IntValue> args = ((Call) curInst).getArgs();
                 for (int i = 0; i < args.size(); ++i)
-                    if (args.get(i) instanceof VirtualRegister)
-                        args.set(i, vrInfo.get(args.get(i)).stackSlot);
+                    if (args.get(i) instanceof VirtualRegister) {
+                        VirtualRegisterInfo info = vrInfo.get(args.get(i));
+                        if (info.currentPhysicalRegister != null)
+                            args.set(i, info.currentPhysicalRegister.physicalRegister);
+                        else
+                            args.set(i, info.stackSlot);
+                    }
             }
 
             Register defined = curInst.getDefinedRegister();

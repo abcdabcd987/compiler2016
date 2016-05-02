@@ -3,10 +3,7 @@ package com.abcdabcd987.compiler2016.MIPS;
 import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import static com.abcdabcd987.compiler2016.MIPS.MIPSRegisterSet.*;
 
@@ -108,11 +105,12 @@ public class TargetIRTransformer {
 
         // if multiple return instruction, merge to an exit block
         if (func.retInstruction.size() > 1) {
-            BasicBlock exitBB = new BasicBlock(func, "exit");
+            BasicBlock exitBB = new BasicBlock(func, func.getName() + ".exit");
             exitBB.append(new Return(exitBB, V0));
-            for (Return ret : func.retInstruction) {
-                ret.prepend(new Jump(ret.getBasicBlock(), exitBB));
+            List<Return> retInstructions = new ArrayList<>(func.retInstruction);
+            for (Return ret : retInstructions) {
                 ret.remove();
+                ret.getBasicBlock().end(new Jump(ret.getBasicBlock(), exitBB));
             }
             func.exitBB = exitBB;
         } else {
@@ -141,14 +139,21 @@ public class TargetIRTransformer {
         if (inst instanceof Load) {
             Load load = (Load) inst;
             if (load.address instanceof StackSlot) {
-                load.address = SP;
                 load.offset = info.stackSlotOffset.get(load.address);
+                load.address = SP;
             }
         } else if (inst instanceof Store) {
             Store store = (Store) inst;
             if (store.address instanceof StackSlot) {
+                StackSlot slot = (StackSlot) store.address;
+                if (slot.getParent() == func) {
+                    store.offset = info.stackSlotOffset.get(slot);
+                } else {
+                    // function call
+                    FunctionInfo calleeInfo = funcInfo.get(slot.getParent());
+                    store.offset = - calleeInfo.frameSize + calleeInfo.stackSlotOffset.get(slot);
+                }
                 store.address = SP;
-                store.offset = info.stackSlotOffset.get(store.address);
             }
         }
     }
@@ -170,13 +175,13 @@ public class TargetIRTransformer {
         if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
         if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
 
-        // copy argument
-        if (args.size() > 0) inst.prepend(new Move(BB, A0, args.get(0)));
-        if (args.size() > 1) inst.prepend(new Move(BB, A1, args.get(1)));
-        if (args.size() > 2) inst.prepend(new Move(BB, A2, args.get(2)));
-        if (args.size() > 3) inst.prepend(new Move(BB, A3, args.get(3)));
-        for (int i = 0; i < args.size(); ++i)
-            inst.prepend(new Store(BB, sizeWord, SP, -calleeInfo.frameSize + calleeInfo.beginArg + i * sizeWord, args.get(i)));
+//        // copy argument
+//        if (args.size() > 0) inst.prepend(new Move(BB, A0, args.get(0)));
+//        if (args.size() > 1) inst.prepend(new Move(BB, A1, args.get(1)));
+//        if (args.size() > 2) inst.prepend(new Move(BB, A2, args.get(2)));
+//        if (args.size() > 3) inst.prepend(new Move(BB, A3, args.get(3)));
+//        for (int i = 0; i < args.size(); ++i)
+//            inst.prepend(new Store(BB, sizeWord, SP, -calleeInfo.frameSize + calleeInfo.beginArg + i * sizeWord, args.get(i)));
 
         // restore $a? register
         if (func.argVarRegList.size() > 0) inst.append(new Load(BB, A0, sizeWord, SP, info.beginArg));
@@ -188,8 +193,8 @@ public class TargetIRTransformer {
         for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i)
             inst.append(new Load(BB, info.usedCallerSaveRegister.get(i), sizeWord, SP, info.beginTempReg + i * sizeWord));
 
-        // move result
-        if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));
+//        // move result
+//        if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));
     }
 
     public void run() {

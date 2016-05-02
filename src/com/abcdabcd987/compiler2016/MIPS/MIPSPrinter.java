@@ -53,7 +53,16 @@ public class MIPSPrinter implements IIRVisitor {
         node.stringPool.values().forEach(this::visit);
         out.println();
         out.println(".text");
-        out.printf(".global %s\n\n", blockLabel(node.functions.get("main").getStartBB()));
+        out.println("main:");
+        out.println("    sub $sp, $sp, 4");
+        out.println("    sw $ra, 0($sp)");
+        out.println("    jal " + blockLabel(node.functions.get("main").getStartBB()));
+        out.println("    move $a0, $v0");
+        out.println("    li $v0, 1");
+        out.println("    syscall");
+        out.println("    lw $ra, 0($sp)");
+        out.println("    jr $ra");
+        out.println();
         node.functions.values().forEach(this::visit);
     }
 
@@ -63,13 +72,14 @@ public class MIPSPrinter implements IIRVisitor {
         curBB = node;
         for (IRInstruction i = node.getHead(); i != null; i = i.getNext()) {
             i.accept(this);
-            out.println();
         }
+        out.println();
     }
 
     @Override
     public void visit(Function node) {
         out.printf("###### function %s:\n", node.getName());
+        node.calcReversePostOrder();
         List<BasicBlock> BBOrder = node.getReversePostOrder();
         for (int i = 0; i < BBOrder.size(); ++i)
             blockNumber.put(BBOrder.get(i), i);
@@ -92,13 +102,13 @@ public class MIPSPrinter implements IIRVisitor {
             case XOR: op = "xor"; break;
             default: assert false;
         }
-        if (node.getRhs() instanceof IntImmediate) op += "i";
+        //if (node.getRhs() instanceof IntImmediate) op += "i";
         out.printf("    %s ", op);
         node.getDest().accept(this);
         out.print(", ");
         node.getLhs().accept(this);
         out.print(", ");
-        node.getRhs();
+        node.getRhs().accept(this);
         out.println();
     }
 
@@ -159,7 +169,7 @@ public class MIPSPrinter implements IIRVisitor {
         node.getCond().accept(this);
         out.printf(", 0, %s\n", blockLabel(node.getElse()));
         if (blockNumber.get(curBB)+1 != blockNumber.get(node.getThen())) {
-            out.printf("%s: jump %s\n", newId("__second_jump"), blockLabel(node.getThen()));
+            out.printf("    j %s\n", blockLabel(node.getThen()));
         }
     }
 
