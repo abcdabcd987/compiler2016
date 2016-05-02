@@ -16,6 +16,7 @@ public class MIPSPrinter implements IIRVisitor {
     private Map<Object, String> nameMap = new HashMap<>();
     private Map<BasicBlock, Integer> blockNumber = new HashMap<>();
     private BasicBlock curBB;
+    private boolean isDefiningStaticData;
 
     public MIPSPrinter(PrintStream out) {
         this.out = out;
@@ -49,14 +50,16 @@ public class MIPSPrinter implements IIRVisitor {
     @Override
     public void visit(IRRoot node) {
         out.println(".data");
+        isDefiningStaticData = true;
         node.dataList.forEach(x -> x.accept(this));
         node.stringPool.values().forEach(this::visit);
+        isDefiningStaticData = false;
         out.println();
         out.println(".text");
         out.println("main:");
         out.println("    sub $sp, $sp, 4");
         out.println("    sw $ra, 0($sp)");
-        out.println("    jal " + blockLabel(node.functions.get("main").getStartBB()));
+        out.println("    jal " + blockLabel(node.functions.get("__init").getStartBB()));
         out.println("    move $a0, $v0");
         out.println("    li $v0, 1");
         out.println("    syscall");
@@ -216,9 +219,15 @@ public class MIPSPrinter implements IIRVisitor {
         }
         out.printf("    %s ", op);
         node.getDest().accept(this);
-        out.printf(", %d(", node.getOffset());
-        node.getAddress().accept(this);
-        out.println(")");
+        if (node.isStaticData) {
+            out.print(", ");
+            node.getAddress().accept(this);
+            out.println();
+        } else {
+            out.printf(", %d(", node.getOffset());
+            node.getAddress().accept(this);
+            out.println(")");
+        }
     }
 
     @Override
@@ -232,9 +241,15 @@ public class MIPSPrinter implements IIRVisitor {
         }
         out.printf("    %s ", op);
         node.getValue().accept(this);
-        out.printf(", %d(", node.getOffset());
-        node.getAddress().accept(this);
-        out.println(")");
+        if (node.isStaticData) {
+            out.print(", ");
+            node.getAddress().accept(this);
+            out.println();
+        } else {
+            out.printf(", %d(", node.getOffset());
+            node.getAddress().accept(this);
+            out.println(")");
+        }
     }
 
     @Override
@@ -261,11 +276,13 @@ public class MIPSPrinter implements IIRVisitor {
 
     @Override
     public void visit(StaticSpace node) {
-
+        if (isDefiningStaticData) out.printf("%s: .space %d\n", dataId(node), node.length);
+        else out.print(dataId(node));
     }
 
     @Override
     public void visit(StaticString node) {
-
+        if (isDefiningStaticData) out.printf("%s: .asciiz \"\\0\\0\\0\\0%s\"\n", dataId(node), node.value);
+        else out.print(dataId(node));
     }
 }

@@ -58,7 +58,7 @@ public class RegisterInformationInjector {
                 binop.lhs = lhs;
                 inst.prepend(move);
             }
-        }
+        } else
 
         // fix unary operation immediate number
         if (inst instanceof UnaryOperation) {
@@ -72,6 +72,16 @@ public class RegisterInformationInjector {
                 }
                 inst.prepend(new Move(BB, unop.getDest(), new IntImmediate(value)));
                 inst.remove();
+            }
+        } else
+
+        // fix store operation immediate number
+        if (inst instanceof Store) {
+            Store store = (Store) inst;
+            if (store.getValue() instanceof IntImmediate) {
+                VirtualRegister reg = new VirtualRegister("imm");
+                inst.prepend(new Move(BB, reg, store.getValue()));
+                store.setValue(reg);
             }
         }
     }

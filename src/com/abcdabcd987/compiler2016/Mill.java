@@ -1,10 +1,7 @@
 package com.abcdabcd987.compiler2016;
 
 import com.abcdabcd987.compiler2016.AST.Program;
-import com.abcdabcd987.compiler2016.BackEnd.IRPrinter;
-import com.abcdabcd987.compiler2016.BackEnd.LocalBottomUpAllocator;
-import com.abcdabcd987.compiler2016.BackEnd.RegisterAllocator;
-import com.abcdabcd987.compiler2016.BackEnd.SSATransformer;
+import com.abcdabcd987.compiler2016.BackEnd.*;
 import com.abcdabcd987.compiler2016.FrontEnd.*;
 import com.abcdabcd987.compiler2016.IR.Function;
 import com.abcdabcd987.compiler2016.IR.IRRoot;
@@ -60,9 +57,9 @@ public class Mill {
         IRBuilder irBuilder = new IRBuilder(sym);
 
         ast.accept(new StructSymbolScanner(sym, ce));
+        ast.accept(new GlobalVariableInitializationHacker(sym));
         ast.accept(new StructFunctionDeclarator(sym, ce));
         ast.accept(new SemanticChecker(sym, ce));
-        ast.accept(new GlobalVariableInitializationHacker(sym));
         ast.accept(irBuilder);
         ast = null;
 
@@ -101,6 +98,7 @@ public class Mill {
         if (CompilerOptions.ifPrintAST) printAST();
         buildIR();
         if (CompilerOptions.ifPrintRawIR) printIR();
+        new GlobalVariableResolver(ir).run();
         if (CompilerOptions.enableSSA) {
             constructSSA();
             if (CompilerOptions.ifPrintSSAIR) printIR();

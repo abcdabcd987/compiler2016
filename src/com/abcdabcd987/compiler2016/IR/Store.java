@@ -11,6 +11,7 @@ public class Store extends IRInstruction {
     public IntValue address;
     public int offset;
     private IntValue value;
+    public boolean isStaticData;
 
     public Store(BasicBlock BB, int size, IntValue address, int offset, IntValue value) {
         super(BB);
@@ -18,8 +19,14 @@ public class Store extends IRInstruction {
         this.address = address;
         this.offset = offset;
         this.value = value;
+        this.isStaticData = false;
         if (address instanceof Register) usedRegister.add((Register) address);
         if (value instanceof Register) usedRegister.add((Register) value);
+    }
+
+    public Store(BasicBlock BB, int size, StaticData address, IntValue value) {
+        this(BB, size, address, 0, value);
+        isStaticData = true;
     }
 
     @Override
@@ -67,6 +74,14 @@ public class Store extends IRInstruction {
 
     public IntValue getAddress() {
         return address;
+    }
+
+    public void setValue(IntValue value) {
+        if (this.value instanceof Register)
+            usedRegister.remove(this.value);
+        this.value = value;
+        if (value instanceof Register)
+            usedRegister.add((Register) value);
     }
 
     public IntValue getValue() {

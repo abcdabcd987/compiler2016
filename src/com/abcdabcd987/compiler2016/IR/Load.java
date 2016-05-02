@@ -11,6 +11,7 @@ public class Load extends IRInstruction {
     private int size;
     public IntValue address;
     public int offset;
+    public boolean isStaticData;
 
     public Load(BasicBlock BB, Register dest, int size, IntValue address, int offset) {
         super(BB);
@@ -18,7 +19,13 @@ public class Load extends IRInstruction {
         this.size = size;
         this.address = address;
         this.offset = offset;
+        this.isStaticData = false;
         if (address instanceof Register) usedRegister.add((Register) address);
+    }
+
+    public Load(BasicBlock BB, Register dest, int size, StaticData address) {
+        this(BB, dest, size, address, 0);
+        isStaticData = true;
     }
 
     @Override

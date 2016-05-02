@@ -199,4 +199,9 @@ public class Function {
     public void accept(IIRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

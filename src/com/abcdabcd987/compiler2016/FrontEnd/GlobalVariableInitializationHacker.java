@@ -2,6 +2,7 @@ package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
 import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
+import com.abcdabcd987.compiler2016.Symbol.Type;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,8 +12,7 @@ import java.util.List;
  */
 public class GlobalVariableInitializationHacker implements IASTVisitor {
     private GlobalSymbolTable sym;
-    private List<BinaryExpr> initList = new ArrayList<>();
-    private FunctionDecl mainFunction = null;
+    private List<Stmt> initBody = new ArrayList<>();
 
     public GlobalVariableInitializationHacker(GlobalSymbolTable sym) {
         this.sym = sym;
@@ -21,7 +21,16 @@ public class GlobalVariableInitializationHacker implements IASTVisitor {
     @Override
     public void visit(Program node) {
         node.decls.forEach(x -> x.accept(this));
-        mainFunction.body.stmts.addAll(0, initList);
+
+        FunctionCall call = new FunctionCall(new Identifier("main", null), new ArrayList<>(), null, new ArrayList<>());
+        ReturnStmt returnStmt = new ReturnStmt(call, null, null);
+        initBody.add(returnStmt);
+
+        FunctionDecl.Builder funcBuilder = new FunctionDecl.Builder();
+        funcBuilder.setReturnType(new PrimitiveTypeNode(Type.Types.INT));
+        funcBuilder.setName("__init");
+        funcBuilder.setBody(new CompoundStmt(initBody));
+        node.decls.add(funcBuilder.build());
     }
 
     @Override
@@ -41,16 +50,14 @@ public class GlobalVariableInitializationHacker implements IASTVisitor {
                     node.posType,
                     node.posName,
                     node.posInit);
-            initList.add(expr);
+            initBody.add(expr);
             node.init = null;
         }
     }
 
     @Override
     public void visit(FunctionDecl node) {
-        if (node.name.equals("main")) {
-            mainFunction = node;
-        }
+
     }
 
     @Override

@@ -1,0 +1,11 @@
+int x;
+int y;
+int main() {
+    x = 10;
+    y = 20;
+    int c = x+y;
+    return c;
+}
+/*! assert: exitcode
+30
+*/

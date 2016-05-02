@@ -7,6 +7,9 @@ import com.abcdabcd987.compiler2016.IR.IntComparison.Condition;
 import com.abcdabcd987.compiler2016.IR.UnaryOperation.UnaryOp;
 import com.abcdabcd987.compiler2016.Symbol.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by abcdabcd987 on 2016-04-08.
  */
@@ -19,6 +22,7 @@ public class IRBuilder implements IASTVisitor {
     private boolean isFunctionArgDecl = false;
     private IRRoot irRoot = new IRRoot();
     private GlobalSymbolTable sym;
+    private Map<StaticData, VirtualRegister> curFuncStaticMap = new HashMap<>();
 
     public IRBuilder(GlobalSymbolTable sym) {
         this.sym = sym;
@@ -46,11 +50,6 @@ public class IRBuilder implements IASTVisitor {
     private boolean needMemoryAccess(Expr node) {
         if (node instanceof MemberAccess) return true;
         if (node instanceof ArrayAccess) return true;
-        if (node instanceof Identifier) {
-            Identifier id = (Identifier) node;
-            SymbolInfo info = id.scope.getInfo(id.name);
-            return info.staticValue != null; // is a global variable
-        }
         return false;
     }
 
@@ -69,9 +68,10 @@ public class IRBuilder implements IASTVisitor {
         SymbolInfo info = node.scope.getInfo(node.name);
         boolean isGlobalVariable = node.scope == sym.globals;
         if (isGlobalVariable) {
-            info.staticValue = new StaticSpace(info.getType().getRegisterSize(), node.name);
-            irRoot.dataList.add(info.staticValue);
-            // global variable init has been thrown to main function in AST
+            StaticData data = new StaticSpace(info.getType().getRegisterSize(), node.name);
+            info.register = data;
+            irRoot.dataList.add(data);
+            // global variable init has been thrown to `__init` function in AST
         } else {
             VirtualRegister reg = new VirtualRegister(node.name);
             if (isFunctionArgDecl) {
@@ -95,6 +95,7 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(FunctionDecl node) {
+        curFuncStaticMap.clear();
         curFunction = new Function(node.functionType);
         irRoot.functions.put(node.name, curFunction);
         curBB = curFunction.getStartBB();
@@ -398,7 +399,7 @@ public class IRBuilder implements IASTVisitor {
             if (isMemOp) {
                 curBB.append(new Store(curBB, size, addr, 0, rhs.intValue));
             } else {
-                curBB.append(new Move(curBB, (VirtualRegister)addr, rhs.intValue));
+                curBB.append(new Move(curBB, (Register) addr, rhs.intValue));
             }
         }
     }
@@ -576,19 +577,7 @@ public class IRBuilder implements IASTVisitor {
     @Override
     public void visit(Identifier node) {
         SymbolInfo info = node.scope.getInfo(node.name);
-        if (info.staticValue != null) {
-            // is a global variable
-            if (getAddress) {
-                node.intValue = info.staticValue;
-            } else {
-                VirtualRegister tmp = new VirtualRegister(node.name);
-                curBB.append(new Load(curBB, tmp, node.exprType.getRegisterSize(), info.staticValue, 0));
-                node.intValue = tmp;
-            }
-        } else {
-            // is a local variable
-            node.intValue = info.register;
-        }
+        node.intValue = info.register;
         if (node.ifTrue != null) {
             curBB.end(new Branch(curBB, node.intValue, node.ifTrue, node.ifFalse));
         }
