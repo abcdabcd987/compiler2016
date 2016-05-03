@@ -31,7 +31,7 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
 
         @Override
         public String toString() {
-            return physicalRegister + ": " + virtualRegister;
+            return physicalRegister + ": " + (virtualRegister == null ? "not used" : virtualRegister);
         }
     }
 
@@ -164,7 +164,7 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
                             if (nextQueue.isEmpty())
                                 free(info);
                             else
-                                info.currentPhysicalRegister.next = nextQueue.peek() - number;
+                                info.currentPhysicalRegister.next = nextQueue.peek();
                         }
                     curInst.setUsedRegister(regRenameMap);
                 }
@@ -186,9 +186,9 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
                 VirtualRegisterInfo info = vrInfo.get(defined);
                 Queue<Integer> nextQueue = info.nextId;
                 while (!nextQueue.isEmpty() && nextQueue.peek() <= number) nextQueue.remove();
-                allocate((VirtualRegister) defined);
+                ensure((VirtualRegister) defined);
                 curInst.setDefinedRegister(info.currentPhysicalRegister.physicalRegister);
-                info.currentPhysicalRegister.next = nextQueue.isEmpty() ? Integer.MAX_VALUE : nextQueue.peek() - number;
+                info.currentPhysicalRegister.next = nextQueue.isEmpty() ? Integer.MAX_VALUE : nextQueue.peek();
             }
         }
     }

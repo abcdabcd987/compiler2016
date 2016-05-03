@@ -457,7 +457,8 @@ public class ASTBuilder extends MillBaseListener {
         } else if (type == MillParser.BoolConstant) {
             map.put(ctx, new BoolConst(s.equals("true")));
         } else if (type == MillParser.CharacterConstant || type == MillParser.StringLiteral) {
-            s = unescape(s);
+            //s = unescape(s);
+            s = s.substring(1, s.length()-1);
             if (type == MillParser.CharacterConstant) {
                 if (s.length() == 1) map.put(ctx, new IntConst(s.charAt(0)));
                 else throw new RuntimeException("Invalid char literal.");

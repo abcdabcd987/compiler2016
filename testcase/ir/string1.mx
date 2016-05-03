@@ -1,0 +1,9 @@
+int main() {
+    string s1 = "aaa";
+    string s2 = "bbbbb";
+    string s3 = s1 + s2;
+    return s3.length();
+}
+/*! assert: exitcode
+8
+*/

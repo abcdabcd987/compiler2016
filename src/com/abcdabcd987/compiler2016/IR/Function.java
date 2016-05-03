@@ -41,6 +41,10 @@ public class Function {
         return type;
     }
 
+    protected Function() {
+
+    }
+
     public Function(FunctionType type) {
         this.retSize = type.returnType.getRegisterSize();
         this.name = type.name;

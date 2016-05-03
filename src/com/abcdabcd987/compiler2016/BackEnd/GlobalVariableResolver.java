@@ -1,5 +1,6 @@
 package com.abcdabcd987.compiler2016.BackEnd;
 
+import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 
 import java.util.Collection;
@@ -49,17 +50,29 @@ public class GlobalVariableResolver {
                     VirtualRegister reg = getVR((StaticData) defined, staticMap);
                     inst.setDefinedRegister(reg);
                     // write back immediately
-                    inst.append(new Store(BB, ((StaticData) defined).getLength(), (StaticData) defined, reg));
+                    inst.append(new Store(BB, ((StaticData) defined).getRegisterSize(), (StaticData) defined, reg));
                 }
             }
 
         // load all on entry
         BasicBlock b = func.getStartBB();
         IRInstruction i = b.getHead();
-        staticMap.forEach((data, vr) -> i.prepend(new Load(b, vr, data.getLength(), data)));
+        staticMap.forEach((data, vr) -> i.prepend(new Load(b, vr, data.getRegisterSize(), data, data instanceof StaticString)));
     }
 
+//    private void processStringData() {
+//        Function initFunc = ir.functions.get("__init");
+//        BasicBlock BB = initFunc.getStartBB();
+//        IRInstruction inst = BB.getHead();
+//        VirtualRegister lenReg = new VirtualRegister("len");
+//        for (StaticString data : ir.stringPool.values()) {
+//            inst.prepend(new Move(BB, lenReg, new IntImmediate(data.value.length())));
+//            inst.prepend(new Store(BB, CompilerOptions.getSizeInt(), data, lenReg));
+//        }
+//    }
+
     public void run() {
+//        processStringData();
         for (Function func : ir.functions.values()) {
             processFunction(func);
         }

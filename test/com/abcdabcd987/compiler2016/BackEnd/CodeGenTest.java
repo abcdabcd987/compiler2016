@@ -40,7 +40,7 @@ public class CodeGenTest {
         CompilerOptions.ifPrintRawIR      = true;
         CompilerOptions.ifPrintSSAIR      = false;
         CompilerOptions.enableSSA         = false;
-        CompilerOptions.registerAllocator = "local";
+        CompilerOptions.registerAllocator = "no";
 
         System.out.println(filename);
         InputStream is = new FileInputStream(filename);

@@ -14,7 +14,7 @@ public class BinaryOperation extends IRInstruction {
 
     private Register dest;
     private BinaryOp op;
-    public IntValue lhs;
+    private IntValue lhs;
     private IntValue rhs;
 
     public BinaryOperation(BasicBlock BB, Register dest, BinaryOp op, IntValue lhs, IntValue rhs) {
@@ -41,6 +41,12 @@ public class BinaryOperation extends IRInstruction {
 
     public IntValue getRhs() {
         return rhs;
+    }
+
+    public void setLhs(IntValue value) {
+        if (lhs instanceof Register) usedRegister.remove(lhs);
+        lhs = value;
+        if (lhs instanceof Register) usedRegister.add((Register)lhs);
     }
 
     @Override

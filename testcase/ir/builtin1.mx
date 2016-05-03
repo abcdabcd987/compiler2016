@@ -1,0 +1,7 @@
+int main() {
+    int[] a = new int[20];
+    return a.size();
+}
+/*! assert: exitcode
+20
+*/

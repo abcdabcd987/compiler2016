@@ -21,14 +21,14 @@ public class GlobalSymbolTable {
     public final static PrimitiveType stringType = new PrimitiveType(Type.Types.STRING);
 
     // Builtin string function
-    private final static FunctionType stringLength = new FunctionType(intType, "string.length");
-    private final static FunctionType stringSubString = new FunctionType(stringType, "string.substring") {{
-        argTypes.add(intType);
-        argTypes.add(intType);
+    public final static FunctionType stringLength = new FunctionType(intType, "string.length");
+    public final static FunctionType stringSubString = new FunctionType(stringType, "string.substring") {{
+        addArg("arg0", intType);
+        addArg("arg1", intType);
     }};
-    private final static FunctionType stringParseInt = new FunctionType(intType, "string.parseInt");
-    private final static FunctionType stringOrd = new FunctionType(intType, "string.ord") {{
-        argTypes.add(intType);
+    public final static FunctionType stringParseInt = new FunctionType(intType, "string.parseInt");
+    public final static FunctionType stringOrd = new FunctionType(intType, "string.ord") {{
+        addArg("arg0", intType);
     }};
     public final static Map<String, FunctionType> stringBuiltinMethods = new HashMap<String, FunctionType>() {{
         put("length", stringLength);
@@ -38,22 +38,35 @@ public class GlobalSymbolTable {
     }};
 
     // Builtin array function
-    private final static FunctionType arraySize = new FunctionType(intType, "array.size");
+    public final static FunctionType arraySize = new FunctionType(intType, "array.size");
     public final static Map<String, FunctionType> arrayBuiltinMethods = new HashMap<String, FunctionType>() {{
         put("size", arraySize);
     }};
 
     // Builtin function
-    private final static FunctionType printFunc = new FunctionType(voidType, "print") {{
-        argTypes.add(stringType);
+    public final static FunctionType printFunc = new FunctionType(voidType, "print") {{
+        addArg("arg0", stringType);
     }};
-    private final static FunctionType printlnFunc = new FunctionType(voidType, "println") {{
-        argTypes.add(stringType);
+    public final static FunctionType printlnFunc = new FunctionType(voidType, "println") {{
+        addArg("arg0", stringType);
     }};
-    private final static FunctionType getStringFunc = new FunctionType(stringType, "getString");
-    private final static FunctionType getIntFunc = new FunctionType(intType, "getInt");
-    private final static FunctionType toStringFunc = new FunctionType(stringType, "toString") {{
-        argTypes.add(intType);
+    public final static FunctionType getStringFunc = new FunctionType(stringType, "getString");
+    public final static FunctionType getIntFunc = new FunctionType(intType, "getInt");
+    public final static FunctionType toStringFunc = new FunctionType(stringType, "toString") {{
+        addArg("arg0", intType);
+    }};
+    public final static FunctionType stringConcatFunc = new FunctionType(stringType, "stringConcat") {{
+        addArg("arg0", stringType);
+        addArg("arg1", stringType);
+    }};
+    public final static Map<String, FunctionType> builtinMethods = new HashMap<String, FunctionType>() {{
+        put(stringConcatFunc.name, stringConcatFunc);
+
+        put(printFunc.name, printFunc);
+        put(printlnFunc.name, printlnFunc);
+        put(getStringFunc.name, getStringFunc);
+        put(getIntFunc.name, getIntFunc);
+        put(toStringFunc.name, toStringFunc);
     }};
 
 
@@ -68,11 +81,7 @@ public class GlobalSymbolTable {
         typeMap.put("null", nullType);
         typeMap.put("string", stringType);
 
-        globals.define(printFunc.name, printFunc);
-        globals.define(printlnFunc.name, printlnFunc);
-        globals.define(getStringFunc.name, getStringFunc);
-        globals.define(getIntFunc.name, getIntFunc);
-        globals.define(toStringFunc.name, toStringFunc);
+        builtinMethods.forEach(globals::define);
     }
 
     public void defineType(String name, Type type) {

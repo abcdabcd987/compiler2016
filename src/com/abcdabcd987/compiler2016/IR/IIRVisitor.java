@@ -13,6 +13,7 @@ public interface IIRVisitor {
     void visit(IntComparison node);
     void visit(IntImmediate node);
     void visit(Call node);
+    void visit(SystemCall node);
     void visit(PhiInstruction node);
 
     void visit(Branch node);

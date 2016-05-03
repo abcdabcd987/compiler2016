@@ -76,9 +76,9 @@ public class IRBuilderTest {
         IRPrinter llvmirPrinter = new IRPrinter(out);
 
         ast.accept(structSymbolScanner);
+        ast.accept(hacker);
         ast.accept(structFunctionDeclarator);
         ast.accept(semanticChecker);
-        ast.accept(hacker);
         ast.accept(irBuilder);
 
         IRRoot ir = irBuilder.getIRRoot();

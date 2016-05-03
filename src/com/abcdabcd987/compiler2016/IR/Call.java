@@ -14,7 +14,6 @@ public class Call extends IRInstruction {
         super(BB);
         this.dest = dest;
         this.func = func;
-        args.stream().filter(x -> x instanceof Register).forEachOrdered(x -> usedRegister.add((VirtualRegister) x));
     }
 
     public Register getDest() {
@@ -27,6 +26,8 @@ public class Call extends IRInstruction {
 
     public Call appendArg(IntValue arg) {
         args.add(arg);
+        if (arg instanceof Register)
+            usedRegister.add((Register) arg);
         return this;
     }
 

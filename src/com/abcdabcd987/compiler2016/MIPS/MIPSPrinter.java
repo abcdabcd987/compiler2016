@@ -50,9 +50,10 @@ public class MIPSPrinter implements IIRVisitor {
     @Override
     public void visit(IRRoot node) {
         out.println(".data");
+        out.println("    .align 2");
         isDefiningStaticData = true;
-        node.dataList.forEach(x -> x.accept(this));
         node.stringPool.values().forEach(this::visit);
+        node.dataList.forEach(x -> x.accept(this));
         isDefiningStaticData = false;
         out.println();
         out.println(".text");
@@ -162,6 +163,11 @@ public class MIPSPrinter implements IIRVisitor {
     }
 
     @Override
+    public void visit(SystemCall node) {
+        out.println("    syscall");
+    }
+
+    @Override
     public void visit(PhiInstruction node) {
         assert false;
     }
@@ -205,7 +211,8 @@ public class MIPSPrinter implements IIRVisitor {
 
     @Override
     public void visit(HeapAllocate node) {
-        assert false;
+        out.println("    li $v0, 9");
+        out.println("    syscall");
     }
 
     @Override
@@ -217,6 +224,7 @@ public class MIPSPrinter implements IIRVisitor {
             case 4: op = "lw"; break;
             default: assert false;
         }
+        if (node.isStaticData && node.isLoadAddress) op = "la";
         out.printf("    %s ", op);
         node.getDest().accept(this);
         if (node.isStaticData) {
@@ -282,7 +290,12 @@ public class MIPSPrinter implements IIRVisitor {
 
     @Override
     public void visit(StaticString node) {
-        if (isDefiningStaticData) out.printf("%s: .asciiz \"\\0\\0\\0\\0%s\"\n", dataId(node), node.value);
+        if (isDefiningStaticData) {
+            out.printf("%s:\n", dataId(node));
+            out.printf("    .word %d\n", node.value.length());
+            out.printf("    .asciiz \"%s\"\n", node.value);
+            out.println("    .align 2");
+        }
         else out.print(dataId(node));
     }
 }

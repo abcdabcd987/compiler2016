@@ -1,6 +1,7 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
+import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.IR.BinaryOperation.BinaryOp;
 import com.abcdabcd987.compiler2016.IR.IntComparison.Condition;
@@ -56,6 +57,11 @@ public class IRBuilder implements IASTVisitor {
     @Override
     public void visit(Program node) {
         node.decls.forEach(x -> x.accept(this));
+        for (Map.Entry<String, FunctionType> e : GlobalSymbolTable.builtinMethods.entrySet()) {
+            String name = e.getKey();
+            FunctionType type = e.getValue();
+            Function func = new Function(type);
+        }
     }
 
     @Override
@@ -266,6 +272,7 @@ public class IRBuilder implements IASTVisitor {
         node.intValue = reg;
         curBB.append(new BinaryOperation(curBB, reg, BinaryOp.MUL, node.subscript.intValue, tmp1));
         curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, node.array.intValue, reg));
+        curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, reg, new IntImmediate(4)));
         if (!getAddress) {
             curBB.append(new Load(curBB, reg, node.exprType.getRegisterSize(), reg, 0));
         }
@@ -356,11 +363,25 @@ public class IRBuilder implements IASTVisitor {
         }
     }
 
-    private void processStringRelationalExpr(BinaryExpr node) {
-
+    private void processStringBinaryExpr(BinaryExpr node) {
+        visit(node.lhs);
+        visit(node.rhs);
+        VirtualRegister reg = new VirtualRegister(null);
+        node.intValue = reg;
+        Call call = null;
+        switch (node.op){
+            case ADD: call = new Call(curBB, reg, irRoot.builtinStringConcat); break;
+            case EQ:  call = new Call(curBB, reg, irRoot.builtinStringEQ); break;
+            case LT:  call = new Call(curBB, reg, irRoot.builtinStringLT); break;
+            default:
+                assert false;
+        }
+        call.appendArg(node.lhs.intValue);
+        call.appendArg(node.rhs.intValue);
+        curBB.append(call);
     }
 
-    private void processArithmeticExpr(BinaryExpr node) {
+    private void processIntArithmeticExpr(BinaryExpr node) {
         visit(node.lhs);
         visit(node.rhs);
         BinaryOp op = null;
@@ -442,7 +463,7 @@ public class IRBuilder implements IASTVisitor {
             case LE:
             case GE:
                 if (node.lhs.exprType.type == Type.Types.INT) processIntRelationalExpr(node);
-                else processStringRelationalExpr(node);
+                else processStringBinaryExpr(node);
                 break;
 
             case SHL:
@@ -455,7 +476,8 @@ public class IRBuilder implements IASTVisitor {
             case XOR:
             case BITWISE_OR:
             case BITWISE_AND:
-                processArithmeticExpr(node);
+                if (node.lhs.exprType.type == Type.Types.INT) processIntArithmeticExpr(node);
+                else processStringBinaryExpr(node);
                 break;
         }
     }
@@ -465,11 +487,51 @@ public class IRBuilder implements IASTVisitor {
         // do nothing
     }
 
+    private boolean processBuiltinFunctionCall(FunctionCall node, FunctionType type) {
+        if (type == GlobalSymbolTable.arraySize || type == GlobalSymbolTable.stringLength) {
+            // array.size, string.length
+            boolean bakGetAddress = getAddress;
+            getAddress = true;
+            visit(node.argThis);
+            getAddress = bakGetAddress;
+            VirtualRegister reg = new VirtualRegister("size");
+            curBB.append(new Load(curBB, reg, CompilerOptions.getSizeInt(), node.argThis.intValue, 0));
+            node.intValue = reg;
+            return true;
+        } else if (type == GlobalSymbolTable.printFunc) {
+            // print, println
+            boolean bakGetAddress = getAddress;
+            getAddress = true;
+            visit(node.parameters.get(0));
+            getAddress = bakGetAddress;
+            VirtualRegister reg = new VirtualRegister("str_start");
+            curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, node.parameters.get(0).intValue, new IntImmediate(CompilerOptions.getSizeInt())));
+            Call call = new Call(curBB, null, irRoot.builtinPrint);
+            call.appendArg(reg);
+            curBB.append(call);
+            return true;
+        } else if (type == GlobalSymbolTable.printlnFunc) {
+            // print, println
+            boolean bakGetAddress = getAddress;
+            getAddress = true;
+            visit(node.parameters.get(0));
+            getAddress = bakGetAddress;
+            Call call = new Call(curBB, null, irRoot.builtinPrintln);
+            call.appendArg(node.parameters.get(0).intValue);
+            curBB.append(call);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void visit(FunctionCall node) {
-        node.parameters.forEach(x -> x.accept(this));
         FunctionType type = (FunctionType) node.name.exprType;
+        if (processBuiltinFunctionCall(node, type)) return;
+
+        // for other function calls
         Function func = irRoot.functions.get(type.name);
+        node.parameters.forEach(x -> x.accept(this));
         VirtualRegister reg = new VirtualRegister(null);
         Call call = new Call(curBB, reg, func);
         if (node.argThis != null) { // for builtin string & array function
@@ -499,7 +561,9 @@ public class IRBuilder implements IASTVisitor {
 
             ArrayType t = (ArrayType) type;
             curBB.append(new BinaryOperation(curBB, reg, BinaryOp.MUL, dim.intValue, new IntImmediate(t.bodyType.getRegisterSize())));
+            curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, reg, new IntImmediate(CompilerOptions.getSizeInt())));
             curBB.append(new HeapAllocate(curBB, reg, reg));
+            curBB.append(new Store(curBB, CompilerOptions.getSizeInt(), reg, 0, dim.intValue));
         }
         node.intValue = reg;
     }

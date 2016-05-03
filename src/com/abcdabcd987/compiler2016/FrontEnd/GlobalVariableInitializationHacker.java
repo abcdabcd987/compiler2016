@@ -1,7 +1,9 @@
 package com.abcdabcd987.compiler2016.FrontEnd;
 
 import com.abcdabcd987.compiler2016.AST.*;
+import com.abcdabcd987.compiler2016.Symbol.FunctionType;
 import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
+import com.abcdabcd987.compiler2016.Symbol.PrimitiveType;
 import com.abcdabcd987.compiler2016.Symbol.Type;
 
 import java.util.ArrayList;
@@ -30,7 +32,10 @@ public class GlobalVariableInitializationHacker implements IASTVisitor {
         funcBuilder.setReturnType(new PrimitiveTypeNode(Type.Types.INT));
         funcBuilder.setName("__init");
         funcBuilder.setBody(new CompoundStmt(initBody));
-        node.decls.add(funcBuilder.build());
+
+        FunctionDecl decl = funcBuilder.build();
+        decl.functionType = new FunctionType(GlobalSymbolTable.intType, "__init");
+        node.decls.add(decl);
     }
 
     @Override

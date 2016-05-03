@@ -16,4 +16,11 @@ public class IRRoot {
     public void accept(IIRVisitor visitor) {
         visitor.visit(this);
     }
+
+    public Function builtinPrint;
+    public Function builtinPrintln;
+    public Function builtinStringConcat;
+    public Function builtinStringEQ;
+    public Function builtinStringLT;
+    public List<Function> builtinFunctions = new ArrayList<>();
 }

@@ -20,7 +20,10 @@ public class RegisterInformationInjector {
         this.irRoot = irRoot;
     }
 
-    private void replaceFunctionArgDefine(Function func, Map<Register, Register> argMap, Map<Register, Register> useMap) {
+    private void replaceFunctionArg(Function func) {
+        Map<Register, Register> argMap = new HashMap<>();
+        Map<Register, Register> useMap = new HashMap<>();
+
         // replace function arg define
         if (func.argVarRegList.size() > 0) argMap.put(func.argVarRegList.get(0), MIPSRegisterSet.A0);
         if (func.argVarRegList.size() > 1) argMap.put(func.argVarRegList.get(1), MIPSRegisterSet.A1);
@@ -31,20 +34,22 @@ public class RegisterInformationInjector {
             if (i > 4) argMap.put(func.argVarRegList.get(i), slot);
             func.argVarRegList.set(i, slot);
         }
-    }
 
-    private void replaceFunctionArgUse(Function func, BasicBlock BB, IRInstruction inst, Map<Register, Register> argMap, Map<Register, Register> useMap) {
         // replace function arg use
-        Register defined = inst.getDefinedRegister();
-        if (defined != null && argMap.containsKey(defined))
-            inst.setDefinedRegister(argMap.get(defined));
+        for (BasicBlock BB : func.getReversePostOrder()) {
+            for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
+                Register defined = inst.getDefinedRegister();
+                if (defined != null && argMap.containsKey(defined))
+                    inst.setDefinedRegister(argMap.get(defined));
 
-        Collection<Register> used = inst.getUsedRegister();
-        if (!used.isEmpty()) {
-            useMap.clear();
-            used.forEach(x -> useMap.put(x, x));
-            useMap.putAll(argMap);
-            inst.setUsedRegister(useMap);
+                Collection<Register> used = inst.getUsedRegister();
+                if (!used.isEmpty()) {
+                    useMap.clear();
+                    used.forEach(x -> useMap.put(x, x));
+                    useMap.putAll(argMap);
+                    inst.setUsedRegister(useMap);
+                }
+            }
         }
     }
 
@@ -52,10 +57,10 @@ public class RegisterInformationInjector {
         // fix binary operation lhs immediate number
         if (inst instanceof BinaryOperation) {
             BinaryOperation binop = (BinaryOperation) inst;
-            if (binop.lhs instanceof IntImmediate) {
+            if (binop.getLhs() instanceof IntImmediate) {
                 VirtualRegister lhs = new VirtualRegister("lhs");
-                Move move = new Move(BB, lhs, binop.lhs);
-                binop.lhs = lhs;
+                Move move = new Move(BB, lhs, binop.getLhs());
+                binop.setLhs(lhs);
                 inst.prepend(move);
             }
         } else
@@ -86,11 +91,23 @@ public class RegisterInformationInjector {
         }
     }
 
+    private boolean modifyBuiltinFunctionCall(Function func, BasicBlock BB, Call call, Function callee, List<IntValue> args) {
+        if (callee == irRoot.builtinPrint) {
+            call.prepend(new Move(BB, A0, args.get(0)));
+            call.prepend(new Move(BB, V0, new IntImmediate(4)));
+            call.prepend(new SystemCall(BB));
+            call.remove();
+            return true;
+        }
+        return false;
+    }
+
     private void modifyFunctionCall(Function func, BasicBlock BB, IRInstruction inst) {
         if (!(inst instanceof Call)) return;
         Call call = (Call) inst;
         Function callee = call.getFunc();
         List<IntValue> args = call.getArgs();
+        if (modifyBuiltinFunctionCall(func, BB, call, callee, args)) return;
 
         // copy argument
         for (int i = 0; i < args.size(); ++i) {
@@ -107,19 +124,24 @@ public class RegisterInformationInjector {
         if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));
     }
 
-    public void run() {
-        Map<Register, Register> argMap = new HashMap<>();
-        Map<Register, Register> useMap = new HashMap<>();
-        for (Function func : irRoot.functions.values()) {
-            argMap.clear();
-            useMap.clear();
-            replaceFunctionArgDefine(func, argMap, useMap);
+    private void modifyHeapAllocation(Function func, BasicBlock BB, IRInstruction inst) {
+        if (!(inst instanceof HeapAllocate)) return;
+        HeapAllocate h = (HeapAllocate) inst;
+        inst.prepend(new Move(BB, A0, h.getAllocSize()));
+        inst.append(new Move(BB, h.getDest(), V0));
+        if (func.argVarRegList.size() > 0) {
+            inst.append(new Load(BB, A0, CompilerOptions.getSizeInt(), func.argVarRegList.get(0), 0));
+        }
+    }
 
+    public void run() {
+        for (Function func : irRoot.functions.values()) replaceFunctionArg(func);
+        for (Function func : irRoot.functions.values()) {
             for (BasicBlock BB : func.getReversePostOrder()) {
                 for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
-                    replaceFunctionArgUse(func, BB, inst, argMap, useMap);
                     replaceImmediateNumber(func, BB, inst);
                     modifyFunctionCall(func, BB, inst);
+                    modifyHeapAllocation(func, BB, inst);
                 }
             }
         }

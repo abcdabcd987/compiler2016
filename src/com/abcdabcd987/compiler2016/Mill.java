@@ -60,10 +60,14 @@ public class Mill {
         ast.accept(new GlobalVariableInitializationHacker(sym));
         ast.accept(new StructFunctionDeclarator(sym, ce));
         ast.accept(new SemanticChecker(sym, ce));
+
+        ir = irBuilder.getIRRoot();
+        new IRBuiltinFunctionInserter(ir).run();
+
         ast.accept(irBuilder);
         ast = null;
 
-        ir = irBuilder.getIRRoot();
+        ir.builtinFunctions.forEach(x -> ir.functions.put(x.getName(), x));
     }
 
     private void printIR() {
@@ -88,6 +92,7 @@ public class Mill {
         for (Function func : ir.functions.values()) {
             switch (CompilerOptions.registerAllocator) {
                 case "local": new LocalBottomUpAllocator(MIPSRegisterSet.general, func).run(); break;
+                case "no": new StupidAllocator(MIPSRegisterSet.general, func).run(); break;
                 default: throw new Exception("unknown register allocator");
             }
         }
@@ -97,8 +102,8 @@ public class Mill {
         buildAST();
         if (CompilerOptions.ifPrintAST) printAST();
         buildIR();
-        if (CompilerOptions.ifPrintRawIR) printIR();
         new GlobalVariableResolver(ir).run();
+        if (CompilerOptions.ifPrintRawIR) printIR();
         if (CompilerOptions.enableSSA) {
             constructSSA();
             if (CompilerOptions.ifPrintSSAIR) printIR();

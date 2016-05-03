@@ -14,7 +14,7 @@ public class StaticString extends StaticData {
     }
 
     @Override
-    public int getLength() {
+    public int getRegisterSize() {
         return CompilerOptions.getSizePointer();
     }
 

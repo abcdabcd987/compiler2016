@@ -183,6 +183,11 @@ public class IRPrinter implements IIRVisitor {
     }
 
     @Override
+    public void visit(SystemCall node) {
+        assert false;
+    }
+
+    @Override
     public void visit(PhiInstruction node) {
         out.print("    ");
         visit(node.dest);
@@ -202,7 +207,7 @@ public class IRPrinter implements IIRVisitor {
     @Override
     public void visit(Return node) {
         out.print("    ret ");
-        node.getRet().accept(this);
+        if (node.getRet() != null) node.getRet().accept(this);
         out.println();
         out.println();
     }
@@ -242,7 +247,7 @@ public class IRPrinter implements IIRVisitor {
         node.getDest().accept(this);
         out.printf(" = load %d ", node.getSize());
         node.getAddress().accept(this);
-        out.println(" 0");
+        out.println(" " + node.offset);
     }
 
     @Override

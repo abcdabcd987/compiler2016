@@ -14,5 +14,5 @@ public abstract class StaticData extends Register {
         return hintName;
     }
 
-    public abstract int getLength();
+    public abstract int getRegisterSize();
 }
