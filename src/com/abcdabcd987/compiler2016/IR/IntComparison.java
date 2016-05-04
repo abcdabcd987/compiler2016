@@ -38,6 +38,12 @@ public class IntComparison extends IRInstruction {
         return lhs;
     }
 
+    public void setLhs(IntValue value) {
+        if (lhs instanceof Register) usedRegister.remove(lhs);
+        lhs = value;
+        if (lhs instanceof Register) usedRegister.add((Register)lhs);
+    }
+
     public IntValue getRhs() {
         return rhs;
     }

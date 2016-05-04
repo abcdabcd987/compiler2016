@@ -32,7 +32,7 @@ public class RegisterInformationInjector {
         if (func.argVarRegList.size() > 3) argMap.put(func.argVarRegList.get(3), MIPSRegisterSet.A3);
         for (int i = 0; i < func.argVarRegList.size(); ++i) {
             StackSlot slot = new StackSlot(func, "arg" + i);
-            if (i > 4) argMap.put(func.argVarRegList.get(i), slot);
+            if (i > 3) argMap.put(func.argVarRegList.get(i), slot);
             func.argVarRegList.set(i, slot);
         }
 
@@ -90,7 +90,17 @@ public class RegisterInformationInjector {
                 inst.prepend(new Move(BB, reg, store.getValue()));
                 store.setValue(reg);
             }
-        }
+        } else
+
+            // fix int comparison operation immediate number
+            if (inst instanceof IntComparison) {
+                IntComparison icmp = (IntComparison) inst;
+                if (icmp.getLhs() instanceof  IntImmediate) {
+                    VirtualRegister lhs = new VirtualRegister("lhs");
+                    icmp.setLhs(lhs);
+                    inst.prepend(new Move(BB, lhs, icmp.getLhs()));
+                }
+            }
     }
 
     private boolean modifyBuiltinFunctionCall(Function func, BasicBlock BB, Call call, Function callee, List<IntValue> args) {
@@ -98,6 +108,7 @@ public class RegisterInformationInjector {
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
+            if (func.argVarRegList.size() > 0) call.append(new Load(BB, A0, wordSize, func.argVarRegList.get(0), 0));
             call.remove();
             return true;
         } else if (callee == irRoot.builtinPrintln) {
@@ -109,6 +120,7 @@ public class RegisterInformationInjector {
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, A0, new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
+            if (func.argVarRegList.size() > 0) call.append(new Load(BB, A0, wordSize, func.argVarRegList.get(0), 0));
             call.remove();
             return true;
         }

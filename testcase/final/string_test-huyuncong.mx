@@ -31,8 +31,8 @@ string calc(string A)
 
 int main()
 {
-	A = getString();
-	B = getString();
+	A = "DCBAE";//getString();
+	B = "4ssfsdf";//getString();
 	N = B.parseInt();
 	if (A.length() < N) {
 		println("length error!");

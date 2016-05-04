@@ -1,7 +1,7 @@
 int hashsize = 100;
 class node {
 	int key;
-    int data;
+    int data; 
 	node next;
 }
 node[] table;
@@ -43,8 +43,9 @@ int main() {
 	table = new node[100];
 	for (i = 0;i < hashsize;i++)
 		table[i] = null;
-	for (i = 0;i < 1000;i++)
+	for (i = 0;i < 1000;i++) {
 		put(i, i);
+	}
 	for (i = 0;i < 1000;i++)
 		println(toString(i) + " " + toString(get(i)));
 	return 0;

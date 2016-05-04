@@ -40,29 +40,35 @@ public class StupidAllocator extends RegisterAllocator {
                         regRenameMap.clear();
                         used.forEach(x -> regRenameMap.put(x, x));
                         for (Register reg : used)
-                            if (reg instanceof VirtualRegister) {
+                            if (reg instanceof VirtualRegister || (reg instanceof StackSlot && !(inst instanceof Load) && !(inst instanceof Store))) {
                                 PhysicalRegister pr = regs.get(cnt++);
                                 regRenameMap.put(reg, pr);
                                 func.usedPhysicalGeneralRegister.add(pr);
-                                inst.prepend(new Load(BB, pr, CompilerOptions.getSizeInt(), getStackSlot((VirtualRegister) reg), 0));
+                                Register addr = reg instanceof VirtualRegister ? getStackSlot((VirtualRegister) reg) : reg;
+                                inst.prepend(new Load(BB, pr, CompilerOptions.getSizeInt(), addr, 0));
                             }
                         inst.setUsedRegister(regRenameMap);
                     }
                 } else {
                     // call instruction don't deserve register allocation
                     List<IntValue> args = ((Call) inst).getArgs();
-                    for (int i = 0; i < args.size(); ++i)
-                        if (args.get(i) instanceof VirtualRegister) {
-                            args.set(i, getStackSlot((VirtualRegister) args.get(i)));
+                    for (int i = 0; i < args.size(); ++i) {
+                        IntValue val = args.get(i);
+                        if (val instanceof VirtualRegister) {
+                            Register addr = getStackSlot((VirtualRegister) val);
+                            args.set(i, addr);
                         }
+                    }
                 }
 
                 Register defined = inst.getDefinedRegister();
-                if (defined instanceof VirtualRegister) {
+                if (defined instanceof VirtualRegister || defined instanceof StackSlot) {
                     PhysicalRegister pr = regs.get(cnt++);
                     func.usedPhysicalGeneralRegister.add(pr);
                     inst.setDefinedRegister(pr);
-                    inst.append(new Store(BB, CompilerOptions.getSizeInt(), getStackSlot((VirtualRegister) defined), 0, pr));
+                    Register addr = defined instanceof VirtualRegister ? getStackSlot((VirtualRegister) defined) : defined;
+                    inst.append(new Store(BB, CompilerOptions.getSizeInt(), addr, 0, pr));
+                    inst = inst.getNext(); // skip the new added store
                 }
             }
         }

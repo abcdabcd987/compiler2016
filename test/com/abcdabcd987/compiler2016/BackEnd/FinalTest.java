@@ -36,13 +36,13 @@ public class FinalTest {
 
     @Test
     public void testPass() throws Exception {
+        System.out.println("#" + filename);
         CompilerOptions.ifPrintAST        = false;
         CompilerOptions.ifPrintRawIR      = false;
         CompilerOptions.ifPrintSSAIR      = false;
         CompilerOptions.enableSSA         = false;
         CompilerOptions.registerAllocator = "no";
 
-        System.out.println(filename);
         InputStream is = new FileInputStream(filename);
         new Mill(is, System.out).run();
     }

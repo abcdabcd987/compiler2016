@@ -1,6 +1,5 @@
 //input: 1 2 3 4
 
-
 int[] a = new int[4];
 int main()
 {

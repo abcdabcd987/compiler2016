@@ -34,20 +34,20 @@ public class GlobalSymbolTable {
         addArg("this", stringType);
         addArg("arg0", intType);
     }};
-    public final static Map<String, FunctionType> stringBuiltinMethods = new HashMap<String, FunctionType>() {{
+    public final static Map<String, FunctionType> stringBuiltinMethods = Collections.unmodifiableMap(new HashMap<String, FunctionType>() {{
         put("length", stringLength);
         put("substring", stringSubString);
         put("parseInt", stringParseInt);
         put("ord", stringOrd);
-    }};
+    }});
 
     // Builtin array function
     public final static FunctionType arraySize = new FunctionType(intType, "array.size") {{
         addArg("this", null);
     }};
-    public final static Map<String, FunctionType> arrayBuiltinMethods = new HashMap<String, FunctionType>() {{
+    public final static Map<String, FunctionType> arrayBuiltinMethods = Collections.unmodifiableMap(new HashMap<String, FunctionType>() {{
         put("size", arraySize);
-    }};
+    }});
 
     // Builtin function
     public final static FunctionType printFunc = new FunctionType(voidType, "print") {{
@@ -73,7 +73,7 @@ public class GlobalSymbolTable {
         addArg("arg0", stringType);
         addArg("arg1", stringType);
     }};
-    public final static Map<String, FunctionType> builtinMethods = new HashMap<String, FunctionType>() {{
+    public final static Map<String, FunctionType> builtinMethods = Collections.unmodifiableMap(new HashMap<String, FunctionType>() {{
         put(stringConcatFunc.name, stringConcatFunc);
         put(stringLess.name, stringLess);
         put(stringEqual.name, stringEqual);
@@ -83,8 +83,8 @@ public class GlobalSymbolTable {
         put(getStringFunc.name, getStringFunc);
         put(getIntFunc.name, getIntFunc);
         put(toStringFunc.name, toStringFunc);
-    }};
-    private final static Set<FunctionType> builtinMethodSet = new HashSet<FunctionType>() {{
+    }});
+    private final static Set<FunctionType> builtinMethodSet = Collections.unmodifiableSet(new HashSet<FunctionType>() {{
         add(stringLength);
         add(stringSubString);
         add(stringParseInt);
@@ -101,7 +101,7 @@ public class GlobalSymbolTable {
         add(getStringFunc);
         add(getIntFunc);
         add(toStringFunc);
-    }};
+    }});
 
     public static boolean isBuiltinMethod(FunctionType functionType) {
         return builtinMethodSet.contains(functionType);

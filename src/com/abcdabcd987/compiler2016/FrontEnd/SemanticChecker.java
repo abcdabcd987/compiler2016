@@ -481,11 +481,13 @@ public class SemanticChecker implements IASTVisitor {
     @Override
     public void visit(Identifier node) {
         node.scope = currentScope;
-        Type t = currentScope.getType(node.name);
-        if (t == null) {
+        SymbolInfo info = currentScope.getInfo(node.name);
+        if (info == null) {
             ce.add(node.pos, "Cannot resolve symbol `" + node.name + "`.");
             return;
         }
+        Type t = info.getType();
+        node.symbolInfo = info;
         node.exprType = t;
         node.isLvalue = t.type != Type.Types.FUNCTION;
     }

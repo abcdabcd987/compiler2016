@@ -68,17 +68,17 @@ public class TargetIRTransformer {
         info.beginTempReg  = info.beginLocal    + func.stackSlots.size()             * sizeWord;
         info.frameSize     = info.beginTempReg  + info.usedCallerSaveRegister.size() * sizeWord;
 
+        for (int i = 0; i < func.stackSlots.size(); ++i) {
+            StackSlot slot = func.stackSlots.get(i);
+            info.stackSlotOffset.put(slot, info.beginLocal + i* sizeWord);
+        }
+
         for (int i = 0; i < func.argVarRegList.size(); ++i) {
             Register arg = func.argVarRegList.get(i);
             if (arg instanceof StackSlot) {
                 StackSlot slot = (StackSlot) arg;
                 info.stackSlotOffset.put(slot, info.beginArg + i * sizeWord);
             }
-        }
-
-        for (int i = 0; i < func.stackSlots.size(); ++i) {
-            StackSlot slot = func.stackSlots.get(i);
-            info.stackSlotOffset.put(slot, info.beginLocal + i* sizeWord);
         }
     }
 
@@ -168,10 +168,10 @@ public class TargetIRTransformer {
             inst.prepend(new Store(BB, sizeWord, SP, info.beginTempReg + i * sizeWord, info.usedCallerSaveRegister.get(i)));
 
         // save $a? register
-//        if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg, A0));
-//        if (func.argVarRegList.size() > 1) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + sizeWord, A1));
-//        if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
-//        if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
+        if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg, A0));
+        if (func.argVarRegList.size() > 1) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + sizeWord, A1));
+        if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
+        if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
 
         // replace $a? with $t?
         boolean usedA0 = false;

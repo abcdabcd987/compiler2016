@@ -15,8 +15,8 @@ public class BinaryExpr extends Expr {
     }
 
     public final BinaryOp op;
-    public final Expr lhs;
-    public final Expr rhs;
+    public Expr lhs;
+    public Expr rhs;
     public final SourcePosition posOp;
     public final SourcePosition posLhs;
     public final SourcePosition posRhs;

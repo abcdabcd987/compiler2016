@@ -3,15 +3,18 @@ package com.abcdabcd987.compiler2016.BackEnd;
 import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by abcdabcd987 on 2016-05-02.
  */
 public class GlobalVariableResolver {
     private IRRoot ir;
+    private static class FunctionInfo {
+        Map<StaticData, VirtualRegister> staticMap = new HashMap<>();
+        Set<StaticData> writtenStatic = new HashSet<>();
+    }
+    private Map<Function, FunctionInfo> funcInfo = new HashMap<>();
 
     public GlobalVariableResolver(IRRoot ir) {
         this.ir = ir;
@@ -27,7 +30,10 @@ public class GlobalVariableResolver {
     }
 
     private void processFunction(Function func) {
-        Map<StaticData, VirtualRegister> staticMap = new HashMap<>();
+        FunctionInfo info = new FunctionInfo();
+        funcInfo.put(func, info);
+        Map<StaticData, VirtualRegister> staticMap = info.staticMap;
+        Set<StaticData> writtenStatic = info.writtenStatic;
         Map<Register, Register> renameMap = new HashMap<>();
 
         // replace usage in instructions
@@ -53,6 +59,7 @@ public class GlobalVariableResolver {
                     inst.setDefinedRegister(reg);
                     // write back immediately
                     inst.append(new Store(BB, ((StaticData) defined).getRegisterSize(), (StaticData) defined, reg));
+                    writtenStatic.add((StaticData) defined);
                 }
             }
 
@@ -62,21 +69,33 @@ public class GlobalVariableResolver {
         staticMap.forEach((data, vr) -> i.prepend(new Load(b, vr, data.getRegisterSize(), data, data instanceof StaticString)));
     }
 
-//    private void processStringData() {
-//        Function initFunc = ir.functions.get("__init");
-//        BasicBlock BB = initFunc.getStartBB();
-//        IRInstruction inst = BB.getHead();
-//        VirtualRegister lenReg = new VirtualRegister("len");
-//        for (StaticString data : ir.stringPool.values()) {
-//            inst.prepend(new Move(BB, lenReg, new IntImmediate(data.value.length())));
-//            inst.prepend(new Store(BB, CompilerOptions.getSizeInt(), data, lenReg));
-//        }
-//    }
-
     public void run() {
-//        processStringData();
         for (Function func : ir.functions.values()) {
             processFunction(func);
+        }
+
+        // reload global variable after function call
+        Set<StaticData> reloadSet = new HashSet<>();
+        for (Function func : ir.functions.values()) {
+            FunctionInfo info = funcInfo.get(func);
+            Set<StaticData> usedSet = info.staticMap.keySet();
+            if (usedSet.isEmpty()) continue;
+            for (BasicBlock BB : func.getReversePostOrder()) {
+                for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
+                    if (!(inst instanceof Call)) continue;
+                    Call call = (Call) inst;
+                    Function callee = call.getFunc();
+                    FunctionInfo calleeInfo = funcInfo.get(callee);
+                    if (calleeInfo == null) continue; // ignore builtin hack
+                    if (calleeInfo.writtenStatic.isEmpty()) continue;
+                    reloadSet.clear();
+                    reloadSet.addAll(calleeInfo.writtenStatic);
+                    reloadSet.retainAll(usedSet);
+                    for (StaticData data : reloadSet) {
+                        call.append(new Load(BB, info.staticMap.get(data), data.getRegisterSize(), data, data instanceof StaticString));
+                    }
+                }
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ package com.abcdabcd987.compiler2016;
  */
 public class CompilerOptions {
     private static final int SIZE_INT = 4;
-    private static final int SIZE_BOOL = 1;
+    private static final int SIZE_BOOL = 4; // FIXME!
     private static final int SIZE_POINTER = 4;
 
     public static boolean ifPrintAST;

@@ -3,9 +3,7 @@ package com.abcdabcd987.compiler2016;
 import com.abcdabcd987.compiler2016.AST.Program;
 import com.abcdabcd987.compiler2016.BackEnd.*;
 import com.abcdabcd987.compiler2016.FrontEnd.*;
-import com.abcdabcd987.compiler2016.IR.Function;
-import com.abcdabcd987.compiler2016.IR.IRRoot;
-import com.abcdabcd987.compiler2016.IR.PhysicalRegister;
+import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.MIPS.MIPSPrinter;
 import com.abcdabcd987.compiler2016.MIPS.MIPSRegisterSet;
 import com.abcdabcd987.compiler2016.MIPS.RegisterInformationInjector;
@@ -40,7 +38,7 @@ public class Mill {
 
     private void buildAST() throws IOException {
         MillParser parser = new MillParser(new CommonTokenStream(new MillLexer(new ANTLRInputStream(in))));
-        parser.setErrorHandler(new BailErrorStrategy());
+        //parser.setErrorHandler(new BailErrorStrategy());
         ASTBuilder astBuilder = new ASTBuilder();
         new ParseTreeWalker().walk(astBuilder, parser.program());
         ast = astBuilder.getProgram();

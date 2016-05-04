@@ -111,8 +111,8 @@ public class MIPSPrinter implements IIRVisitor {
             case MUL: op = "mul"; break;
             case DIV: op = "div"; break;
             case MOD: op = "rem"; break;
-            case SHL: op = "shl"; break;
-            case SHR: op = "sra"; break;
+            case SHL: op = "sll"; break;
+            case SHR: op = "srl"; break;
             case AND: op = "and"; break;
             case OR: op = "or"; break;
             case XOR: op = "xor"; break;
@@ -158,6 +158,7 @@ public class MIPSPrinter implements IIRVisitor {
         out.printf("    %s ", op);
         node.getDest().accept(this);
         out.print(", ");
+        assert !(node.getLhs() instanceof IntImmediate);
         node.getLhs().accept(this);
         out.print(", ");
         node.getRhs().accept(this);

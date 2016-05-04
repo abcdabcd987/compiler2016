@@ -9,15 +9,6 @@ import java.util.*;
  * Created by abcdabcd987 on 2016-04-11.
  */
 public class Function {
-    public static class Frame {
-        public int beginArg;
-        public int beginSavedReg;
-        public int beginRA;
-        public int beginLocal;
-        public int beginTempReg;
-        public int frameSize;
-    }
-
     public Map<String, VirtualRegister> argVarReg = new HashMap<>();
     public List<Register> argVarRegList = new ArrayList<>();
     private String name;

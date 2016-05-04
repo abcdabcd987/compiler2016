@@ -11,6 +11,7 @@ int main()
 
   for (i = 2; i <= N; i++) if (b[i])
   {
+    //println("i=" + toString(i));
     int count = 2;
     
     if (i>3 && b[i-2])
