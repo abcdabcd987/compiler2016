@@ -15,6 +15,7 @@ import static com.abcdabcd987.compiler2016.MIPS.MIPSRegisterSet.*;
  */
 public class RegisterInformationInjector {
     private IRRoot irRoot;
+    private final int wordSize = CompilerOptions.getSizeInt();
 
     public RegisterInformationInjector(IRRoot irRoot) {
         this.irRoot = irRoot;
@@ -36,6 +37,7 @@ public class RegisterInformationInjector {
         }
 
         // replace function arg use
+        if (argMap.isEmpty()) return;
         for (BasicBlock BB : func.getReversePostOrder()) {
             for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
                 Register defined = inst.getDefinedRegister();
@@ -98,6 +100,16 @@ public class RegisterInformationInjector {
             call.prepend(new SystemCall(BB));
             call.remove();
             return true;
+        } else if (callee == irRoot.builtinPrintln) {
+            StaticString data = irRoot.stringPool.get("\\n");
+            call.prepend(new Move(BB, A0, args.get(0)));
+            call.prepend(new Move(BB, V0, new IntImmediate(4)));
+            call.prepend(new SystemCall(BB));
+            call.prepend(new Load(BB, A0, data.getRegisterSize(), data, true));
+            call.prepend(new Move(BB, V0, new IntImmediate(4)));
+            call.prepend(new SystemCall(BB));
+            call.remove();
+            return true;
         }
         return false;
     }
@@ -109,19 +121,6 @@ public class RegisterInformationInjector {
         List<IntValue> args = call.getArgs();
         if (modifyBuiltinFunctionCall(func, BB, call, callee, args)) return;
 
-        // copy argument
-        for (int i = 0; i < args.size(); ++i) {
-            IntValue value = args.get(i);
-            inst.prepend(new Move(BB, A0, args.get(i)));
-            inst.prepend(new Store(BB, CompilerOptions.getSizeInt(), callee.argVarRegList.get(i), 0, A0));
-        }
-        if (args.size() > 0) inst.prepend(new Move(BB, A0, args.get(0)));
-        if (args.size() > 1) inst.prepend(new Move(BB, A1, args.get(1)));
-        if (args.size() > 2) inst.prepend(new Move(BB, A2, args.get(2)));
-        if (args.size() > 3) inst.prepend(new Move(BB, A3, args.get(3)));
-
-        // move result
-        if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));
     }
 
     private void modifyHeapAllocation(Function func, BasicBlock BB, IRInstruction inst) {
@@ -130,7 +129,7 @@ public class RegisterInformationInjector {
         inst.prepend(new Move(BB, A0, h.getAllocSize()));
         inst.append(new Move(BB, h.getDest(), V0));
         if (func.argVarRegList.size() > 0) {
-            inst.append(new Load(BB, A0, CompilerOptions.getSizeInt(), func.argVarRegList.get(0), 0));
+            inst.append(new Load(BB, A0, wordSize, func.argVarRegList.get(0), 0));
         }
     }
 

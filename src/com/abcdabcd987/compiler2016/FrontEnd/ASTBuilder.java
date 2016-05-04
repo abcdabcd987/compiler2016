@@ -412,27 +412,6 @@ public class ASTBuilder extends MillBaseListener {
         map.put(ctx, new Identifier(ctx.Identifier().getText(), new SourcePosition(ctx.Identifier())));
     }
 
-    private String unescape(String s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); ++i) {
-            if (s.charAt(i) != '\\') {
-                sb.append(s.charAt(i));
-            } else {
-                ++i;
-                switch (s.charAt(i)) {
-                    case 't': sb.append('\t'); break;
-                    case 'n': sb.append('\n'); break;
-                    case 'r': sb.append('\r'); break;
-                    case '\'':sb.append('\''); break;
-                    case '"': sb.append('"');  break;
-                    case '\\':sb.append('\\'); break;
-                    default: sb.append(s.charAt(i));
-                }
-            }
-        }
-        return sb.toString();
-    }
-
     // expression: Constant
     @Override
     public void exitLiteral(MillParser.LiteralContext ctx) {

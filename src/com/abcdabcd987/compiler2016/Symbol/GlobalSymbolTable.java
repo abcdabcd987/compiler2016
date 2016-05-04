@@ -5,9 +5,7 @@ import com.abcdabcd987.compiler2016.AST.FunctionCall;
 import com.abcdabcd987.compiler2016.AST.StructTypeNode;
 import com.abcdabcd987.compiler2016.AST.TypeNode;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by abcdabcd987 on 2016-03-31.
@@ -21,13 +19,19 @@ public class GlobalSymbolTable {
     public final static PrimitiveType stringType = new PrimitiveType(Type.Types.STRING);
 
     // Builtin string function
-    public final static FunctionType stringLength = new FunctionType(intType, "string.length");
+    public final static FunctionType stringLength = new FunctionType(intType, "string.length") {{
+        addArg("this", stringType);
+    }};
     public final static FunctionType stringSubString = new FunctionType(stringType, "string.substring") {{
+        addArg("this", stringType);
         addArg("arg0", intType);
         addArg("arg1", intType);
     }};
-    public final static FunctionType stringParseInt = new FunctionType(intType, "string.parseInt");
+    public final static FunctionType stringParseInt = new FunctionType(intType, "string.parseInt") {{
+        addArg("this", stringType);
+    }};
     public final static FunctionType stringOrd = new FunctionType(intType, "string.ord") {{
+        addArg("this", stringType);
         addArg("arg0", intType);
     }};
     public final static Map<String, FunctionType> stringBuiltinMethods = new HashMap<String, FunctionType>() {{
@@ -38,7 +42,9 @@ public class GlobalSymbolTable {
     }};
 
     // Builtin array function
-    public final static FunctionType arraySize = new FunctionType(intType, "array.size");
+    public final static FunctionType arraySize = new FunctionType(intType, "array.size") {{
+        addArg("this", null);
+    }};
     public final static Map<String, FunctionType> arrayBuiltinMethods = new HashMap<String, FunctionType>() {{
         put("size", arraySize);
     }};
@@ -59,8 +65,18 @@ public class GlobalSymbolTable {
         addArg("arg0", stringType);
         addArg("arg1", stringType);
     }};
+    public final static FunctionType stringLess = new FunctionType(stringType, "stringLess") {{
+        addArg("arg0", stringType);
+        addArg("arg1", stringType);
+    }};
+    public final static FunctionType stringEqual = new FunctionType(stringType, "stringEqual") {{
+        addArg("arg0", stringType);
+        addArg("arg1", stringType);
+    }};
     public final static Map<String, FunctionType> builtinMethods = new HashMap<String, FunctionType>() {{
         put(stringConcatFunc.name, stringConcatFunc);
+        put(stringLess.name, stringLess);
+        put(stringEqual.name, stringEqual);
 
         put(printFunc.name, printFunc);
         put(printlnFunc.name, printlnFunc);
@@ -68,6 +84,28 @@ public class GlobalSymbolTable {
         put(getIntFunc.name, getIntFunc);
         put(toStringFunc.name, toStringFunc);
     }};
+    private final static Set<FunctionType> builtinMethodSet = new HashSet<FunctionType>() {{
+        add(stringLength);
+        add(stringSubString);
+        add(stringParseInt);
+        add(stringOrd);
+
+        add(arraySize);
+
+        add(stringConcatFunc);
+        add(stringLess);
+        add(stringEqual);
+
+        add(printFunc);
+        add(printlnFunc);
+        add(getStringFunc);
+        add(getIntFunc);
+        add(toStringFunc);
+    }};
+
+    public static boolean isBuiltinMethod(FunctionType functionType) {
+        return builtinMethodSet.contains(functionType);
+    }
 
 
     private Map<String, Type> typeMap = new LinkedHashMap<>();

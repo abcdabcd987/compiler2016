@@ -1,8 +1,9 @@
 package com.abcdabcd987.compiler2016.MIPS;
 
 import com.abcdabcd987.compiler2016.IR.*;
+import com.abcdabcd987.compiler2016.Utility.Utility;
 
-import java.io.PrintStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,17 @@ public class MIPSPrinter implements IIRVisitor {
         out.println("    jr $ra");
         out.println();
         node.functions.values().forEach(this::visit);
+        out.println();
+        out.println();
+        out.println();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("lib/builtin_functions.s"));
+            String line;
+            while ((line = br.readLine()) != null) out.println(line);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     @Override
@@ -159,7 +171,12 @@ public class MIPSPrinter implements IIRVisitor {
 
     @Override
     public void visit(Call node) {
-        out.printf("    jal %s\n", blockLabel(node.getFunc().getStartBB()));
+        Function func = node.getFunc();
+        if (func.builtinFunctionHackName == null) {
+            out.printf("    jal %s\n", blockLabel(node.getFunc().getStartBB()));
+        } else {
+            out.printf("    jal %s\n", func.builtinFunctionHackName);
+        }
     }
 
     @Override
@@ -292,7 +309,7 @@ public class MIPSPrinter implements IIRVisitor {
     public void visit(StaticString node) {
         if (isDefiningStaticData) {
             out.printf("%s:\n", dataId(node));
-            out.printf("    .word %d\n", node.value.length());
+            out.printf("    .word %d\n", Utility.unescape(node.value).length());
             out.printf("    .asciiz \"%s\"\n", node.value);
             out.println("    .align 2");
         }

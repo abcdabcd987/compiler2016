@@ -13,14 +13,23 @@ public class IRRoot {
     public Map<String, StaticString> stringPool = new LinkedHashMap<>();
     public List<StaticData> dataList = new ArrayList<>();
 
+    public IRRoot() {
+        stringPool.put("\\n", new StaticString("\\n"));
+    }
+
     public void accept(IIRVisitor visitor) {
         visitor.visit(this);
     }
 
     public Function builtinPrint;
     public Function builtinPrintln;
+    public Function builtinToString;
+    public Function builtinGetString;
+    public Function builtinGetInt;
     public Function builtinStringConcat;
-    public Function builtinStringEQ;
-    public Function builtinStringLT;
+    public Function builtinStringEqual;
+    public Function builtinStringLess;
+    public Function builtinStringParseInt;
+    public Function builtinStringSubString;
     public List<Function> builtinFunctions = new ArrayList<>();
 }

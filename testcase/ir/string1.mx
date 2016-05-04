@@ -2,8 +2,8 @@ int main() {
     string s1 = "aaa";
     string s2 = "bbbbb";
     string s3 = s1 + s2;
-    return s3.length();
+    return s3.length() * 1000 + s3.ord(5);
 }
 /*! assert: exitcode
-8
+8098
 */

@@ -37,6 +37,9 @@ public class Function {
     public List<StackSlot> stackSlots = new ArrayList<>();
     public Set<PhysicalRegister> usedPhysicalGeneralRegister = null;
 
+    // builtin function hack FIXME!
+    public String builtinFunctionHackName = null;
+
     public FunctionType getType() {
         return type;
     }

@@ -146,13 +146,8 @@ public class TargetIRTransformer {
             Store store = (Store) inst;
             if (store.address instanceof StackSlot) {
                 StackSlot slot = (StackSlot) store.address;
-                if (slot.getParent() == func) {
-                    store.offset = info.stackSlotOffset.get(slot);
-                } else {
-                    // function call
-                    FunctionInfo calleeInfo = funcInfo.get(slot.getParent());
-                    store.offset = - calleeInfo.frameSize + calleeInfo.stackSlotOffset.get(slot);
-                }
+                assert slot.getParent() == func;
+                store.offset = info.stackSlotOffset.get(slot);
                 store.address = SP;
             }
         }
@@ -162,26 +157,59 @@ public class TargetIRTransformer {
         if (!(inst instanceof Call)) return;
         Call call = (Call) inst;
         Function callee = call.getFunc();
-        FunctionInfo calleeInfo = funcInfo.get(callee);
         List<IntValue> args = call.getArgs();
+        FunctionInfo calleeInfo = funcInfo.get(callee);
 
         // save $t? register
         for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i)
             inst.prepend(new Store(BB, sizeWord, SP, info.beginTempReg + i * sizeWord, info.usedCallerSaveRegister.get(i)));
 
         // save $a? register
-        if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg, A0));
-        if (func.argVarRegList.size() > 1) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + sizeWord, A1));
-        if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
-        if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
+//        if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg, A0));
+//        if (func.argVarRegList.size() > 1) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + sizeWord, A1));
+//        if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
+//        if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
 
-//        // copy argument
-//        if (args.size() > 0) inst.prepend(new Move(BB, A0, args.get(0)));
-//        if (args.size() > 1) inst.prepend(new Move(BB, A1, args.get(1)));
-//        if (args.size() > 2) inst.prepend(new Move(BB, A2, args.get(2)));
-//        if (args.size() > 3) inst.prepend(new Move(BB, A3, args.get(3)));
-//        for (int i = 0; i < args.size(); ++i)
-//            inst.prepend(new Store(BB, sizeWord, SP, -calleeInfo.frameSize + calleeInfo.beginArg + i * sizeWord, args.get(i)));
+        // replace $a? with $t?
+        boolean usedA0 = false;
+        boolean usedA1 = false;
+        boolean usedA2 = false;
+        boolean usedA3 = false;
+        for (int i = 0; i < args.size(); ++i) {
+            IntValue value = args.get(i);
+            if      (value == A0) { usedA0 = true; args.set(i, T0); }
+            else if (value == A1) { usedA1 = true; args.set(i, T1); }
+            else if (value == A2) { usedA2 = true; args.set(i, T2); }
+            else if (value == A3) { usedA3 = true; args.set(i, T3); }
+        }
+        if (usedA0) call.prepend(new Move(BB, T0, A0));
+        if (usedA1) call.prepend(new Move(BB, T1, A1));
+        if (usedA2) call.prepend(new Move(BB, T2, A2));
+        if (usedA3) call.prepend(new Move(BB, T3, A3));
+
+        // copy argument
+        if (callee.builtinFunctionHackName == null) {
+            for (int i = 0; i < args.size(); ++i) {
+                IntValue value = args.get(i);
+                if (value instanceof IntImmediate) {
+                    inst.prepend(new Move(BB, T4, args.get(i)));
+                    value = T4;
+                } else if (value instanceof StackSlot) {
+                    StackSlot slot = (StackSlot) value;
+                    assert slot.getParent() == func;
+                    inst.prepend(new Load(BB, T4, sizeWord, SP, info.stackSlotOffset.get(slot)));
+                    value = T4;
+                }
+                inst.prepend(new Store(BB, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + i*sizeWord, value));
+            }
+        }
+        if (args.size() > 0) inst.prepend(new Load(BB, A0, sizeWord, SP, - calleeInfo.frameSize + info.beginArg));
+        if (args.size() > 1) inst.prepend(new Load(BB, A1, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + sizeWord));
+        if (args.size() > 2) inst.prepend(new Load(BB, A2, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 2*sizeWord));
+        if (args.size() > 3) inst.prepend(new Load(BB, A3, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 3*sizeWord));
+
+        // move result
+        if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));
 
         // restore $a? register
         if (func.argVarRegList.size() > 0) inst.append(new Load(BB, A0, sizeWord, SP, info.beginArg));
@@ -192,9 +220,6 @@ public class TargetIRTransformer {
         // restore $t? register
         for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i)
             inst.append(new Load(BB, info.usedCallerSaveRegister.get(i), sizeWord, SP, info.beginTempReg + i * sizeWord));
-
-//        // move result
-//        if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));
     }
 
     public void run() {

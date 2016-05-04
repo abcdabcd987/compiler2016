@@ -369,20 +369,22 @@ public class SemanticChecker implements IASTVisitor {
             ce.add(node.posName, "Function call on non-function type.");
             return;
         }
-        if (functionType.argTypes.size() != node.parameters.size()) {
+        boolean hasThis = GlobalSymbolTable.arrayBuiltinMethods.containsValue(functionType) || GlobalSymbolTable.stringBuiltinMethods.containsValue(functionType);
+        int offset = hasThis ? 1 : 0;
+        if (functionType.argTypes.size() != node.parameters.size() + offset) {
             ce.add(node.posArgs.get(node.posArgs.size()-1), "Function call expect " + functionType.argTypes.size() + "arguments, but got " + node.parameters.size() + ".");
             return;
         }
-        for (int i = 0; i < functionType.argTypes.size(); ++i) {
-            visit(node.parameters.get(i));
+        for (int i = offset; i < functionType.argTypes.size(); ++i) {
+            visit(node.parameters.get(i - offset));
             VariableType targetType = functionType.argTypes.get(i);
-            Type sourceType = node.parameters.get(i).exprType;
+            Type sourceType = node.parameters.get(i - offset).exprType;
             if (!targetType.isSameType(sourceType)) {
-                ce.add(node.posArgs.get(i), "The " + (i+1) + "# argument of function call expect " + targetType + ", but got " + sourceType + ".");
+                ce.add(node.posArgs.get(i - offset), "The " + (i+1-offset) + "# argument of function call expect " + targetType + ", but got " + sourceType + ".");
                 return;
             }
         }
-        if (GlobalSymbolTable.arrayBuiltinMethods.containsValue(functionType) || GlobalSymbolTable.stringBuiltinMethods.containsValue(functionType))
+        if (hasThis)
             node.argThis = ((MemberAccess)node.name).record;
 
         node.isLvalue = false;
