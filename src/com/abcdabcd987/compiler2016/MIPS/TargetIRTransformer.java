@@ -2,6 +2,7 @@ package com.abcdabcd987.compiler2016.MIPS;
 
 import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
+import com.abcdabcd987.compiler2016.Symbol.Type;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,8 +100,10 @@ public class TargetIRTransformer {
 
     private void modifyReturn(Function func) {
         // move to $v0 on return instruction
-        for (Return ret : func.retInstruction) {
-            ret.prepend(new Move(ret.getBasicBlock(), V0, ret.getRet()));
+        if (func.getType().returnType.type != Type.Types.VOID) {
+            for (Return ret : func.retInstruction) {
+                ret.prepend(new Move(ret.getBasicBlock(), V0, ret.getRet()));
+            }
         }
 
         // if multiple return instruction, merge to an exit block
@@ -189,6 +192,7 @@ public class TargetIRTransformer {
 
         // copy argument
         if (callee.builtinFunctionHackName == null) {
+            // normal function call
             for (int i = 0; i < args.size(); ++i) {
                 IntValue value = args.get(i);
                 if (value instanceof IntImmediate) {
@@ -202,11 +206,29 @@ public class TargetIRTransformer {
                 }
                 inst.prepend(new Store(BB, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + i*sizeWord, value));
             }
+            if (args.size() > 0) inst.prepend(new Load(BB, A0, sizeWord, SP, - calleeInfo.frameSize + info.beginArg));
+            if (args.size() > 1) inst.prepend(new Load(BB, A1, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + sizeWord));
+            if (args.size() > 2) inst.prepend(new Load(BB, A2, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 2*sizeWord));
+            if (args.size() > 3) inst.prepend(new Load(BB, A3, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 3*sizeWord));
+        } else {
+            // builtin function call hack
+            for (int i = 0; i < args.size(); ++i) {
+                IntValue value = args.get(i);
+                if (value instanceof StackSlot) {
+                    StackSlot slot = (StackSlot) value;
+                    assert slot.getParent() == func;
+                    inst.prepend(new Load(BB, T4, sizeWord, SP, info.stackSlotOffset.get(slot)));
+                    value = T4;
+                }
+                MIPSRegister target = null;
+                if      (i == 0) target = A0;
+                else if (i == 1) target = A1;
+                else if (i == 2) target = A2;
+                else if (i == 3) target = A3;
+                assert target != null;
+                inst.prepend(new Move(BB, target, value));
+            }
         }
-        if (args.size() > 0) inst.prepend(new Load(BB, A0, sizeWord, SP, - calleeInfo.frameSize + info.beginArg));
-        if (args.size() > 1) inst.prepend(new Load(BB, A1, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + sizeWord));
-        if (args.size() > 2) inst.prepend(new Load(BB, A2, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 2*sizeWord));
-        if (args.size() > 3) inst.prepend(new Load(BB, A3, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 3*sizeWord));
 
         // move result
         if (call.getDest() != null) inst.append(new Move(BB, call.getDest(), V0));

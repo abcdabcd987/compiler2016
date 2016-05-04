@@ -95,17 +95,18 @@ public class RegisterInformationInjector {
 
     private boolean modifyBuiltinFunctionCall(Function func, BasicBlock BB, Call call, Function callee, List<IntValue> args) {
         if (callee == irRoot.builtinPrint) {
-            call.prepend(new Move(BB, A0, args.get(0)));
+            call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
             call.remove();
             return true;
         } else if (callee == irRoot.builtinPrintln) {
             StaticString data = irRoot.stringPool.get("\\n");
-            call.prepend(new Move(BB, A0, args.get(0)));
+            call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
             call.prepend(new Load(BB, A0, data.getRegisterSize(), data, true));
+            call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, A0, new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
             call.remove();

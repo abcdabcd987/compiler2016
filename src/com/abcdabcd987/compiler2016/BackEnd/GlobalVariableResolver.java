@@ -33,7 +33,9 @@ public class GlobalVariableResolver {
         // replace usage in instructions
         for (BasicBlock BB : func.getReversePostOrder())
             for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
-                if (inst instanceof Load || inst instanceof Store) continue;
+                if ((inst instanceof Load && ((Load) inst).isStaticData) ||
+                    (inst instanceof Store && ((Store) inst).isStaticData))
+                    continue;
                 Collection<Register> used = inst.getUsedRegister();
                 if (!used.isEmpty()) {
                     renameMap.clear();

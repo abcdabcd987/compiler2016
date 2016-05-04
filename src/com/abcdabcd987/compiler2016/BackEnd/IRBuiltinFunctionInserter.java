@@ -168,7 +168,7 @@ public class IRBuiltinFunctionInserter {
     }
 
     private void doStringParseInt() {
-        if (ir.builtinStringSubString != null) return;
+        if (ir.builtinStringParseInt != null) return;
         Function func = initFunction(GlobalSymbolTable.stringParseInt);
         ir.builtinStringParseInt = func;
         func.builtinFunctionHackName = "string.parseInt";

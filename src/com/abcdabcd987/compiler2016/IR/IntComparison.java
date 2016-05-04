@@ -22,8 +22,8 @@ public class IntComparison extends IRInstruction {
         this.cond = cond;
         this.lhs = lhs;
         this.rhs = rhs;
-        if (lhs instanceof Register) usedRegister.add((VirtualRegister) lhs);
-        if (rhs instanceof Register) usedRegister.add((VirtualRegister) rhs);
+        if (lhs instanceof Register) usedRegister.add((Register) lhs);
+        if (rhs instanceof Register) usedRegister.add((Register) rhs);
     }
 
     public Register getDest() {

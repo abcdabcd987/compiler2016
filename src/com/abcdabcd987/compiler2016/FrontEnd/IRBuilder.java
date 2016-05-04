@@ -91,7 +91,7 @@ public class IRBuilder implements IASTVisitor {
                     node.init.ifFalse = new BasicBlock(curFunction, null);
                 }
                 node.init.accept(this);
-                assign(false, node.init.exprType.getMemorySize(), reg, node.init);
+                assign(false, node.init.exprType.getRegisterSize(), reg, node.init);
             } else if (!isFunctionArgDecl) {
                 // set 0 if no initial value
                 curBB.append(new Move(curBB, reg, new IntImmediate(0)));
@@ -108,7 +108,17 @@ public class IRBuilder implements IASTVisitor {
         isFunctionArgDecl = true;
         node.argTypes.forEach(x -> x.accept(this));
         isFunctionArgDecl = false;
+
         node.body.accept(this);
+        if (curFunction.retInstruction.isEmpty()) {
+            if (curFunction.getType().returnType.type == Type.Types.VOID) {
+                curBB.end(new Return(curBB, null));
+            } else {
+                //assert node.name.equals("main");
+                curBB.end(new Return(curBB, new IntImmediate(0)));
+            }
+        }
+
         curFunction = null;
     }
 
@@ -134,8 +144,26 @@ public class IRBuilder implements IASTVisitor {
 
     @Override
     public void visit(ReturnStmt node) {
-        visit(node.value);
-        curBB.end(new Return(curBB, node.value.intValue));
+        if (curFunction.getType().returnType.type == Type.Types.VOID) {
+            curBB.end(new Return(curBB, null));
+        } else {
+            if (isLogicalExpression(node.value)) {
+                // build value
+                node.value.ifTrue = new BasicBlock(curFunction, null);
+                node.value.ifFalse = new BasicBlock(curFunction, null);
+                visit(node.value);
+
+                // build assignment
+                VirtualRegister reg = new VirtualRegister("retvalue");
+                assign(false, CompilerOptions.getSizeInt(), reg, node.value);
+
+                // return result
+                curBB.end(new Return(curBB, reg));
+            } else {
+                visit(node.value);
+                curBB.end(new Return(curBB, node.value.intValue));
+            }
+        }
     }
 
     @Override
@@ -187,6 +215,9 @@ public class IRBuilder implements IASTVisitor {
         BasicBlock BBStep = new BasicBlock(curFunction, "for_step");
         BasicBlock BBAfter = new BasicBlock(curFunction, "for_after");
 
+        if (node.cond == null) BBCond = BBLoop;
+        if (node.step == null) BBStep = BBCond;
+
         // save old loop BB
         BasicBlock oldLoopCondBB = curLoopStepBB;
         BasicBlock oldLoopAfterBB = curLoopAfterBB;
@@ -195,16 +226,18 @@ public class IRBuilder implements IASTVisitor {
 
         // generate init
         if (node.init != null) visit(node.init);
-        else node.initWithDecl.forEach(x -> x.accept(this));
+        else if (node.initWithDecl != null) node.initWithDecl.forEach(x -> x.accept(this));
 
         // jump to condition check
         curBB.end(new Jump(curBB, BBCond));
 
         // generate condition check
-        curBB = BBCond;
-        node.cond.ifTrue = BBLoop;
-        node.cond.ifFalse = BBAfter;
-        visit(node.cond);
+        if (node.cond != null) {
+            curBB = BBCond;
+            node.cond.ifTrue = BBLoop;
+            node.cond.ifFalse = BBAfter;
+            visit(node.cond);
+        }
 
         // generate loop
         curBB = BBLoop;
@@ -212,9 +245,11 @@ public class IRBuilder implements IASTVisitor {
         curBB.end(new Jump(curBB, BBStep));
 
         // generate step
-        curBB = BBStep;
-        if (node.step != null) visit(node.step);
-        curBB.end(new Jump(curBB, BBCond));
+        if (node.step != null) {
+            curBB = BBStep;
+            visit(node.step);
+            curBB.end(new Jump(curBB, BBCond));
+        }
 
         // exit loop
         curLoopStepBB = oldLoopCondBB;
@@ -440,7 +475,7 @@ public class IRBuilder implements IASTVisitor {
         getAddress = false;
 
         // build assignment
-        assign(isMemOp, node.rhs.exprType.getMemorySize(), node.lhs.intValue, node.rhs);
+        assign(isMemOp, node.rhs.exprType.getRegisterSize(), node.lhs.intValue, node.rhs);
         node.intValue = node.rhs.intValue;
     }
 
@@ -491,7 +526,7 @@ public class IRBuilder implements IASTVisitor {
         boolean bakGetAddress = getAddress;
         if (type == GlobalSymbolTable.arraySize || type == GlobalSymbolTable.stringLength) {
             // array.size, string.length
-            getAddress = true;
+            getAddress = false;
             visit(node.argThis);
             getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("size");
@@ -515,10 +550,8 @@ public class IRBuilder implements IASTVisitor {
             getAddress = true;
             visit(node.parameters.get(0));
             getAddress = bakGetAddress;
-            VirtualRegister reg = new VirtualRegister("str_start");
-            curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, node.parameters.get(0).intValue, new IntImmediate(CompilerOptions.getSizeInt())));
             Call call = new Call(curBB, null, irRoot.builtinPrint);
-            call.appendArg(reg);
+            call.appendArg(node.parameters.get(0).intValue);
             curBB.append(call);
             return true;
         } else if (type == GlobalSymbolTable.printlnFunc) {
@@ -559,7 +592,9 @@ public class IRBuilder implements IASTVisitor {
             return true;
         } else if (type == GlobalSymbolTable.toStringFunc) {
             // toString
+            getAddress = false;
             visit(node.parameters.get(0));
+            getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("tostring");
             Call call = new Call(curBB, reg, irRoot.builtinToString);
             call.appendArg(node.parameters.get(0).intValue);
@@ -682,9 +717,9 @@ public class IRBuilder implements IASTVisitor {
         if (isMemOp) {
             reg = new VirtualRegister(null);
             curBB.append(new BinaryOperation(curBB, reg, op, body.intValue, one));
-            curBB.append(new Store(curBB, body.exprType.getMemorySize(), addr, 0, reg));
+            curBB.append(new Store(curBB, body.exprType.getRegisterSize(), addr, 0, reg));
         } else {
-            curBB.append(new BinaryOperation(curBB, (VirtualRegister) body.intValue, op, body.intValue, one));
+            curBB.append(new BinaryOperation(curBB, (Register) body.intValue, op, body.intValue, one));
         }
     }
 

@@ -296,6 +296,8 @@ public class MIPSPrinter implements IIRVisitor {
             out.print(", ");
             node.getSource().accept(this);
             out.println();
+        } else {
+            assert false;
         }
     }
 
