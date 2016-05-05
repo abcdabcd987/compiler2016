@@ -25,15 +25,3 @@ int main()
 	work("Mars", mars);
 	work("Mars", mars);
 }
-/*
-class TA{
-	string state;
-	int anger;
-}
-int main() {
-	TA mr = new TA;
-	mr.state = "the leading TA";
-	mr.anger = 1000;
-	println(mr.state);
-	println(toString(mr.anger));
-}*/

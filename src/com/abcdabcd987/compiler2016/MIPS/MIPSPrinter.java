@@ -62,9 +62,10 @@ public class MIPSPrinter implements IIRVisitor {
         out.println("    sub $sp, $sp, 4");
         out.println("    sw $ra, 0($sp)");
         out.println("    jal " + blockLabel(node.functions.get("__init").getStartBB()));
-        out.println("    move $a0, $v0");
-        out.println("    li $v0, 1");
-        out.println("    syscall");
+//        // print exitcode
+//        out.println("    move $a0, $v0");
+//        out.println("    li $v0, 1");
+//        out.println("    syscall");
         out.println("    lw $ra, 0($sp)");
         out.println("    jr $ra");
         out.println();

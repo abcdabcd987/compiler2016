@@ -97,8 +97,8 @@ public class RegisterInformationInjector {
                 IntComparison icmp = (IntComparison) inst;
                 if (icmp.getLhs() instanceof  IntImmediate) {
                     VirtualRegister lhs = new VirtualRegister("lhs");
-                    icmp.setLhs(lhs);
                     inst.prepend(new Move(BB, lhs, icmp.getLhs()));
+                    icmp.setLhs(lhs);
                 }
             }
     }

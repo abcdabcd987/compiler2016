@@ -1,4 +1,3 @@
-
 int cd(int d, string a, string b, string c, int sum) {
     if (d == 1) {
         println("move " + a + " --> " + c);
@@ -21,3 +20,4 @@ int main() {
     println(toString(sum));
     return 0;
 }
+

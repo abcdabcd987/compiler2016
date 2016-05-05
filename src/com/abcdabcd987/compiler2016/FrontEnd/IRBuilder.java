@@ -654,6 +654,11 @@ public class IRBuilder implements IASTVisitor {
         node.parameters.forEach(x -> call.appendArg(x.intValue));
         curBB.append(call);
         node.intValue = reg;
+
+
+        if (node.ifTrue != null) {
+            curBB.end(new Branch(curBB, node.intValue, node.ifTrue, node.ifFalse));
+        }
     }
 
     @Override

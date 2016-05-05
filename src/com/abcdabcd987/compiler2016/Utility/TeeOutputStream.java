@@ -2,18 +2,24 @@ package com.abcdabcd987.compiler2016.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by abcdabcd987 on 2016-04-18.
  */
 public class TeeOutputStream extends OutputStream {
-    private OutputStream[] streams;
+    private List<OutputStream> streams = new ArrayList<>();
 
     public TeeOutputStream(OutputStream... streams) {
         super();
-        this.streams = streams;
+        Collections.addAll(this.streams, streams);
+    }
+
+    public void add(OutputStream outputStream) {
+        streams.add(outputStream);
     }
 
     @Override

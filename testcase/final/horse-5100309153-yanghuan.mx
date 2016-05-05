@@ -40,15 +40,8 @@ void addList(int x, int y) {
 }
 
 int main() {
-	//origin(106);
-    N = 106;
-    step = new int[N][];
-    for (i = 0; i < N; i ++ ) {
-        step[i] = new int[N];
-        for (j = 0; j < N; j ++ )
-        step[i][j] = 0;
-    }   
-    N = 101;//getInt();
+	origin(106);
+    N = getInt();
     targetx = targety  = N - 1;
     for (i = 0; i < N; i ++)
         for (j = 0; j < N; j ++)
@@ -72,14 +65,3 @@ int main() {
     else print("no solution!\n");
     return 0;
 }
-/*
-int n;
-void do() {
-    n = 20;
-}
-int main() {
-    n = 10;
-    println(toString(n));
-    do();
-    println(toString(n));
-}*/

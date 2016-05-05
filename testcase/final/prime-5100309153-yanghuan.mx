@@ -12,18 +12,18 @@ int[][] result;
 
 void origin(int N)
 {
-	result = new int[N][];
+    result = new int[N][];
     for (i = 0; i < N; i ++ ) {
-		result[i] = new int[N];
+        result[i] = new int[N];
         for (j = 0; j < N; j ++ )
         result[i][j] = 0;
-    }	
+    }   
 }
 
 //int getPrime(int N, int* primeCount, int* b, int* gps, int* prime) {
 int getPrime(int N) {
     int count;
-	int i;
+    int i;
     count = 2;
     for (i = 2; i <= N; i = i + 1) {
         if (b[i] == 1) {
@@ -55,12 +55,12 @@ int getResult(int N, int k1, int k2) {
 
 int printF(int k1, int k2, int k3) {
 //    printf("%d", k1);
-	print(toString(k1));
+    print(toString(k1));
     while (k3 > 0) {
 //        printf("%c", ' ');
-		print(" ");
+        print(" ");
 //        printf("%d", k2);
-		print(toString(k2));
+        print(toString(k2));
         k2 = k2 * 2 - k1;
         k1 = (k1 + k2) / 2;
         k3 = k3 - 1;
@@ -70,10 +70,10 @@ int printF(int k1, int k2, int k3) {
 }
 
 int main() {
-	origin(170);
+    origin(170);
     N = 1000;
 //    M = 100*(getchar()-'0')+10*(getchar()-'0')+getchar()-'0';
-	M = getInt();
+    M = getInt();
     primeCount = 0;
     resultCount = 0;
     tmp[0] = 0;
@@ -104,7 +104,7 @@ int main() {
                 }
             }
     //printf("Total: %d\n", resultCount);
-	print("Total: ");
-	println(toString(resultCount));
+    print("Total: ");
+    println(toString(resultCount));
     return 0;
 }
