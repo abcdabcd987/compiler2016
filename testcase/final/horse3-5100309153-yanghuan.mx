@@ -18,7 +18,9 @@ int i;
 int j;
 
 void origin(int N)
-{
+{   
+    head = 0;
+    tail = 0;
 	step = new int[N][];
     for (i = 0; i < N; i ++ ) {
 		step[i] = new int[N];

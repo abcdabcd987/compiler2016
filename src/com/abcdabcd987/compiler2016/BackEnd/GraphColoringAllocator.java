@@ -61,9 +61,10 @@ public class GraphColoringAllocator extends RegisterAllocator {
      * */
     private void buildGraph() {
         List<VirtualRegister> args = curFunc.argVarRegList;
-        for (int i = 0; i < args.size(); ++i)
-            for (int j = i+1; j < args.size(); ++j)
-                addEdge(args.get(i), args.get(j));
+        args.forEach(this::getVRInfo);
+//        for (int i = 0; i < args.size(); ++i)
+//            for (int j = i+1; j < args.size(); ++j)
+//                addEdge(args.get(i), args.get(j));
 
         for (BasicBlock BB : curFunc.getReversePreOrder()) {
             for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {

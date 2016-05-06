@@ -23,6 +23,7 @@ public class FinalTest {
         final String srcExt = ".mx";
         final String inExt = ".in";
         final String ansExt = ".out";
+        final String limitExt = ".limit";
         SortedSet<String> files = new TreeSet<>(Arrays.stream(new File(dataRoot).listFiles())
                 .filter(File::isFile).map(x -> dataRoot + x.getName()).collect(Collectors.toSet()));
         Collection<Object[]> params = new ArrayList<>();
@@ -31,7 +32,8 @@ public class FinalTest {
             String name = file.substring(0, file.length()-srcExt.length());
             String in = files.contains(name + inExt) ? name + inExt : null;
             String ans = files.contains(name + ansExt) ? name + ansExt : null;
-            params.add(new Object[] { file, in, ans });
+            String lim = files.contains(name + limitExt) ? name + limitExt : null;
+            params.add(new Object[] { file, in, ans, lim });
         }
         return params;
     }
@@ -39,11 +41,13 @@ public class FinalTest {
     private String srcFile;
     private String inFile;
     private String ansFile;
+    private String limitFile;
 
-    public FinalTest(String srcFile, String inFile, String ansFile) {
+    public FinalTest(String srcFile, String inFile, String ansFile, String limitFile) {
         this.inFile = inFile;
         this.ansFile = ansFile;
         this.srcFile = srcFile;
+        this.limitFile = limitFile;
     }
 
     @Test
@@ -54,7 +58,7 @@ public class FinalTest {
 
         final String outputPath           = "./out/out.s";
         final boolean runSPIM             = true;
-        final boolean printToStdout       = true;
+        final boolean printToStdout       = false;
         CompilerOptions.ifPrintAST        = false;
         CompilerOptions.ifPrintRawIR      = false;
         CompilerOptions.ifPrintSSAIR      = false;
@@ -92,7 +96,7 @@ public class FinalTest {
             BufferedReader brAns = new BufferedReader(new FileReader(ansFile));
             BufferedReader brOut = new BufferedReader(new InputStreamReader(spim.getInputStream()));
             boolean correct = true;
-            System.out.println("PROGRAM OUTPUT:");
+            System.out.println("========== PROGRAM OUTPUT:");
             while (true) {
                 String lineOut = brOut.readLine();
                 String lineAns = brAns.readLine();
@@ -107,10 +111,22 @@ public class FinalTest {
 
 
             BufferedReader brErr = new BufferedReader(new InputStreamReader(spim.getErrorStream()));
-            System.out.println("STDERR:");
+            System.out.println("========== STDERR:");
+            int totInst = Integer.MAX_VALUE;
             String line;
-            while ((line = brErr.readLine()) != null) System.out.println(line);
+            while ((line = brErr.readLine()) != null) {
+                System.out.println(line);
+                if (line.startsWith("[Statistics]")) totInst = Integer.valueOf(line.split("\t")[2]);
+            }
+
             assertTrue(correct);
+
+            if (limitFile != null) {
+                BufferedReader brLim = new BufferedReader(new FileReader(limitFile));
+                int maxInst = Integer.valueOf(brLim.readLine());
+                System.out.printf("========== %d / %d (%.2f%%)\n", totInst, maxInst, totInst * 100. / maxInst);
+                assertTrue(totInst <= maxInst);
+            }
         }
     }
 }

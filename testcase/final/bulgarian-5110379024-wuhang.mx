@@ -117,7 +117,7 @@ int main() {
     show();
     merge();
     while (!win()) {
-        println("step :" + toString(++count));
+        println("step " + toString(++count) + ":");
         move();
         merge();
         show();
