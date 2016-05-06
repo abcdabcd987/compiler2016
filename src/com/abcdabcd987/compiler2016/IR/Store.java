@@ -20,8 +20,10 @@ public class Store extends IRInstruction {
         this.offset = offset;
         this.value = value;
         this.isStaticData = false;
-        if (address instanceof Register) usedRegister.add((Register) address);
+        // ignore StackSlot address in regalloc
+        if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
         if (value instanceof Register) usedRegister.add((Register) value);
+        assert !(value instanceof StackSlot);
     }
 
     public Store(BasicBlock BB, int size, StaticData address, IntValue value) {
@@ -46,7 +48,7 @@ public class Store extends IRInstruction {
 
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
-        if (address instanceof Register) address = regMap.get(address);
+        if (address instanceof Register && !(address instanceof StackSlot)) address = regMap.get(address);
         if (value instanceof Register) value = regMap.get(value);
         updateUsedRegisterCollection(regMap);
     }
@@ -82,6 +84,7 @@ public class Store extends IRInstruction {
         this.value = value;
         if (value instanceof Register)
             usedRegister.add((Register) value);
+        assert !(value instanceof StackSlot);
     }
 
     public IntValue getValue() {

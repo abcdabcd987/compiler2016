@@ -4,10 +4,7 @@ import com.abcdabcd987.compiler2016.AST.Program;
 import com.abcdabcd987.compiler2016.BackEnd.*;
 import com.abcdabcd987.compiler2016.FrontEnd.*;
 import com.abcdabcd987.compiler2016.IR.*;
-import com.abcdabcd987.compiler2016.MIPS.MIPSPrinter;
-import com.abcdabcd987.compiler2016.MIPS.MIPSRegisterSet;
-import com.abcdabcd987.compiler2016.MIPS.RegisterInformationInjector;
-import com.abcdabcd987.compiler2016.MIPS.TargetIRTransformer;
+import com.abcdabcd987.compiler2016.MIPS.*;
 import com.abcdabcd987.compiler2016.Parser.MillLexer;
 import com.abcdabcd987.compiler2016.Parser.MillParser;
 import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
@@ -87,13 +84,15 @@ public class Mill {
     }
 
     private void allocateRegister() throws Exception {
-        for (Function func : ir.functions.values()) {
-            switch (CompilerOptions.registerAllocator) {
-                case "local": new LocalBottomUpAllocator(MIPSRegisterSet.general, func).run(); break;
-                case "no": new StupidAllocator(MIPSRegisterSet.general, func).run(); break;
-                default: throw new Exception("unknown register allocator");
-            }
+        RegisterAllocator allocator;
+        Collection<PhysicalRegister> regs = MIPSRegisterSet.general;
+        switch (CompilerOptions.registerAllocator) {
+            case "local": allocator = new LocalBottomUpAllocator(ir, regs); break;
+            case "no"   : allocator = new StupidAllocator(ir, regs); break;
+            case "color": allocator = new GraphColoringAllocator(ir, regs, MIPSRegisterSet.T0, MIPSRegisterSet.T1); break;
+            default: throw new Exception("unknown register allocator");
         }
+        allocator.run();
     }
 
     public void run() throws Exception {

@@ -9,13 +9,13 @@ import java.util.*;
  * Created by abcdabcd987 on 2016-05-02.
  */
 public class StupidAllocator extends RegisterAllocator {
+    private IRRoot ir;
     private Function func;
     private List<PhysicalRegister> regs = new ArrayList<>();
     private Map<VirtualRegister, StackSlot> slots = new HashMap<>();
 
-    public StupidAllocator(Collection<PhysicalRegister> regs, Function func) {
-        this.func = func;
-        func.usedPhysicalGeneralRegister = new HashSet<>();
+    public StupidAllocator(IRRoot ir, Collection<PhysicalRegister> regs) {
+        this.ir = ir;
         this.regs.addAll(regs);
     }
 
@@ -28,8 +28,11 @@ public class StupidAllocator extends RegisterAllocator {
         return slot;
     }
 
-    @Override
-    public void run() {
+    private void processFunction() {
+        func.usedPhysicalGeneralRegister = new HashSet<>();
+        slots.clear();
+        slots.putAll(func.argStackSlotMap);
+
         Map<Register, Register> regRenameMap = new HashMap<>();
         for (BasicBlock BB : func.getReversePostOrder()) {
             for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
@@ -40,11 +43,12 @@ public class StupidAllocator extends RegisterAllocator {
                         regRenameMap.clear();
                         used.forEach(x -> regRenameMap.put(x, x));
                         for (Register reg : used)
-                            if (reg instanceof VirtualRegister || (reg instanceof StackSlot && !(inst instanceof Load) && !(inst instanceof Store))) {
-                                PhysicalRegister pr = regs.get(cnt++);
+                            if (reg instanceof VirtualRegister) {
+                                PhysicalRegister pr = ((VirtualRegister) reg).forcedPhysicalRegister;
+                                if (pr == null) pr = regs.get(cnt++);
                                 regRenameMap.put(reg, pr);
                                 func.usedPhysicalGeneralRegister.add(pr);
-                                Register addr = reg instanceof VirtualRegister ? getStackSlot((VirtualRegister) reg) : reg;
+                                Register addr = getStackSlot((VirtualRegister) reg);
                                 inst.prepend(new Load(BB, pr, CompilerOptions.getSizeInt(), addr, 0));
                             }
                         inst.setUsedRegister(regRenameMap);
@@ -62,15 +66,24 @@ public class StupidAllocator extends RegisterAllocator {
                 }
 
                 Register defined = inst.getDefinedRegister();
-                if (defined instanceof VirtualRegister || defined instanceof StackSlot) {
-                    PhysicalRegister pr = regs.get(cnt++);
+                if (defined instanceof VirtualRegister) {
+                    PhysicalRegister pr = ((VirtualRegister) defined).forcedPhysicalRegister;
+                    if (pr == null) pr = regs.get(cnt++);
                     func.usedPhysicalGeneralRegister.add(pr);
                     inst.setDefinedRegister(pr);
-                    Register addr = defined instanceof VirtualRegister ? getStackSlot((VirtualRegister) defined) : defined;
+                    Register addr = getStackSlot((VirtualRegister) defined);
                     inst.append(new Store(BB, CompilerOptions.getSizeInt(), addr, 0, pr));
                     inst = inst.getNext(); // skip the new added store
                 }
             }
+        }
+    }
+
+    @Override
+    public void run() {
+        for (Function function : ir.functions.values()) {
+            func = function;
+            processFunction();
         }
     }
 }

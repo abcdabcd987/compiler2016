@@ -11,6 +11,10 @@ public abstract class IRInstruction {
     private IRInstruction next = null;
     protected List<Register> usedRegister = new ArrayList<>();
 
+    // liveness analysis
+    public Set<VirtualRegister> liveIn = null;
+    public Set<VirtualRegister> liveOut = null;
+
     public IRInstruction(BasicBlock curBB, IRInstruction prev, IRInstruction next) {
         this.curBB = curBB;
         this.prev = prev;

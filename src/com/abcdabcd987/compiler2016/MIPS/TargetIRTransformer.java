@@ -58,8 +58,12 @@ public class TargetIRTransformer {
      */
     private void calcFrame(Function func) {
         FunctionInfo info = funcInfo.get(func);
-        info.usedCallerSaveRegister = func.usedPhysicalGeneralRegister.stream().filter(PhysicalRegister::isCallerSave).collect(Collectors.toList());
-        info.usedCalleeSaveRegister = func.usedPhysicalGeneralRegister.stream().filter(PhysicalRegister::isCalleeSave).collect(Collectors.toList());
+        info.usedCallerSaveRegister = new ArrayList<>();
+        info.usedCalleeSaveRegister = new ArrayList<>();
+        for (PhysicalRegister pr : func.usedPhysicalGeneralRegister) {
+            if (pr.isCallerSave()) info.usedCallerSaveRegister.add(pr);
+            if (pr.isCalleeSave()) info.usedCalleeSaveRegister.add(pr);
+        }
 
         info.beginArg = 0;
         info.beginSavedReg = info.beginArg      + func.argVarRegList.size()          * sizeWord;
@@ -74,11 +78,9 @@ public class TargetIRTransformer {
         }
 
         for (int i = 0; i < func.argVarRegList.size(); ++i) {
-            Register arg = func.argVarRegList.get(i);
-            if (arg instanceof StackSlot) {
-                StackSlot slot = (StackSlot) arg;
-                info.stackSlotOffset.put(slot, info.beginArg + i * sizeWord);
-            }
+            VirtualRegister arg = func.argVarRegList.get(i);
+            StackSlot slot = func.argStackSlotMap.get(arg);
+            info.stackSlotOffset.put(slot, info.beginArg + i * sizeWord);
         }
     }
 
@@ -173,60 +175,44 @@ public class TargetIRTransformer {
         if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
         if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
 
-        // replace $a? with $t?
-        boolean usedA0 = false;
-        boolean usedA1 = false;
-        boolean usedA2 = false;
-        boolean usedA3 = false;
-        for (int i = 0; i < args.size(); ++i) {
-            IntValue value = args.get(i);
-            if      (value == A0) { usedA0 = true; args.set(i, T0); }
-            else if (value == A1) { usedA1 = true; args.set(i, T1); }
-            else if (value == A2) { usedA2 = true; args.set(i, T2); }
-            else if (value == A3) { usedA3 = true; args.set(i, T3); }
-        }
-        if (usedA0) call.prepend(new Move(BB, T0, A0));
-        if (usedA1) call.prepend(new Move(BB, T1, A1));
-        if (usedA2) call.prepend(new Move(BB, T2, A2));
-        if (usedA3) call.prepend(new Move(BB, T3, A3));
-
         // copy argument
         if (callee.builtinFunctionHackName == null) {
             // normal function call
             for (int i = 0; i < args.size(); ++i) {
                 IntValue value = args.get(i);
                 if (value instanceof IntImmediate) {
-                    inst.prepend(new Move(BB, T4, args.get(i)));
-                    value = T4;
+                    inst.prepend(new Move(BB, A0, args.get(i)));
+                    value = A0;
                 } else if (value instanceof StackSlot) {
                     StackSlot slot = (StackSlot) value;
                     assert slot.getParent() == func;
-                    inst.prepend(new Load(BB, T4, sizeWord, SP, info.stackSlotOffset.get(slot)));
-                    value = T4;
+                    inst.prepend(new Load(BB, A0, sizeWord, SP, info.stackSlotOffset.get(slot)));
+                    value = A0;
                 }
-                inst.prepend(new Store(BB, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + i*sizeWord, value));
+                inst.prepend(new Store(BB, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + i*sizeWord, value));
             }
-            if (args.size() > 0) inst.prepend(new Load(BB, A0, sizeWord, SP, - calleeInfo.frameSize + info.beginArg));
-            if (args.size() > 1) inst.prepend(new Load(BB, A1, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + sizeWord));
-            if (args.size() > 2) inst.prepend(new Load(BB, A2, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 2*sizeWord));
-            if (args.size() > 3) inst.prepend(new Load(BB, A3, sizeWord, SP, - calleeInfo.frameSize + info.beginArg + 3*sizeWord));
+            if (args.size() > 0) inst.prepend(new Load(BB, A0, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg));
+            if (args.size() > 1) inst.prepend(new Load(BB, A1, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + sizeWord));
+            if (args.size() > 2) inst.prepend(new Load(BB, A2, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + 2*sizeWord));
+            if (args.size() > 3) inst.prepend(new Load(BB, A3, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + 3*sizeWord));
         } else {
             // builtin function call hack
             for (int i = 0; i < args.size(); ++i) {
-                IntValue value = args.get(i);
-                if (value instanceof StackSlot) {
-                    StackSlot slot = (StackSlot) value;
-                    assert slot.getParent() == func;
-                    inst.prepend(new Load(BB, T4, sizeWord, SP, info.stackSlotOffset.get(slot)));
-                    value = T4;
-                }
                 MIPSRegister target = null;
                 if      (i == 0) target = A0;
                 else if (i == 1) target = A1;
                 else if (i == 2) target = A2;
                 else if (i == 3) target = A3;
                 assert target != null;
-                inst.prepend(new Move(BB, target, value));
+
+                IntValue value = args.get(i);
+                if (value instanceof StackSlot) {
+                    StackSlot slot = (StackSlot) value;
+                    assert slot.getParent() == func;
+                    inst.prepend(new Load(BB, target, sizeWord, SP, info.stackSlotOffset.get(slot)));
+                } else {
+                    inst.prepend(new Move(BB, target, value));
+                }
             }
         }
 

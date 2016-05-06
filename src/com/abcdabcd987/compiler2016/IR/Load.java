@@ -21,7 +21,8 @@ public class Load extends IRInstruction {
         this.address = address;
         this.offset = offset;
         this.isStaticData = false;
-        if (address instanceof Register) usedRegister.add((Register) address);
+        // ignore StackSlot address in regalloc
+        if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
     }
 
     public Load(BasicBlock BB, Register dest, int size, StaticData address, boolean isLoadAddress) {
@@ -47,7 +48,7 @@ public class Load extends IRInstruction {
 
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
-        if (address instanceof Register) address = regMap.get(address);
+        if (address instanceof Register && !(address instanceof StackSlot)) address = regMap.get(address);
         updateUsedRegisterCollection(regMap);
     }
 

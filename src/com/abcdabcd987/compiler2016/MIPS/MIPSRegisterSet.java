@@ -8,11 +8,11 @@ import java.util.*;
  * Created by abcdabcd987 on 2016-04-30.
  */
 public class MIPSRegisterSet {
-    //                                              id,  name,   gr  ,  er  ,  ee
-    public static final MIPSRegister ZERO = new MIPSRegister(0, "zero", false, false, false);
+    //                                                      id,  name,   gr  ,  er  ,  ee
+    public static final MIPSRegister ZERO = new MIPSRegister(0,   "$0", false, false, false);
     public static final MIPSRegister AT   = new MIPSRegister(1,  "$at", false, false, false);
     public static final MIPSRegister V0   = new MIPSRegister(2,  "$v0", false, false, false);
-    public static final MIPSRegister V1   = new MIPSRegister(3,  "$v1", false, false, false);
+    public static final MIPSRegister V1   = new MIPSRegister(3,  "$v1", true , true , false);
     public static final MIPSRegister A0   = new MIPSRegister(4,  "$a0", false, false, false);
     public static final MIPSRegister A1   = new MIPSRegister(5,  "$a1", false, false, false);
     public static final MIPSRegister A2   = new MIPSRegister(6,  "$a2", false, false, false);
@@ -39,7 +39,7 @@ public class MIPSRegisterSet {
     public static final MIPSRegister K1   = new MIPSRegister(27, "$k1", false, false, false);
     public static final MIPSRegister GP   = new MIPSRegister(28, "$gp", false, false, false);
     public static final MIPSRegister SP   = new MIPSRegister(29, "$sp", false, false, false);
-    public static final MIPSRegister FP   = new MIPSRegister(30, "$fp", false, false, false);
+    public static final MIPSRegister FP   = new MIPSRegister(30, "$fp", true , true , false);
     public static final MIPSRegister RA   = new MIPSRegister(31, "$ra", false, false, false);
 
     public static final Collection<PhysicalRegister> all;

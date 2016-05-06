@@ -7,6 +7,7 @@ public class VirtualRegister extends Register {
     private String hintName;
     private int ssaId = -1;
     private VirtualRegister oldName = null;
+    public PhysicalRegister forcedPhysicalRegister = null;
 
     public VirtualRegister(String hintName) {
         this.hintName = hintName;

@@ -49,6 +49,7 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
         int number;
     }
 
+    private IRRoot ir;
     private Function func;
     private Map<VirtualRegister, VirtualRegisterInfo> vrInfo = new HashMap<>();
     private Map<IRInstruction, InstructionInfo> instInfo = new HashMap<>();
@@ -58,8 +59,8 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
     private BasicBlock curBB = null;
     private IRInstruction curInst = null;
 
-    public LocalBottomUpAllocator(Collection<PhysicalRegister> regs, Function func) {
-        this.func = func;
+    public LocalBottomUpAllocator(IRRoot ir, Collection<PhysicalRegister> regs) {
+        this.ir = ir;
         func.usedPhysicalGeneralRegister = new HashSet<>();
         regs.forEach(x -> this.regs.add(new PhysicalRegisterInfo(x)));
         this.regs.forEach(regStack::push);
@@ -193,13 +194,24 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
         }
     }
 
-    public void run() {
+    private void processFunction() {
         for (BasicBlock BB : func.getReversePostOrder()) {
             curBB = BB;
             numberInstruction();
             calcVirtualRegisterNextAccess();
             processBB();
             clearAll();
+        }
+    }
+
+    public void run() {
+        for (Function function : ir.functions.values()) {
+            func = function;
+            vrInfo.clear();
+            instInfo.clear();
+            regRenameMap.clear();
+            regStack.clear();
+            processFunction();
         }
     }
 }

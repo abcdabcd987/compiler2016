@@ -1,7 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
 import com.abcdabcd987.compiler2016.Symbol.FunctionType;
-import com.abcdabcd987.compiler2016.Symbol.Type;
 
 import java.util.*;
 
@@ -10,7 +9,7 @@ import java.util.*;
  */
 public class Function {
     public Map<String, VirtualRegister> argVarReg = new HashMap<>();
-    public List<Register> argVarRegList = new ArrayList<>();
+    public List<VirtualRegister> argVarRegList = new ArrayList<>();
     private String name;
     private BasicBlock startBB;
     public BasicBlock exitBB;
@@ -19,12 +18,13 @@ public class Function {
 
     // control flow graph information
     private List<BasicBlock> reversePostOrder = null;
-    private List<BasicBlock> preOrder = null;
+    private List<BasicBlock> reversePreOrder = null;
     private List<BasicBlock> DTPreOrder = null;
     private Set<BasicBlock> visited = null;
     public List<Return> retInstruction = new ArrayList<>();
 
     // register allocation information
+    public Map<VirtualRegister, StackSlot> argStackSlotMap = new HashMap<>();
     public List<StackSlot> stackSlots = new ArrayList<>();
     public Set<PhysicalRegister> usedPhysicalGeneralRegister = null;
 
@@ -74,21 +74,22 @@ public class Function {
     private void dfsPreOrder(BasicBlock node) {
         if (visited.contains(node)) return;
         visited.add(node);
-        preOrder.add(node);
+        reversePreOrder.add(node);
         node.getSucc().forEach(this::dfsPreOrder);
     }
     
-    // calc pre order
-    private void calcPreOrder() {
-        preOrder = new ArrayList<>();
+    // calc reverse pre order
+    public void calcReversePreOrder() {
+        reversePreOrder = new ArrayList<>();
         visited = new HashSet<>();
         dfsPreOrder(startBB);
+        Collections.reverse(reversePreOrder);
         visited = null;
     }
 
-    public List<BasicBlock> getPreOrder() {
-        if (preOrder == null) calcPreOrder();
-        return preOrder;
+    public List<BasicBlock> getReversePreOrder() {
+        if (reversePreOrder == null) calcReversePreOrder();
+        return reversePreOrder;
     }
 
     // traverse dominance tree using pre order

@@ -54,12 +54,12 @@ public class FinalTest {
 
         final String outputPath           = "./out/out.s";
         final boolean runSPIM             = true;
-        final boolean printToStdout       = false;
+        final boolean printToStdout       = true;
         CompilerOptions.ifPrintAST        = false;
         CompilerOptions.ifPrintRawIR      = false;
         CompilerOptions.ifPrintSSAIR      = false;
         CompilerOptions.enableSSA         = false;
-        CompilerOptions.registerAllocator = "no";
+        CompilerOptions.registerAllocator = "color";
 
         TeeOutputStream tee = new TeeOutputStream();
         OutputStream fileOut = new FileOutputStream(outputPath);

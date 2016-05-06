@@ -3,7 +3,6 @@ package com.abcdabcd987.compiler2016.MIPS;
 import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.IR.*;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,34 +24,42 @@ public class RegisterInformationInjector {
         Map<Register, Register> argMap = new HashMap<>();
         Map<Register, Register> useMap = new HashMap<>();
 
-        // replace function arg define
-        if (func.argVarRegList.size() > 0) argMap.put(func.argVarRegList.get(0), MIPSRegisterSet.A0);
-        if (func.argVarRegList.size() > 1) argMap.put(func.argVarRegList.get(1), MIPSRegisterSet.A1);
-        if (func.argVarRegList.size() > 2) argMap.put(func.argVarRegList.get(2), MIPSRegisterSet.A2);
-        if (func.argVarRegList.size() > 3) argMap.put(func.argVarRegList.get(3), MIPSRegisterSet.A3);
+        // make stack slot for args and load extra args
+        IRInstruction first = func.getStartBB().getHead();
         for (int i = 0; i < func.argVarRegList.size(); ++i) {
+            VirtualRegister vr = func.argVarRegList.get(i);
             StackSlot slot = new StackSlot(func, "arg" + i);
-            if (i > 3) argMap.put(func.argVarRegList.get(i), slot);
-            func.argVarRegList.set(i, slot);
+            func.argStackSlotMap.put(vr, slot);
+            first.prepend(new Load(func.getStartBB(), vr, wordSize, slot, 0));
         }
+        if (func.argVarRegList.size() > 0) func.argVarRegList.get(0).forcedPhysicalRegister = MIPSRegisterSet.A0;
+        if (func.argVarRegList.size() > 1) func.argVarRegList.get(1).forcedPhysicalRegister = MIPSRegisterSet.A1;
+        if (func.argVarRegList.size() > 2) func.argVarRegList.get(2).forcedPhysicalRegister = MIPSRegisterSet.A2;
+        if (func.argVarRegList.size() > 3) func.argVarRegList.get(3).forcedPhysicalRegister = MIPSRegisterSet.A3;
 
-        // replace function arg use
-        if (argMap.isEmpty()) return;
-        for (BasicBlock BB : func.getReversePostOrder()) {
-            for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
-                Register defined = inst.getDefinedRegister();
-                if (defined != null && argMap.containsKey(defined))
-                    inst.setDefinedRegister(argMap.get(defined));
-
-                Collection<Register> used = inst.getUsedRegister();
-                if (!used.isEmpty()) {
-                    useMap.clear();
-                    used.forEach(x -> useMap.put(x, x));
-                    useMap.putAll(argMap);
-                    inst.setUsedRegister(useMap);
-                }
-            }
-        }
+//        // replace function arg define
+//        if (func.argVarRegList.size() > 0) argMap.put(func.argVarRegList.get(0), MIPSRegisterSet.A0);
+//        if (func.argVarRegList.size() > 1) argMap.put(func.argVarRegList.get(1), MIPSRegisterSet.A1);
+//        if (func.argVarRegList.size() > 2) argMap.put(func.argVarRegList.get(2), MIPSRegisterSet.A2);
+//        if (func.argVarRegList.size() > 3) argMap.put(func.argVarRegList.get(3), MIPSRegisterSet.A3);
+//
+//        // replace function arg use
+//        if (argMap.isEmpty()) return;
+//        for (BasicBlock BB : func.getReversePostOrder()) {
+//            for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
+//                Register defined = inst.getDefinedRegister();
+//                if (defined != null && argMap.containsKey(defined))
+//                    inst.setDefinedRegister(argMap.get(defined));
+//
+//                Collection<Register> used = inst.getUsedRegister();
+//                if (!used.isEmpty()) {
+//                    useMap.clear();
+//                    used.forEach(x -> useMap.put(x, x));
+//                    useMap.putAll(argMap);
+//                    inst.setUsedRegister(useMap);
+//                }
+//            }
+//        }
     }
 
     private void replaceImmediateNumber(Function func, BasicBlock BB, IRInstruction inst) {
@@ -105,14 +112,16 @@ public class RegisterInformationInjector {
 
     private boolean modifyBuiltinFunctionCall(Function func, BasicBlock BB, Call call, Function callee, List<IntValue> args) {
         if (callee == irRoot.builtinPrint) {
+            if (func.argVarRegList.size() > 0) call.append(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
-            if (func.argVarRegList.size() > 0) call.append(new Load(BB, A0, wordSize, func.argVarRegList.get(0), 0));
+            if (func.argVarRegList.size() > 0) call.append(new Load(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
             call.remove();
             return true;
         } else if (callee == irRoot.builtinPrintln) {
             StaticString data = irRoot.stringPool.get("\\n");
+            if (func.argVarRegList.size() > 0) call.append(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
@@ -120,7 +129,7 @@ public class RegisterInformationInjector {
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, A0, new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
-            if (func.argVarRegList.size() > 0) call.append(new Load(BB, A0, wordSize, func.argVarRegList.get(0), 0));
+            if (func.argVarRegList.size() > 0) call.append(new Load(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
             call.remove();
             return true;
         }
@@ -138,12 +147,11 @@ public class RegisterInformationInjector {
 
     private void modifyHeapAllocation(Function func, BasicBlock BB, IRInstruction inst) {
         if (!(inst instanceof HeapAllocate)) return;
+        if (func.argVarRegList.size() > 0) inst.append(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
         HeapAllocate h = (HeapAllocate) inst;
         inst.prepend(new Move(BB, A0, h.getAllocSize()));
         inst.append(new Move(BB, h.getDest(), V0));
-        if (func.argVarRegList.size() > 0) {
-            inst.append(new Load(BB, A0, wordSize, func.argVarRegList.get(0), 0));
-        }
+        if (func.argVarRegList.size() > 0) inst.append(new Load(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
     }
 
     public void run() {
