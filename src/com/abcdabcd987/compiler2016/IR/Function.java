@@ -8,7 +8,6 @@ import java.util.*;
  * Created by abcdabcd987 on 2016-04-11.
  */
 public class Function {
-    public Map<String, VirtualRegister> argVarReg = new HashMap<>();
     public List<VirtualRegister> argVarRegList = new ArrayList<>();
     private String name;
     private BasicBlock startBB;

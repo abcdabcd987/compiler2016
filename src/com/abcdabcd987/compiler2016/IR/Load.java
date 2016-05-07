@@ -21,8 +21,7 @@ public class Load extends IRInstruction {
         this.address = address;
         this.offset = offset;
         this.isStaticData = false;
-        // ignore StackSlot address in regalloc
-        if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
+        reloadUsedRegisterCollection();
     }
 
     public Load(BasicBlock BB, Register dest, int size, StaticData address, boolean isLoadAddress) {
@@ -42,6 +41,13 @@ public class Load extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        // ignore StackSlot address in regalloc
+        if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         dest = newReg;
     }
@@ -49,19 +55,20 @@ public class Load extends IRInstruction {
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (address instanceof Register && !(address instanceof StackSlot)) address = regMap.get(address);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (dest instanceof VirtualRegister)
-            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
+            dest = ((VirtualRegister) dest).getSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (address instanceof VirtualRegister)
-            address = ((VirtualRegister) address).newSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
+            address = ((VirtualRegister) address).getSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
+        reloadUsedRegisterCollection();
     }
 
     public Register getDest() {

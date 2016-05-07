@@ -21,7 +21,6 @@ public class IRBuiltinFunctionInserter {
         for (int i = 0; i < funcType.argTypes.size(); ++i) {
             String name = "arg" + i;
             VirtualRegister reg = new VirtualRegister(name);
-            func.argVarReg.put(name, reg);
             func.argVarRegList.add(reg);
         }
         return func;

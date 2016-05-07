@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Created by abcdabcd987 on 2016-05-01.
@@ -69,16 +68,11 @@ public class Mill {
         ir.accept(new IRPrinter(out));
     }
 
-    private void constructSSA() {
+    private void processSSA() {
         for (Function func : ir.functions.values()) {
             SSATransformer ssaTransformer = new SSATransformer(func);
             ssaTransformer.construct();
-        }
-    }
-
-    private void destructSSA() {
-        for (Function func : ir.functions.values()) {
-            SSATransformer ssaTransformer = new SSATransformer(func);
+            if (CompilerOptions.ifPrintSSAIR) printIR();
             ssaTransformer.destroy();
         }
     }
@@ -101,11 +95,7 @@ public class Mill {
         buildIR();
         new GlobalVariableResolver(ir).run();
         if (CompilerOptions.ifPrintRawIR) printIR();
-        if (CompilerOptions.enableSSA) {
-            constructSSA();
-            if (CompilerOptions.ifPrintSSAIR) printIR();
-            destructSSA();
-        }
+        if (CompilerOptions.enableSSA) processSSA();
         new RegisterInformationInjector(ir).run();
         allocateRegister();
         new TargetIRTransformer(ir).run();

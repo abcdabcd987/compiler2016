@@ -89,10 +89,11 @@ public class IRPrinter implements IIRVisitor {
         regMap = new IdentityHashMap<>();
         counterReg = new HashMap<>();
         out.printf("func %s ", node.getName());
-        node.getType().argNames.forEach(x -> {
-            VirtualRegister reg = node.argVarReg.get(x);
+        List<String> argNames = node.getType().argNames;
+        for (int i = 0; i < argNames.size(); ++i) {
+            VirtualRegister reg = node.argVarRegList.get(i);
             out.printf("$%s ", regId(reg));
-        });
+        }
         out.printf("{\n");
 
         List<BasicBlock> RPO = node.getReversePostOrder();

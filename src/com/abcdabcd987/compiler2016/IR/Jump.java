@@ -26,23 +26,28 @@ public class Jump extends BranchInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         assert false;
     }
 
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
-        assert false;
+
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        assert false;
+
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        assert false;
+
     }
 
     public BasicBlock getTarget() {

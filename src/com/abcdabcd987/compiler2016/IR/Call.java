@@ -46,6 +46,14 @@ public class Call extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        for (IntValue arg : args)
+            if (arg instanceof Register)
+                usedRegister.add((Register) arg);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         dest = newReg;
     }
@@ -56,13 +64,13 @@ public class Call extends IRInstruction {
             if (args.get(i) instanceof Register) {
                 args.set(i, regMap.get(args.get(i)));
             }
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier) {
         if (dest instanceof VirtualRegister)
-            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
+            dest = ((VirtualRegister) dest).getSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
@@ -70,7 +78,8 @@ public class Call extends IRInstruction {
         for (int i = 0; i < args.size(); ++i)
             if (args.get(i) instanceof VirtualRegister) {
                 VirtualRegister reg = (VirtualRegister) args.get(i);
-                args.set(i, reg.newSSARenamedRegister(idSupplier.apply(reg)));
+                args.set(i, reg.getSSARenamedRegister(idSupplier.apply(reg)));
             }
+        reloadUsedRegisterCollection();
     }
 }

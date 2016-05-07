@@ -73,7 +73,7 @@ public class FinalTest {
         CompilerOptions.ifPrintAST        = false;
         CompilerOptions.ifPrintRawIR      = false;
         CompilerOptions.ifPrintSSAIR      = false;
-        CompilerOptions.enableSSA         = false;
+        CompilerOptions.enableSSA         = true;
         CompilerOptions.registerAllocator = "color";
 
         TeeOutputStream tee = new TeeOutputStream();

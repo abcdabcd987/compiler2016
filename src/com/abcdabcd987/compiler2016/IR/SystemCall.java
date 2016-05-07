@@ -23,6 +23,11 @@ public class SystemCall extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         assert false;
     }

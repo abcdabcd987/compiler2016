@@ -60,18 +60,11 @@ public abstract class IRInstruction {
         return Collections.unmodifiableCollection(usedRegister);
     }
     public abstract Register getDefinedRegister();
+    protected abstract void reloadUsedRegisterCollection();
     public abstract void setDefinedRegister(Register newReg);
     public abstract void setUsedRegister(Map<Register, Register> regMap);
     public abstract void renameDefinedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier);
     public abstract void renameUsedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier);
-
-    /** helper function */
-    protected void updateUsedRegisterCollection(Map<Register, Register> map) {
-        for (int i = 0; i < usedRegister.size(); ++i) {
-            Register reg = map.get(usedRegister.get(i));
-            if (reg != null) usedRegister.set(i, reg);
-        }
-    }
 
     public IRInstruction getPrev() {
         return prev;

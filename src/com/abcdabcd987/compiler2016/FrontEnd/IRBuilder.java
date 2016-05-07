@@ -81,7 +81,6 @@ public class IRBuilder implements IASTVisitor {
         } else {
             VirtualRegister reg = new VirtualRegister(node.name);
             if (isFunctionArgDecl) {
-                curFunction.argVarReg.put(node.name, reg);
                 curFunction.argVarRegList.add(reg);
             }
             info.register = reg;

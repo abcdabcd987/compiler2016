@@ -12,7 +12,7 @@ public class Return extends BranchInstruction {
     public Return(BasicBlock BB, IntValue ret) {
         super(BB);
         this.ret = ret;
-        if (ret instanceof Register) usedRegister.add((Register) ret);
+        reloadUsedRegisterCollection();
     }
 
     @Override
@@ -26,6 +26,12 @@ public class Return extends BranchInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        if (ret instanceof Register) usedRegister.add((Register) ret);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         assert false;
     }
@@ -33,7 +39,7 @@ public class Return extends BranchInstruction {
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (ret instanceof Register) ret = regMap.get(ret);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
@@ -44,7 +50,8 @@ public class Return extends BranchInstruction {
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (ret instanceof VirtualRegister)
-            ret = ((VirtualRegister) ret).newSSARenamedRegister(idSupplier.apply((VirtualRegister) ret));
+            ret = ((VirtualRegister) ret).getSSARenamedRegister(idSupplier.apply((VirtualRegister) ret));
+        reloadUsedRegisterCollection();
     }
 
     public IntValue getRet() {

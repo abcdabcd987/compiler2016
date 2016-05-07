@@ -16,7 +16,7 @@ public class Branch extends BranchInstruction {
         this.cond = cond;
         this.then = then;
         this.otherwise = otherwise;
-        if (cond instanceof Register) usedRegister.add((Register) cond);
+        reloadUsedRegisterCollection();
     }
 
     @Override
@@ -30,6 +30,12 @@ public class Branch extends BranchInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        if (cond instanceof Register) usedRegister.add((Register) cond);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         assert false;
     }
@@ -37,18 +43,19 @@ public class Branch extends BranchInstruction {
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (cond instanceof Register) cond = regMap.get(cond);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
-        assert false;
+
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (cond instanceof VirtualRegister)
-            cond = ((VirtualRegister) cond).newSSARenamedRegister(idSupplier.apply((VirtualRegister) cond));
+            cond = ((VirtualRegister) cond).getSSARenamedRegister(idSupplier.apply((VirtualRegister) cond));
+        reloadUsedRegisterCollection();
     }
 
     public IntValue getCond() {

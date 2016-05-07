@@ -20,10 +20,7 @@ public class Store extends IRInstruction {
         this.offset = offset;
         this.value = value;
         this.isStaticData = false;
-        // ignore StackSlot address in regalloc
-        if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
-        if (value instanceof Register) usedRegister.add((Register) value);
-        assert !(value instanceof StackSlot);
+        reloadUsedRegisterCollection();
     }
 
     public Store(BasicBlock BB, int size, StaticData address, IntValue value) {
@@ -42,6 +39,15 @@ public class Store extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        // ignore StackSlot address in regalloc
+        if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
+        if (value instanceof Register) usedRegister.add((Register) value);
+        assert !(value instanceof StackSlot);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         assert false;
     }
@@ -50,7 +56,7 @@ public class Store extends IRInstruction {
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (address instanceof Register && !(address instanceof StackSlot)) address = regMap.get(address);
         if (value instanceof Register) value = regMap.get(value);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
@@ -61,9 +67,10 @@ public class Store extends IRInstruction {
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (address instanceof VirtualRegister)
-            address = ((VirtualRegister) address).newSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
+            address = ((VirtualRegister) address).getSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
         if (value instanceof VirtualRegister)
-            value = ((VirtualRegister) value).newSSARenamedRegister(idSupplier.apply((VirtualRegister) value));
+            value = ((VirtualRegister) value).getSSARenamedRegister(idSupplier.apply((VirtualRegister) value));
+        reloadUsedRegisterCollection();
     }
 
     public int getSize() {
@@ -79,12 +86,8 @@ public class Store extends IRInstruction {
     }
 
     public void setValue(IntValue value) {
-        if (this.value instanceof Register)
-            usedRegister.remove(this.value);
         this.value = value;
-        if (value instanceof Register)
-            usedRegister.add((Register) value);
-        assert !(value instanceof StackSlot);
+        reloadUsedRegisterCollection();
     }
 
     public IntValue getValue() {

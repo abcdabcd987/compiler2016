@@ -14,7 +14,7 @@ public class HeapAllocate extends IRInstruction {
         super(BB);
         this.dest = dest;
         this.allocSize = allocSize;
-        if (allocSize instanceof Register) usedRegister.add((Register) allocSize);
+        reloadUsedRegisterCollection();
     }
 
     public IntValue getAllocSize() {
@@ -36,6 +36,12 @@ public class HeapAllocate extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        if (allocSize instanceof Register) usedRegister.add((Register) allocSize);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         dest = newReg;
     }
@@ -43,18 +49,19 @@ public class HeapAllocate extends IRInstruction {
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (allocSize instanceof Register) allocSize = regMap.get(allocSize);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (dest instanceof VirtualRegister)
-            dest = ((VirtualRegister)dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
+            dest = ((VirtualRegister)dest).getSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (allocSize instanceof VirtualRegister)
-            allocSize = ((VirtualRegister) allocSize).newSSARenamedRegister(idSupplier.apply((VirtualRegister) allocSize));
+            allocSize = ((VirtualRegister) allocSize).getSSARenamedRegister(idSupplier.apply((VirtualRegister) allocSize));
+        reloadUsedRegisterCollection();
     }
 }

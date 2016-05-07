@@ -7,6 +7,7 @@ public class VirtualRegister extends Register {
     private String hintName;
     private int ssaId = -1;
     private VirtualRegister oldName = null;
+    private VirtualRegister newName = null;
     public PhysicalRegister forcedPhysicalRegister = null;
 
     public VirtualRegister(String hintName) {
@@ -19,8 +20,9 @@ public class VirtualRegister extends Register {
         this.oldName = oldName;
     }
 
-    public VirtualRegister newSSARenamedRegister(int id) {
-        return new VirtualRegister(hintName, id, this);
+    public VirtualRegister getSSARenamedRegister(int id) {
+        if (newName == null) newName = new VirtualRegister(hintName, id, this);
+        return newName;
     }
 
     public int getSSAId() {

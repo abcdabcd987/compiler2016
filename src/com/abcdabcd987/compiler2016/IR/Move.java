@@ -14,7 +14,7 @@ public class Move extends IRInstruction {
         super(BB);
         this.dest = dest;
         this.source = source;
-        if (source instanceof Register) usedRegister.add((Register) source);
+        reloadUsedRegisterCollection();
     }
 
     public Register getDest() {
@@ -36,6 +36,12 @@ public class Move extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        if (source instanceof Register) usedRegister.add((Register) source);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         dest = newReg;
     }
@@ -43,18 +49,19 @@ public class Move extends IRInstruction {
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (source instanceof Register) source = regMap.get(source);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (dest instanceof VirtualRegister)
-            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
+            dest = ((VirtualRegister) dest).getSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (source instanceof VirtualRegister)
-            source = ((VirtualRegister) source).newSSARenamedRegister(idSupplier.apply((VirtualRegister) source));
+            source = ((VirtualRegister) source).getSSARenamedRegister(idSupplier.apply((VirtualRegister) source));
+        reloadUsedRegisterCollection();
     }
 }

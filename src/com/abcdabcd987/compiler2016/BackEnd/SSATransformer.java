@@ -59,15 +59,18 @@ public class SSATransformer {
     public void construct() {
         func.calcDominanceTree();
         func.calcDominanceFrontier();
+        func.calcReversePostOrder();
         blocksRPO = func.getReversePostOrder();
         buildGlobalSet();
         insertPhiInstruction();
         renameAll();
+        func.calcReversePostOrder();
     }
 
     public void destroy() {
         removePhiInstruction();
         sequentializeParallelCopy();
+        func.calcReversePostOrder();
     }
 
     /**
@@ -79,25 +82,26 @@ public class SSATransformer {
         for (BasicBlock block : blocksRPO) {
             varKill.clear();
             if (block == func.getStartBB()) {
-                varKill.addAll(func.argVarReg.values());
+                for (VirtualRegister arg : func.argVarRegList) {
+                    varKill.add(arg);
+                    if (!regInfo.containsKey(arg)) regInfo.put(arg, new RegisterInformation());
+                }
             }
             for (IRInstruction i = block.getHead(); i != null; i = i.getNext()) {
-                @SuppressWarnings("unchecked")
-                Collection<VirtualRegister> used = (Collection<VirtualRegister>)(Collection<?>)i.getUsedRegister();
-                VirtualRegister dest = (VirtualRegister)i.getDefinedRegister();
-                if (used != null) {
-                    for (VirtualRegister reg : used)
+                Collection<Register> used = i.getUsedRegister();
+                Register dest = i.getDefinedRegister();
+                for (Register reg : used)
+                    if (reg instanceof VirtualRegister)
                         if (!varKill.contains(reg)) {
-                            globals.add(reg);
-                            if (!regInfo.containsKey(reg)) regInfo.put(reg, new RegisterInformation());
+                            globals.add((VirtualRegister) reg);
+                            if (!regInfo.containsKey(reg)) regInfo.put((VirtualRegister) reg, new RegisterInformation());
                         }
-                }
-                if (dest != null) {
-                    varKill.add(dest);
+                if (dest instanceof VirtualRegister) {
+                    varKill.add((VirtualRegister) dest);
                     RegisterInformation info = regInfo.get(dest);
                     if (info == null) {
                         info = new RegisterInformation();
-                        regInfo.put(dest, info);
+                        regInfo.put((VirtualRegister) dest, info);
                     }
                     info.containingBB.add(block);
                 }
@@ -137,7 +141,7 @@ public class SSATransformer {
     }
 
     private void rename(BasicBlock BB) {
-        BB.phi.values().forEach(x -> x.dest = x.dest.newSSARenamedRegister(newId(x.dest)));
+        BB.phi.values().forEach(x -> x.dest = x.dest.getSSARenamedRegister(newId(x.dest)));
 
         java.util.function.Function<VirtualRegister, Integer> idSuplierForUsed = x -> regInfo.get(x).stack.peek();
         java.util.function.Function<VirtualRegister, Integer> idSuplierForDefined = this::newId;
@@ -151,7 +155,7 @@ public class SSATransformer {
                 PhiInstruction phi = entry.getValue();
                 VirtualRegister oldName = entry.getKey();
                 Stack<Integer> s = regInfo.get(oldName).stack;
-                VirtualRegister newName = !s.empty() ? oldName.newSSARenamedRegister(s.peek()) : null;
+                VirtualRegister newName = !s.empty() ? oldName.getSSARenamedRegister(s.peek()) : null;
                 phi.paths.put(BB, newName);
             }
         }
@@ -172,13 +176,17 @@ public class SSATransformer {
      */
     private void renameAll() {
         // rename function arguments
-        func.argVarReg.entrySet().forEach(e -> func.argVarReg.put(e.getKey(), e.getValue().newSSARenamedRegister(newId(e.getValue()))));
+        for (int i = 0; i < func.argVarRegList.size(); ++i) {
+            VirtualRegister old = func.argVarRegList.get(i);
+            VirtualRegister now = old.getSSARenamedRegister(newId(old));
+            func.argVarRegList.set(i, now);
+        }
 
         // rename all basic blocks
         rename(func.getStartBB());
 
         // rename function arguments
-        func.argVarReg.entrySet().forEach(e -> regInfo.get(e.getValue().getOldName()).stack.pop());
+        func.argVarRegList.forEach(x -> regInfo.get(x.getOldName()).stack.pop());
     }
 
     /**
@@ -189,10 +197,13 @@ public class SSATransformer {
         blocksRPO.forEach(x -> blockInfo.put(x, new BlockInformation()));
 
         Map<BasicBlock, List<ParallelCopy>> mapPC = new HashMap<>(); // predecessor => parallel copies
+        Set<BasicBlock> predSet = new HashSet<>();
         for (BasicBlock BB : blocksRPO) {
             mapPC.clear();
 
-            for (BasicBlock in : BB.getPred()) {
+            predSet.clear();
+            predSet.addAll(BB.getPred());
+            for (BasicBlock in : predSet) {
                 Set<BasicBlock> inSucc = in.getSucc();
                 BasicBlock toInsert = in;
                 if (inSucc.size() > 1) {

@@ -20,7 +20,7 @@ public class UnaryOperation extends IRInstruction {
         this.dest = dest;
         this.op = op;
         this.operand = operand;
-        if (operand instanceof Register) usedRegister.add((Register) operand);
+        reloadUsedRegisterCollection();
     }
 
     @Override
@@ -34,6 +34,12 @@ public class UnaryOperation extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        if (operand instanceof Register) usedRegister.add((Register) operand);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         dest = newReg;
     }
@@ -41,19 +47,20 @@ public class UnaryOperation extends IRInstruction {
     @Override
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (operand instanceof Register) operand = regMap.get(operand);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (dest instanceof VirtualRegister)
-            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
+            dest = ((VirtualRegister) dest).getSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (operand instanceof VirtualRegister)
-            operand = ((VirtualRegister) operand).newSSARenamedRegister(idSupplier.apply((VirtualRegister) operand));
+            operand = ((VirtualRegister) operand).getSSARenamedRegister(idSupplier.apply((VirtualRegister) operand));
+        reloadUsedRegisterCollection();
     }
 
     public Register getDest() {

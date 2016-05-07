@@ -22,8 +22,7 @@ public class IntComparison extends IRInstruction {
         this.cond = cond;
         this.lhs = lhs;
         this.rhs = rhs;
-        if (lhs instanceof Register) usedRegister.add((Register) lhs);
-        if (rhs instanceof Register) usedRegister.add((Register) rhs);
+        reloadUsedRegisterCollection();
     }
 
     public Register getDest() {
@@ -39,9 +38,8 @@ public class IntComparison extends IRInstruction {
     }
 
     public void setLhs(IntValue value) {
-        if (lhs instanceof Register) usedRegister.remove(lhs);
         lhs = value;
-        if (lhs instanceof Register) usedRegister.add((Register)lhs);
+        reloadUsedRegisterCollection();
     }
 
     public IntValue getRhs() {
@@ -59,6 +57,13 @@ public class IntComparison extends IRInstruction {
     }
 
     @Override
+    protected void reloadUsedRegisterCollection() {
+        usedRegister.clear();
+        if (lhs instanceof Register) usedRegister.add((Register) lhs);
+        if (rhs instanceof Register) usedRegister.add((Register) rhs);
+    }
+
+    @Override
     public void setDefinedRegister(Register newReg) {
         dest = newReg;
     }
@@ -67,20 +72,21 @@ public class IntComparison extends IRInstruction {
     public void setUsedRegister(Map<Register, Register> regMap) {
         if (lhs instanceof Register) lhs = regMap.get(lhs);
         if (rhs instanceof Register) rhs = regMap.get(rhs);
-        updateUsedRegisterCollection(regMap);
+        reloadUsedRegisterCollection();
     }
 
     @Override
     public void renameDefinedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (dest instanceof VirtualRegister)
-            dest = ((VirtualRegister) dest).newSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
+            dest = ((VirtualRegister) dest).getSSARenamedRegister(idSupplier.apply((VirtualRegister) dest));
     }
 
     @Override
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (lhs instanceof VirtualRegister)
-            lhs = ((VirtualRegister) lhs).newSSARenamedRegister(idSupplier.apply((VirtualRegister) lhs));
+            lhs = ((VirtualRegister) lhs).getSSARenamedRegister(idSupplier.apply((VirtualRegister) lhs));
         if (rhs instanceof VirtualRegister)
-            rhs = ((VirtualRegister) rhs).newSSARenamedRegister(idSupplier.apply((VirtualRegister) rhs));
+            rhs = ((VirtualRegister) rhs).getSSARenamedRegister(idSupplier.apply((VirtualRegister) rhs));
+        reloadUsedRegisterCollection();
     }
 }
