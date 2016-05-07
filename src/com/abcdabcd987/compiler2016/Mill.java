@@ -13,9 +13,7 @@ import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Collection;
 
 /**
@@ -100,5 +98,83 @@ public class Mill {
         allocateRegister();
         new TargetIRTransformer(ir).run();
         ir.accept(new MIPSPrinter(out));
+    }
+
+    private static void printHelpAndExit(boolean illegal) {
+        if (illegal) System.out.println("Error! Unknown argument sequence.");
+        System.out.println("Mill - Mx* language implementation made with love by abcdabcd987");
+        System.out.println("Usage: mill [options] [input]");
+        System.out.println("Options:");
+        System.out.println("  -help              Print this help message");
+        System.out.println("  -o <file>          Write output to <file>");
+        System.out.println("  -enable-ssa        Enable single static assignment analysis and transforms");
+        System.out.println("  -reg-alloc <val>   Set register allocator to <val>");
+        System.out.println("                     Available register allocators:");
+        System.out.println("                       no:    Don't allocate at all. (CISC-like)");
+        System.out.println("                       local: Local bottom-up allocator");
+        System.out.println("                       color: Global allocation by interference graph coloring");
+        System.out.println("  -print-ast         Print the abstract semantic tree");
+        System.out.println("  -print-ir          Print the intermediate representation");
+        System.out.println("  -print-ssa-ir      Print the intermediate representation after SSA transforms");
+        System.exit(illegal ? 1 : 0);
+    }
+
+    public static void main(String[] argv) throws Exception {
+        // default options:
+        CompilerOptions.ifPrintAST        = false;
+        CompilerOptions.ifPrintRawIR      = false;
+        CompilerOptions.ifPrintSSAIR      = false;
+        CompilerOptions.enableSSA         = false;
+        CompilerOptions.registerAllocator = "color";
+
+        // check options
+        String inFile = null;
+        String outFile = null;
+        for (int i = 0; i < argv.length; ++i) {
+            String arg = argv[i];
+            switch (arg) {
+                case "-enable-ssa":
+                    CompilerOptions.enableSSA = true;
+                    break;
+
+                case "-print-ast":
+                    CompilerOptions.ifPrintAST = true;
+                    break;
+
+                case "-print-ir":
+                    CompilerOptions.ifPrintRawIR = true;
+                    break;
+
+                case "-print-ssa-ir":
+                    CompilerOptions.ifPrintSSAIR = true;
+                    break;
+
+                case "-reg-alloc":
+                    if (i+1 >= argv.length) printHelpAndExit(true);
+                    CompilerOptions.registerAllocator = argv[++i];
+                    break;
+
+                case "-o":
+                    if (i+1 >= argv.length) printHelpAndExit(true);
+                    outFile = argv[++i];
+                    break;
+
+                case "-help":
+                case "--help":
+                case "-?":
+                case "/?":
+                    printHelpAndExit(false);
+                    break;
+
+                default:
+                    if (inFile != null) printHelpAndExit(true);
+                    inFile = arg;
+            }
+        }
+
+        // run compiler
+        InputStream in = inFile == null ? System.in : new FileInputStream(inFile);
+        PrintStream out = outFile == null ? System.out : new PrintStream(new FileOutputStream(outFile));
+        new Mill(in, out).run();
     }
 }

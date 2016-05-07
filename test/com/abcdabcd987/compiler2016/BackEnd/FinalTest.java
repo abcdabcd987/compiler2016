@@ -89,7 +89,7 @@ public class FinalTest {
         fileOut.close();
 
         if (runSPIM) {
-            Process spim = new ProcessBuilder("./lib/statspim/usr/bin/spim", "-lstack", "33554432", "-ldata", "33554432", "-stat", "-file", outputPath)
+            Process spim = new ProcessBuilder("./lib/statspim/usr/bin/spim", "-lstack", "104857600", "-stat", "-file", outputPath)
                     .redirectInput(ProcessBuilder.Redirect.PIPE)
                     .redirectOutput(ProcessBuilder.Redirect.PIPE)
                     .redirectError(ProcessBuilder.Redirect.PIPE)
