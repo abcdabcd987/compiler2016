@@ -35,7 +35,7 @@ public class Mill {
 
     private void buildAST() throws IOException {
         MillParser parser = new MillParser(new CommonTokenStream(new MillLexer(new ANTLRInputStream(in))));
-        //parser.setErrorHandler(new BailErrorStrategy());
+        parser.setErrorHandler(new BailErrorStrategy());
         ASTBuilder astBuilder = new ASTBuilder();
         new ParseTreeWalker().walk(astBuilder, parser.program());
         ast = astBuilder.getProgram();

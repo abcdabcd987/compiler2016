@@ -5,9 +5,6 @@ import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.Symbol.FunctionType;
 import com.abcdabcd987.compiler2016.Symbol.GlobalSymbolTable;
 
-import static com.abcdabcd987.compiler2016.IR.BinaryOperation.BinaryOp.*;
-import static com.abcdabcd987.compiler2016.IR.IntComparison.Condition.*;
-
 /**
  * Created by abcdabcd987 on 2016-05-02.
  */
@@ -93,17 +90,24 @@ public class IRBuiltinFunctionInserter {
 //        afterBB.end(new Return(afterBB, addrReg));
     }
 
-    private void doPrint() {
-        if (ir.builtinPrint != null) return;
-        Function func = initFunction(GlobalSymbolTable.printFunc);
-        ir.builtinPrint = func;
+    private void doPrintString() {
+        if (ir.builtinPrintString != null) return;
+        Function func = initFunction(GlobalSymbolTable.printStringFunc);
+        ir.builtinPrintString = func;
 //        ir.builtinFunctions.add(func);
     }
 
-    private void doPrintln() {
-        if (ir.builtinPrintln != null) return;
-        Function func = initFunction(GlobalSymbolTable.printlnFunc);
-        ir.builtinPrintln = func;
+    private void doPrintInt() {
+        if (ir.builtinPrintInt != null) return;
+        Function func = initFunction(GlobalSymbolTable.printIntFunc);
+        ir.builtinPrintInt = func;
+//        ir.builtinFunctions.add(func);
+    }
+
+    private void doPrintlnString() {
+        if (ir.builtinPrintlnString != null) return;
+        Function func = initFunction(GlobalSymbolTable.printlnStringFunc);
+        ir.builtinPrintlnString = func;
 //        ir.builtinFunctions.add(func);
 //
 //        BasicBlock startBB = func.getStartBB();
@@ -137,10 +141,17 @@ public class IRBuiltinFunctionInserter {
 //
 //        afterBB.append(new Store(afterBB, 1, iReg, 0, new IntImmediate('\n')));
 //        afterBB.append(new Store(afterBB, 1, iReg, 1, new IntImmediate(0)));
-//        Call call = new Call(afterBB, null, ir.builtinPrint);
+//        Call call = new Call(afterBB, null, ir.builtinPrintString);
 //        call.appendArg(addrReg);
 //        afterBB.append(call);
 //        afterBB.end(new Return(afterBB, null));
+    }
+
+
+    private void doPrintlnInt() {
+        if (ir.builtinPrintlnInt != null) return;
+        Function func = initFunction(GlobalSymbolTable.printlnIntFunc);
+        ir.builtinPrintlnInt = func;
     }
 
     private void doStringEqual() {
@@ -200,8 +211,10 @@ public class IRBuiltinFunctionInserter {
     }
 
     public void run() {
-        doPrint();
-        doPrintln();
+        doPrintString();
+        doPrintInt();
+        doPrintlnString();
+        doPrintlnInt();
         doToString();
         doGetString();
         doGetInt();

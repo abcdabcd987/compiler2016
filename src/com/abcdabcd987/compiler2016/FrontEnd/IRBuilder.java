@@ -540,55 +540,62 @@ public class IRBuilder implements IASTVisitor {
         // do nothing
     }
 
+
+
+    /**
+     * print & println optimization
+     * print(A + B + C);   =>  print(A); print(B); print(C);
+     * print(toString(i)); =>  printInt(i);
+     * @param lastNewLine if print new line for the last element
+     */
+    private void processPrint(Expr node, boolean lastNewLine) {
+        if (node instanceof BinaryExpr) {
+            // print(A + B)
+            BinaryExpr expr = (BinaryExpr) node;
+            assert expr.op == BinaryExpr.BinaryOp.ADD;
+            processPrint(expr.lhs, false);
+            processPrint(expr.rhs, lastNewLine);
+        } else if (node instanceof FunctionCall && ((FunctionCall) node).name.exprType == GlobalSymbolTable.toStringFunc) {
+            // print(toString(intExpr))
+            Expr intExpr = ((FunctionCall) node).parameters.get(0);
+            visit(intExpr);
+            Call call = new Call(curBB, null, lastNewLine ? irRoot.builtinPrintlnInt : irRoot.builtinPrintInt);
+            call.appendArg(intExpr.intValue);
+            curBB.append(call);
+        } else {
+            // print(stringExpr)
+            visit(node);
+            Call call = new Call(curBB, null, lastNewLine ? irRoot.builtinPrintlnString : irRoot.builtinPrintString);
+            call.appendArg(node.intValue);
+            curBB.append(call);
+        }
+    }
+
     private boolean processBuiltinFunctionCall(FunctionCall node, FunctionType type) {
         boolean bakGetAddress = getAddress;
+        getAddress = false;
         if (type == GlobalSymbolTable.arraySize || type == GlobalSymbolTable.stringLength) {
             // array.size, string.length
-            getAddress = false;
             visit(node.argThis);
-            getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("size");
             curBB.append(new Load(curBB, reg, CompilerOptions.getSizeInt(), node.argThis.intValue, 0));
             node.intValue = reg;
-            return true;
         } else if (type == GlobalSymbolTable.stringOrd) {
             // string.ord
-            getAddress = false;
             visit(node.argThis);
-            getAddress = false;
             node.parameters.get(0).accept(this);
-            getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("ord");
             curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, node.argThis.intValue, node.parameters.get(0).intValue));
             curBB.append(new Load(curBB, reg, 1, reg, 4));
             node.intValue = reg;
-            return true;
-        } else if (type == GlobalSymbolTable.printFunc) {
-            // print
-            getAddress = false;
-            visit(node.parameters.get(0));
-            getAddress = bakGetAddress;
-            Call call = new Call(curBB, null, irRoot.builtinPrint);
-            call.appendArg(node.parameters.get(0).intValue);
-            curBB.append(call);
-            return true;
-        } else if (type == GlobalSymbolTable.printlnFunc) {
-            // println
-            getAddress = false;
-            visit(node.parameters.get(0));
-            getAddress = bakGetAddress;
-            Call call = new Call(curBB, null, irRoot.builtinPrintln);
-            call.appendArg(node.parameters.get(0).intValue);
-            curBB.append(call);
-            return true;
+        } else if (type == GlobalSymbolTable.printStringFunc || type == GlobalSymbolTable.printlnStringFunc) {
+            // print & println (with optimization)
+            processPrint(node.parameters.get(0), type == GlobalSymbolTable.printlnStringFunc);
         } else if (type == GlobalSymbolTable.stringSubString) {
             // string.subString
-            getAddress = false;
             visit(node.argThis);
-            getAddress = false;
             node.parameters.get(0).accept(this);
             node.parameters.get(1).accept(this);
-            getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("substr");
             Call call = new Call(curBB, reg, irRoot.builtinStringSubString);
             call.appendArg(node.argThis.intValue);
@@ -596,45 +603,39 @@ public class IRBuilder implements IASTVisitor {
             call.appendArg(node.parameters.get(1).intValue);
             curBB.append(call);
             node.intValue = reg;
-            return true;
         } else if (type == GlobalSymbolTable.stringParseInt) {
             // string.parseInt
-            getAddress = false;
             visit(node.argThis);
-            getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("parsedInt");
             Call call = new Call(curBB, reg, irRoot.builtinStringParseInt);
             call.appendArg(node.argThis.intValue);
             curBB.append(call);
             node.intValue = reg;
-            return true;
         } else if (type == GlobalSymbolTable.toStringFunc) {
             // toString
-            getAddress = false;
             visit(node.parameters.get(0));
-            getAddress = bakGetAddress;
             VirtualRegister reg = new VirtualRegister("tostring");
             Call call = new Call(curBB, reg, irRoot.builtinToString);
             call.appendArg(node.parameters.get(0).intValue);
             curBB.append(call);
             node.intValue = reg;
-            return true;
         } else if (type == GlobalSymbolTable.getStringFunc) {
             // getString
             VirtualRegister reg = new VirtualRegister("gottenString");
             Call call = new Call(curBB, reg, irRoot.builtinGetString);
             curBB.append(call);
             node.intValue = reg;
-            return true;
         } else if (type == GlobalSymbolTable.getIntFunc) {
             // getInt
             VirtualRegister reg = new VirtualRegister("gottenInt");
             Call call = new Call(curBB, reg, irRoot.builtinGetInt);
             curBB.append(call);
             node.intValue = reg;
-            return true;
+        } else {
+            return false;
         }
-        return false;
+        getAddress = bakGetAddress;
+        return true;
     }
 
     @Override
@@ -741,6 +742,7 @@ public class IRBuilder implements IASTVisitor {
             reg = new VirtualRegister(null);
             curBB.append(new BinaryOperation(curBB, reg, op, body.intValue, one));
             curBB.append(new Store(curBB, body.exprType.getRegisterSize(), addr, 0, reg));
+            if (!isPostfix) node.intValue = reg;
         } else {
             curBB.append(new BinaryOperation(curBB, (Register) body.intValue, op, body.intValue, one));
         }

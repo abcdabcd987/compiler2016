@@ -17,6 +17,7 @@ public class GraphColoringAllocator extends RegisterAllocator {
         int degree = 0;
         boolean deleted = false;
         Register color = null;
+        Set<VirtualRegister> suggestSame = new HashSet<>();
     }
 
     private IRRoot ir;
@@ -38,6 +39,8 @@ public class GraphColoringAllocator extends RegisterAllocator {
         this.tmpPR1 = tmpPR1;
         this.tmpPR2 = tmpPR2;
         this.physicalRegisters = new ArrayList<>(physicalRegisters);
+        this.physicalRegisters.remove(tmpPR1);
+        this.physicalRegisters.remove(tmpPR2);
         this.colors = physicalRegisters.size();
     }
 
@@ -70,9 +73,13 @@ public class GraphColoringAllocator extends RegisterAllocator {
             for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
                 Register defined = inst.getDefinedRegister();
                 if (!(defined instanceof VirtualRegister)) continue;
-                getVRInfo((VirtualRegister) defined); // ensure vrInfo.get(define) != null
+                VirtualRegisterInfo info = getVRInfo((VirtualRegister) defined);// ensure vrInfo.get(define) != null
                 if (inst instanceof Move) {
                     IntValue src = ((Move) inst).getSource();
+                    if (src instanceof VirtualRegister) {
+                        info.suggestSame.add((VirtualRegister) src);
+                        getVRInfo((VirtualRegister) src).suggestSame.add((VirtualRegister) defined);
+                    }
                     inst.liveOut.stream()
                             .filter(x -> x != src && x != defined)
                             .forEach(x -> addEdge(x, (VirtualRegister) defined));
@@ -136,15 +143,24 @@ public class GraphColoringAllocator extends RegisterAllocator {
                 assert !usedColor.contains(forced);
                 info.color = forced;
             } else {
-                for (PhysicalRegister pr : physicalRegisters) {
-                    if (!usedColor.contains(pr)) {
-                        info.color = pr;
+                for (VirtualRegister vr : info.suggestSame) {
+                    Register reg = getVRInfo(vr).color;
+                    if (reg instanceof PhysicalRegister && !usedColor.contains(reg)) {
+                        info.color = reg;
                         break;
                     }
                 }
                 if (info.color == null) {
-                    info.color = curFunc.argStackSlotMap.get(node);
-                    if (info.color == null) info.color = new StackSlot(curFunc, null);
+                    for (PhysicalRegister pr : physicalRegisters) {
+                        if (!usedColor.contains(pr)) {
+                            info.color = pr;
+                            break;
+                        }
+                    }
+                    if (info.color == null) {
+                        info.color = curFunc.argStackSlotMap.get(node);
+                        if (info.color == null) info.color = new StackSlot(curFunc, node.getHintName());
+                    }
                 }
             }
             info.deleted = false;

@@ -1,7 +1,6 @@
 package com.abcdabcd987.compiler2016.Symbol;
 
 import com.abcdabcd987.compiler2016.AST.ArrayTypeNode;
-import com.abcdabcd987.compiler2016.AST.FunctionCall;
 import com.abcdabcd987.compiler2016.AST.StructTypeNode;
 import com.abcdabcd987.compiler2016.AST.TypeNode;
 
@@ -50,11 +49,17 @@ public class GlobalSymbolTable {
     }});
 
     // Builtin function
-    public final static FunctionType printFunc = new FunctionType(voidType, "print") {{
+    public final static FunctionType printStringFunc = new FunctionType(voidType, "print") {{
         addArg("arg0", stringType);
     }};
-    public final static FunctionType printlnFunc = new FunctionType(voidType, "println") {{
+    public final static FunctionType printlnStringFunc = new FunctionType(voidType, "println") {{
         addArg("arg0", stringType);
+    }};
+    public final static FunctionType printIntFunc = new FunctionType(voidType, "printInt") {{
+        addArg("arg0", intType);
+    }};
+    public final static FunctionType printlnIntFunc = new FunctionType(voidType, "printlnInt") {{
+        addArg("arg0", intType);
     }};
     public final static FunctionType getStringFunc = new FunctionType(stringType, "getString");
     public final static FunctionType getIntFunc = new FunctionType(intType, "getInt");
@@ -78,8 +83,10 @@ public class GlobalSymbolTable {
         put(stringLess.name, stringLess);
         put(stringEqual.name, stringEqual);
 
-        put(printFunc.name, printFunc);
-        put(printlnFunc.name, printlnFunc);
+        put(printStringFunc.name, printStringFunc);
+        put(printlnStringFunc.name, printlnStringFunc);
+        put(printIntFunc.name, printIntFunc);
+        put(printlnIntFunc.name, printlnIntFunc);
         put(getStringFunc.name, getStringFunc);
         put(getIntFunc.name, getIntFunc);
         put(toStringFunc.name, toStringFunc);
@@ -96,8 +103,10 @@ public class GlobalSymbolTable {
         add(stringLess);
         add(stringEqual);
 
-        add(printFunc);
-        add(printlnFunc);
+        add(printStringFunc);
+        add(printlnStringFunc);
+        add(printIntFunc);
+        add(printlnIntFunc);
         add(getStringFunc);
         add(getIntFunc);
         add(toStringFunc);

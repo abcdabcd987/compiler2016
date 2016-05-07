@@ -230,6 +230,12 @@ public class TargetIRTransformer {
             inst.append(new Load(BB, info.usedCallerSaveRegister.get(i), sizeWord, SP, info.beginTempReg + i * sizeWord));
     }
 
+    private void removeSelfMove(IRInstruction inst) {
+        if (!(inst instanceof Move)) return;
+        Move move = (Move) inst;
+        if (move.getSource() == move.getDest()) inst.remove();
+    }
+
     public void run() {
         for (Function func : irRoot.functions.values()) {
             FunctionInfo info = new FunctionInfo();
@@ -247,6 +253,7 @@ public class TargetIRTransformer {
                 for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
                     modifyCall(func, info, BB, inst);
                     modifyStackSlot(func, info, BB, inst);
+                    removeSelfMove(inst);
                 }
             }
         }

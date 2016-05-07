@@ -21,8 +21,10 @@ public class IRRoot {
         visitor.visit(this);
     }
 
-    public Function builtinPrint;
-    public Function builtinPrintln;
+    public Function builtinPrintString;
+    public Function builtinPrintlnString;
+    public Function builtinPrintInt;
+    public Function builtinPrintlnInt;
     public Function builtinToString;
     public Function builtinGetString;
     public Function builtinGetInt;

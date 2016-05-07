@@ -3,6 +3,8 @@ package com.abcdabcd987.compiler2016.BackEnd;
 import com.abcdabcd987.compiler2016.CompilerOptions;
 import com.abcdabcd987.compiler2016.Mill;
 import com.abcdabcd987.compiler2016.Utility.TeeOutputStream;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,6 +44,15 @@ public class FinalTest {
     private String inFile;
     private String ansFile;
     private String limitFile;
+    private static Map<String, Integer> instNumMap = new TreeMap<>();
+
+    @AfterClass
+    public static void after() throws FileNotFoundException {
+        PrintStream out = new PrintStream(new FileOutputStream("out/lim.csv"));
+        instNumMap.keySet().forEach(x -> out.print(x + "\t"));
+        out.println();
+        instNumMap.values().forEach(x -> out.print(x + "\t"));
+    }
 
     public FinalTest(String srcFile, String inFile, String ansFile, String limitFile) {
         this.inFile = inFile;
@@ -119,14 +130,17 @@ public class FinalTest {
                 if (line.startsWith("[Statistics]")) totInst = Integer.valueOf(line.split("\t")[2]);
             }
 
-            assertTrue(correct);
-
             if (limitFile != null) {
                 BufferedReader brLim = new BufferedReader(new FileReader(limitFile));
                 int maxInst = Integer.valueOf(brLim.readLine());
                 System.out.printf("========== %d / %d (%.2f%%)\n", totInst, maxInst, totInst * 100. / maxInst);
+                String filename = srcFile.substring(srcFile.lastIndexOf("/")+1, srcFile.length());
+                filename = filename.substring(0, filename.lastIndexOf("."));
+                instNumMap.put(filename, totInst);
                 assertTrue(totInst <= maxInst);
             }
+
+            assertTrue(correct);
         }
     }
 }
