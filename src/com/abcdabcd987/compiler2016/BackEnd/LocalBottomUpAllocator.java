@@ -61,7 +61,6 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
 
     public LocalBottomUpAllocator(IRRoot ir, Collection<PhysicalRegister> regs) {
         this.ir = ir;
-        func.usedPhysicalGeneralRegister = new HashSet<>();
         regs.forEach(x -> this.regs.add(new PhysicalRegisterInfo(x)));
         this.regs.forEach(regStack::push);
     }

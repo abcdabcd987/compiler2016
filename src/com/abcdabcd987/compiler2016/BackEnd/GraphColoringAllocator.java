@@ -168,8 +168,6 @@ public class GraphColoringAllocator extends RegisterAllocator {
     }
 
     private void rewriteInstruction() {
-        curFunc.usedPhysicalGeneralRegister = new HashSet<>();
-
         for (BasicBlock BB : curFunc.getReversePreOrder()) {
             for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
                 Collection<Register> used = inst.getUsedRegister();
@@ -179,8 +177,6 @@ public class GraphColoringAllocator extends RegisterAllocator {
                         renameMap.clear();
                         for (Register reg : used) {
                             if (reg instanceof VirtualRegister) {
-                                if (!vrInfo.containsKey(reg))
-                                    reg = reg;
                                 Register color = vrInfo.get(reg).color;
                                 if (color instanceof StackSlot) {
                                     PhysicalRegister pr = tmpPR1Used ? tmpPR1 : tmpPR2;

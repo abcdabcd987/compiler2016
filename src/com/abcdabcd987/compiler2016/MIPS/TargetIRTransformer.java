@@ -5,7 +5,7 @@ import com.abcdabcd987.compiler2016.IR.*;
 import com.abcdabcd987.compiler2016.Symbol.Type;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 import static com.abcdabcd987.compiler2016.MIPS.MIPSRegisterSet.*;
 
 /**
@@ -19,9 +19,10 @@ public class TargetIRTransformer {
         int beginLocal;
         int beginTempReg;
         int frameSize;
-        List<PhysicalRegister> usedCallerSaveRegister;
-        List<PhysicalRegister> usedCalleeSaveRegister;
+        List<PhysicalRegister> usedCallerSaveRegister = new ArrayList<>();
+        List<PhysicalRegister> usedCalleeSaveRegister = new ArrayList<>();
         Map<StackSlot, Integer> stackSlotOffset = new HashMap<>();
+        Set<PhysicalRegister> recursiveUsedRegister = new HashSet<>();
     }
 
     private IRRoot irRoot;
@@ -58,8 +59,6 @@ public class TargetIRTransformer {
      */
     private void calcFrame(Function func) {
         FunctionInfo info = funcInfo.get(func);
-        info.usedCallerSaveRegister = new ArrayList<>();
-        info.usedCalleeSaveRegister = new ArrayList<>();
         for (PhysicalRegister pr : func.usedPhysicalGeneralRegister) {
             if (pr.isCallerSave()) info.usedCallerSaveRegister.add(pr);
             if (pr.isCalleeSave()) info.usedCalleeSaveRegister.add(pr);
@@ -107,20 +106,6 @@ public class TargetIRTransformer {
                 ret.prepend(new Move(ret.getBasicBlock(), V0, ret.getRet()));
             }
         }
-
-        // if multiple return instruction, merge to an exit block
-        if (func.retInstruction.size() > 1) {
-            BasicBlock exitBB = new BasicBlock(func, func.getName() + ".exit");
-            exitBB.append(new Return(exitBB, V0));
-            List<Return> retInstructions = new ArrayList<>(func.retInstruction);
-            for (Return ret : retInstructions) {
-                ret.remove();
-                ret.getBasicBlock().end(new Jump(ret.getBasicBlock(), exitBB));
-            }
-            func.exitBB = exitBB;
-        } else {
-            func.exitBB = func.retInstruction.get(0).getBasicBlock();
-        }
     }
 
     private void modifyExit(Function func) {
@@ -166,8 +151,11 @@ public class TargetIRTransformer {
         FunctionInfo calleeInfo = funcInfo.get(callee);
 
         // save $t? register
-        for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i)
-            inst.prepend(new Store(BB, sizeWord, SP, info.beginTempReg + i * sizeWord, info.usedCallerSaveRegister.get(i)));
+        for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i) {
+            PhysicalRegister reg = info.usedCallerSaveRegister.get(i);
+            if (calleeInfo.recursiveUsedRegister.contains(reg))
+                inst.prepend(new Store(BB, sizeWord, SP, info.beginTempReg + i * sizeWord, reg));
+        }
 
         // save $a? register
         if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg, A0));
@@ -226,8 +214,11 @@ public class TargetIRTransformer {
         if (func.argVarRegList.size() > 3) inst.append(new Load(BB, A3, sizeWord, SP, info.beginArg + 3*sizeWord));
 
         // restore $t? register
-        for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i)
-            inst.append(new Load(BB, info.usedCallerSaveRegister.get(i), sizeWord, SP, info.beginTempReg + i * sizeWord));
+        for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i) {
+            PhysicalRegister reg = info.usedCallerSaveRegister.get(i);
+            if (calleeInfo.recursiveUsedRegister.contains(reg))
+                inst.append(new Load(BB, reg, sizeWord, SP, info.beginTempReg + i * sizeWord));
+        }
     }
 
     private void removeSelfMove(IRInstruction inst) {
@@ -236,12 +227,42 @@ public class TargetIRTransformer {
         if (move.getSource() == move.getDest()) inst.remove();
     }
 
+    private void calcRecursiveRegisterUse() {
+        Collection<Function> funcs = irRoot.functions.values();
+        Set<PhysicalRegister> set = new HashSet<>();
+
+        funcs.forEach(x -> funcInfo.get(x).recursiveUsedRegister.addAll(x.usedPhysicalGeneralRegister));
+        for (Function func : irRoot.builtinFunctions) {
+            FunctionInfo info = new FunctionInfo();
+            funcInfo.put(func, info);
+            info.recursiveUsedRegister.addAll(func.usedPhysicalGeneralRegister);
+        }
+
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (Function func : funcs) {
+                FunctionInfo info = funcInfo.get(func);
+                set.clear();
+                set.addAll(info.recursiveUsedRegister);
+                func.calleeSet.forEach(x -> set.addAll(funcInfo.get(x).recursiveUsedRegister));
+                if (!set.equals(info.recursiveUsedRegister)) {
+                    changed = true;
+                    info.recursiveUsedRegister.clear();
+                    info.recursiveUsedRegister.addAll(set);
+                }
+            }
+        }
+    }
+
     public void run() {
         for (Function func : irRoot.functions.values()) {
             FunctionInfo info = new FunctionInfo();
             funcInfo.put(func, info);
             calcFrame(func);
         }
+
+        calcRecursiveRegisterUse();
 
         for (Function func : irRoot.functions.values()) {
             FunctionInfo info = funcInfo.get(func);

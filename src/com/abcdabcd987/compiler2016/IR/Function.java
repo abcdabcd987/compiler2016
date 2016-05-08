@@ -21,11 +21,12 @@ public class Function {
     private List<BasicBlock> DTPreOrder = null;
     private Set<BasicBlock> visited = null;
     public List<Return> retInstruction = new ArrayList<>();
+    public Set<Function> calleeSet = new HashSet<>();
 
     // register allocation information
     public Map<VirtualRegister, StackSlot> argStackSlotMap = new HashMap<>();
     public List<StackSlot> stackSlots = new ArrayList<>();
-    public Set<PhysicalRegister> usedPhysicalGeneralRegister = null;
+    public Set<PhysicalRegister> usedPhysicalGeneralRegister = new HashSet<>();
 
     // builtin function hack FIXME!
     public String builtinFunctionHackName = null;

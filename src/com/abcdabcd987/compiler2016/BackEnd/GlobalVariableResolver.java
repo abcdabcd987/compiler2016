@@ -13,6 +13,7 @@ public class GlobalVariableResolver {
     private static class FunctionInfo {
         Map<StaticData, VirtualRegister> staticMap = new HashMap<>();
         Set<StaticData> writtenStatic = new HashSet<>();
+        Set<StaticData> recursiveStaticUse = new HashSet<>();
     }
     private Map<Function, FunctionInfo> funcInfo = new HashMap<>();
 
@@ -42,6 +43,7 @@ public class GlobalVariableResolver {
                 if ((inst instanceof Load && ((Load) inst).isStaticData) ||
                     (inst instanceof Store && ((Store) inst).isStaticData))
                     continue;
+                if (inst instanceof Call) func.calleeSet.add(((Call) inst).getFunc());
                 Collection<Register> used = inst.getUsedRegister();
                 if (!used.isEmpty()) {
                     renameMap.clear();
@@ -57,8 +59,7 @@ public class GlobalVariableResolver {
                 if (defined instanceof StaticData) {
                     VirtualRegister reg = getVR((StaticData) defined, staticMap);
                     inst.setDefinedRegister(reg);
-                    // write back immediately
-                    inst.append(new Store(BB, ((StaticData) defined).getRegisterSize(), (StaticData) defined, reg));
+                    // postpone write back
                     writtenStatic.add((StaticData) defined);
                 }
             }
@@ -69,12 +70,36 @@ public class GlobalVariableResolver {
         staticMap.forEach((data, vr) -> i.prepend(new Load(b, vr, data.getRegisterSize(), data, data instanceof StaticString)));
     }
 
+    private void calcRecursiveUse() {
+        funcInfo.values().forEach(info -> info.recursiveStaticUse.addAll(info.staticMap.keySet()));
+        ir.builtinFunctions.forEach(x -> funcInfo.put(x, new FunctionInfo()));
+
+        Set<StaticData> set = new HashSet<>();
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (Map.Entry<Function, FunctionInfo> entry : funcInfo.entrySet()) {
+                Function func = entry.getKey();
+                FunctionInfo info = entry.getValue();
+                set.clear();
+                set.addAll(info.recursiveStaticUse);
+                func.calleeSet.forEach(x -> set.addAll(funcInfo.get(x).recursiveStaticUse));
+                if (!info.recursiveStaticUse.equals(set)) {
+                    changed = true;
+                    info.recursiveStaticUse.clear();
+                    info.recursiveStaticUse.addAll(set);
+                }
+            }
+        }
+    }
+
     public void run() {
         for (Function func : ir.functions.values()) {
             processFunction(func);
         }
 
-        // reload global variable after function call
+        calcRecursiveUse();
+
         Set<StaticData> reloadSet = new HashSet<>();
         for (Function func : ir.functions.values()) {
             FunctionInfo info = funcInfo.get(func);
@@ -86,6 +111,13 @@ public class GlobalVariableResolver {
                     Call call = (Call) inst;
                     Function callee = call.getFunc();
                     FunctionInfo calleeInfo = funcInfo.get(callee);
+
+                    // write back before function call
+                    for (StaticData data : info.writtenStatic)
+                        if (calleeInfo.recursiveStaticUse.contains(data))
+                            call.prepend(new Store(BB, data.getRegisterSize(), data, info.staticMap.get(data)));
+
+                    // reload after function call
                     if (calleeInfo == null) continue; // ignore builtin hack
                     if (calleeInfo.writtenStatic.isEmpty()) continue;
                     reloadSet.clear();
@@ -95,6 +127,15 @@ public class GlobalVariableResolver {
                         call.append(new Load(BB, info.staticMap.get(data), data.getRegisterSize(), data, data instanceof StaticString));
                     }
                 }
+            }
+        }
+
+        // write back on exit
+        for (Function func : ir.functions.values()) {
+            Return ret = func.retInstruction.get(0);
+            FunctionInfo info = funcInfo.get(func);
+            for (StaticData data : info.writtenStatic) {
+                ret.prepend(new Store(ret.getBasicBlock(), data.getRegisterSize(), data, info.staticMap.get(data)));
             }
         }
     }

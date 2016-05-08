@@ -18,4 +18,6 @@ public abstract class Expr extends Stmt {
 
     // for IR: expr value
     public IntValue intValue;
+    public IntValue addressValue;
+    public int addressOffset;
 }

@@ -58,8 +58,6 @@ public class Mill {
 
         ast.accept(irBuilder);
         ast = null;
-
-        ir.builtinFunctions.forEach(x -> ir.functions.put(x.getName(), x));
     }
 
     private void printIR() {

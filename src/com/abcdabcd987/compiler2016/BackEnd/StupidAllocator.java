@@ -29,7 +29,6 @@ public class StupidAllocator extends RegisterAllocator {
     }
 
     private void processFunction() {
-        func.usedPhysicalGeneralRegister = new HashSet<>();
         slots.clear();
         slots.putAll(func.argStackSlotMap);
 

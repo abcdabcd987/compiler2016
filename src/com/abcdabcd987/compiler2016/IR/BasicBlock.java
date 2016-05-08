@@ -87,7 +87,7 @@ public class BasicBlock {
     private void delSucc(BasicBlock BB) {
         if (BB == null) return;
         succ.remove(BB);
-        BB.pred.remove(BB);
+        BB.pred.remove(this);
     }
 
     public void end(BranchInstruction next) {
