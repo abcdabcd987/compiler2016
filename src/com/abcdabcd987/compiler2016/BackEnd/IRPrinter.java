@@ -193,7 +193,16 @@ public class IRPrinter implements IIRVisitor {
         out.print("    ");
         visit(node.dest);
         out.print(" = phi");
-        node.paths.forEach((BB, reg) -> out.printf(" %%%s %s", labelId(BB), reg != null ? "$"+regId(reg) : "undef"));
+        for (Map.Entry<BasicBlock, IntValue> e : node.paths.entrySet()) {
+            BasicBlock BB = e.getKey();
+            IntValue reg = e.getValue();
+            String src = null;
+            if (reg == null) src = "undef";
+            else if (reg instanceof VirtualRegister) src = "$"+regId((VirtualRegister) reg);
+            else if (reg instanceof IntImmediate) src = String.valueOf(((IntImmediate) reg).getValue());
+            else assert false;
+            out.printf(" %%%s %s", labelId(BB), src);
+        }
         out.println();
     }
 

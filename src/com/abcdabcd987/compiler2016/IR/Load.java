@@ -45,6 +45,8 @@ public class Load extends IRInstruction {
         usedRegister.clear();
         // ignore StackSlot address in regalloc
         if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
+        usedIntValue.clear();
+        usedIntValue.add(address);
     }
 
     @Override
@@ -68,6 +70,12 @@ public class Load extends IRInstruction {
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (address instanceof VirtualRegister)
             address = ((VirtualRegister) address).getSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
+        reloadUsedRegisterCollection();
+    }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (address == oldValue) address = newValue;
         reloadUsedRegisterCollection();
     }
 

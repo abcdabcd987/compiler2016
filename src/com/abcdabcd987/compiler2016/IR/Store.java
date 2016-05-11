@@ -45,6 +45,9 @@ public class Store extends IRInstruction {
         if (address instanceof Register && !(address instanceof StackSlot)) usedRegister.add((Register) address);
         if (value instanceof Register) usedRegister.add((Register) value);
         assert !(value instanceof StackSlot);
+        usedIntValue.clear();
+        usedIntValue.add(value);
+        usedIntValue.add(address);
     }
 
     @Override
@@ -70,6 +73,13 @@ public class Store extends IRInstruction {
             address = ((VirtualRegister) address).getSSARenamedRegister(idSupplier.apply((VirtualRegister) address));
         if (value instanceof VirtualRegister)
             value = ((VirtualRegister) value).getSSARenamedRegister(idSupplier.apply((VirtualRegister) value));
+        reloadUsedRegisterCollection();
+    }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (address == oldValue) address = newValue;
+        if (value == oldValue) value = newValue;
         reloadUsedRegisterCollection();
     }
 

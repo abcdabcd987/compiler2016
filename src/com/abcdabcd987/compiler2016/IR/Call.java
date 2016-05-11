@@ -48,9 +48,12 @@ public class Call extends IRInstruction {
     @Override
     protected void reloadUsedRegisterCollection() {
         usedRegister.clear();
-        for (IntValue arg : args)
+        usedIntValue.clear();
+        for (IntValue arg : args) {
             if (arg instanceof Register)
                 usedRegister.add((Register) arg);
+            usedIntValue.add(arg);
+        }
     }
 
     @Override
@@ -82,4 +85,13 @@ public class Call extends IRInstruction {
             }
         reloadUsedRegisterCollection();
     }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        for (int i = 0; i < args.size(); ++i)
+            if (args.get(i) == oldValue)
+                args.set(i, newValue);
+        reloadUsedRegisterCollection();
+    }
+
 }

@@ -39,6 +39,8 @@ public class Move extends IRInstruction {
     protected void reloadUsedRegisterCollection() {
         usedRegister.clear();
         if (source instanceof Register) usedRegister.add((Register) source);
+        usedIntValue.clear();
+        usedIntValue.add(source);
     }
 
     @Override
@@ -62,6 +64,12 @@ public class Move extends IRInstruction {
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (source instanceof VirtualRegister)
             source = ((VirtualRegister) source).getSSARenamedRegister(idSupplier.apply((VirtualRegister) source));
+        reloadUsedRegisterCollection();
+    }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (source == oldValue) source = newValue;
         reloadUsedRegisterCollection();
     }
 }

@@ -29,6 +29,8 @@ public class Return extends BranchInstruction {
     protected void reloadUsedRegisterCollection() {
         usedRegister.clear();
         if (ret instanceof Register) usedRegister.add((Register) ret);
+        usedIntValue.clear();
+        usedIntValue.add(ret);
     }
 
     @Override
@@ -54,12 +56,13 @@ public class Return extends BranchInstruction {
         reloadUsedRegisterCollection();
     }
 
-    public IntValue getRet() {
-        return ret;
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (ret == oldValue) ret = newValue;
+        reloadUsedRegisterCollection();
     }
 
-    @Override
-    public void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB) {
-        // do nothing
+    public IntValue getRet() {
+        return ret;
     }
 }

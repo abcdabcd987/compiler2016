@@ -12,6 +12,8 @@ public class CompilerOptions {
     public static boolean ifPrintRawIR;
     public static boolean ifPrintSSAIR;
     public static boolean enableSSA;
+    public static boolean eliminateDeadCode;
+    public static boolean simpleConstantPropagate;
     public static String registerAllocator;
 
     public static int getSizeInt() {

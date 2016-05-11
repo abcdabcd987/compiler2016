@@ -37,6 +37,8 @@ public class UnaryOperation extends IRInstruction {
     protected void reloadUsedRegisterCollection() {
         usedRegister.clear();
         if (operand instanceof Register) usedRegister.add((Register) operand);
+        usedIntValue.clear();
+        usedIntValue.add(operand);
     }
 
     @Override
@@ -60,6 +62,12 @@ public class UnaryOperation extends IRInstruction {
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         if (operand instanceof VirtualRegister)
             operand = ((VirtualRegister) operand).getSSARenamedRegister(idSupplier.apply((VirtualRegister) operand));
+        reloadUsedRegisterCollection();
+    }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (operand == oldValue) operand = newValue;
         reloadUsedRegisterCollection();
     }
 

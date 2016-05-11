@@ -1,6 +1,5 @@
 package com.abcdabcd987.compiler2016.IR;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -50,15 +49,12 @@ public class Jump extends BranchInstruction {
 
     }
 
-    public BasicBlock getTarget() {
-        return target;
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+
     }
 
-    @Override
-    public void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB) {
-        if (target != toBB) return;
-        target = insertedBB;
-        updateConnectivity(curBB.getSucc(), toBB, insertedBB);
-        updateConnectivity(toBB.getPred(), curBB, insertedBB);
+    public BasicBlock getTarget() {
+        return target;
     }
 }

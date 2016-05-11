@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import com.abcdabcd987.compiler2016.BackEnd.SSATransformer;
+
 import java.util.*;
 import java.util.function.Function;
 
@@ -33,6 +35,8 @@ public class Branch extends BranchInstruction {
     protected void reloadUsedRegisterCollection() {
         usedRegister.clear();
         if (cond instanceof Register) usedRegister.add((Register) cond);
+        usedIntValue.clear();
+        usedIntValue.add(cond);
     }
 
     @Override
@@ -58,6 +62,12 @@ public class Branch extends BranchInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (cond == oldValue) cond = newValue;
+        reloadUsedRegisterCollection();
+    }
+
     public IntValue getCond() {
         return cond;
     }
@@ -70,11 +80,32 @@ public class Branch extends BranchInstruction {
         return otherwise;
     }
 
-    @Override
-    public void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB) {
+
+    /**
+     * <pre>
+     * change from: curBB -> toBB
+     *          to: curBB -> insertedBB -> toBB
+     * </pre>
+     * used in ssa destruction.
+     * @param toBB old jump destination
+     * @return inserted split block
+     * @see SSATransformer#removePhiInstruction()
+     */
+    public BasicBlock insertSplitBlock(BasicBlock toBB) {
+        assert (then == toBB ? 1 : 0) + (otherwise == toBB ? 1 : 0) == 1;
+        BasicBlock target = then == toBB ? then : otherwise;
+        BasicBlock insertedBB = new BasicBlock(curBB.getParent(), "CEP");
+        insertedBB.end(new Jump(insertedBB, target));
+
         if (then == toBB) then = insertedBB;
-        if (otherwise == toBB) otherwise = insertedBB;
-        updateConnectivity(curBB.getSucc(), toBB, insertedBB);
-        updateConnectivity(toBB.getPred(), curBB, insertedBB);
+        else otherwise = insertedBB;
+
+        curBB.getSucc().remove(toBB);
+        curBB.getSucc().add(insertedBB);
+        toBB.getPred().remove(curBB);
+        toBB.getPred().add(insertedBB);
+        insertedBB.getPred().add(curBB);
+        insertedBB.getSucc().add(toBB);
+        return insertedBB;
     }
 }

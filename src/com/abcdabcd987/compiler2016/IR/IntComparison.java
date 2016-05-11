@@ -61,6 +61,9 @@ public class IntComparison extends IRInstruction {
         usedRegister.clear();
         if (lhs instanceof Register) usedRegister.add((Register) lhs);
         if (rhs instanceof Register) usedRegister.add((Register) rhs);
+        usedIntValue.clear();
+        usedIntValue.add(lhs);
+        usedIntValue.add(rhs);
     }
 
     @Override
@@ -89,4 +92,12 @@ public class IntComparison extends IRInstruction {
             rhs = ((VirtualRegister) rhs).getSSARenamedRegister(idSupplier.apply((VirtualRegister) rhs));
         reloadUsedRegisterCollection();
     }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (lhs == oldValue) lhs = newValue;
+        if (rhs == oldValue) rhs = newValue;
+        reloadUsedRegisterCollection();
+    }
+
 }

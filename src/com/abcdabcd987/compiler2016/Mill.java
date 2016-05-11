@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import java.io.*;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by abcdabcd987 on 2016-05-01.
@@ -65,12 +67,12 @@ public class Mill {
     }
 
     private void processSSA() {
-        for (Function func : ir.functions.values()) {
-            SSATransformer ssaTransformer = new SSATransformer(func);
-            ssaTransformer.construct();
-            if (CompilerOptions.ifPrintSSAIR) printIR();
-            ssaTransformer.destroy();
-        }
+        List<SSATransformer> ssaTransformers = ir.functions.values().stream().map(SSATransformer::new).collect(Collectors.toList());
+        ssaTransformers.forEach(SSATransformer::construct);
+        if (CompilerOptions.ifPrintSSAIR) printIR();
+        if (CompilerOptions.eliminateDeadCode) ssaTransformers.forEach(SSATransformer::naivelyEliminateDeadCode);
+        if (CompilerOptions.simpleConstantPropagate) ssaTransformers.forEach(SSATransformer::simpleConstantPropagate);
+        ssaTransformers.forEach(SSATransformer::destroy);
     }
 
     private void allocateRegister() throws Exception {
@@ -105,7 +107,6 @@ public class Mill {
         System.out.println("Options:");
         System.out.println("  -help              Print this help message");
         System.out.println("  -o <file>          Write output to <file>");
-        System.out.println("  -enable-ssa        Enable single static assignment analysis and transforms");
         System.out.println("  -reg-alloc <val>   Set register allocator to <val>");
         System.out.println("                     Available register allocators:");
         System.out.println("                       no:    Don't allocate at all. (CISC-like)");
@@ -114,16 +115,21 @@ public class Mill {
         System.out.println("  -print-ast         Print the abstract semantic tree");
         System.out.println("  -print-ir          Print the intermediate representation");
         System.out.println("  -print-ssa-ir      Print the intermediate representation after SSA transforms");
+        System.out.println("  -no-ssa            Disable single static assignment analysis and transforms");
+        System.out.println("  -no-naive-dce      Disable naive dead code elimination");
+        System.out.println("  -no-scp            Disable simple constant propagate");
         System.exit(illegal ? 1 : 0);
     }
 
     public static void main(String[] argv) throws Exception {
         // default options:
-        CompilerOptions.ifPrintAST        = false;
-        CompilerOptions.ifPrintRawIR      = false;
-        CompilerOptions.ifPrintSSAIR      = false;
-        CompilerOptions.enableSSA         = false;
-        CompilerOptions.registerAllocator = "color";
+        CompilerOptions.ifPrintAST              = false;
+        CompilerOptions.ifPrintRawIR            = false;
+        CompilerOptions.ifPrintSSAIR            = false;
+        CompilerOptions.enableSSA               = true;
+        CompilerOptions.eliminateDeadCode       = true;
+        CompilerOptions.simpleConstantPropagate = true;
+        CompilerOptions.registerAllocator       = "color";
 
         // check options
         String inFile = null;
@@ -131,8 +137,8 @@ public class Mill {
         for (int i = 0; i < argv.length; ++i) {
             String arg = argv[i];
             switch (arg) {
-                case "-enable-ssa":
-                    CompilerOptions.enableSSA = true;
+                case "-no-ssa":
+                    CompilerOptions.enableSSA = false;
                     break;
 
                 case "-print-ast":
@@ -155,6 +161,14 @@ public class Mill {
                 case "-o":
                     if (i+1 >= argv.length) printHelpAndExit(true);
                     outFile = argv[++i];
+                    break;
+
+                case "-no-naive-dce":
+                    CompilerOptions.eliminateDeadCode = false;
+                    break;
+
+                case "-no-scp":
+                    CompilerOptions.simpleConstantPropagate = false;
                     break;
 
                 case "-help":

@@ -1,5 +1,8 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by abcdabcd987 on 2016-04-23.
  */
@@ -7,7 +10,7 @@ public class VirtualRegister extends Register {
     private String hintName;
     private int ssaId = -1;
     private VirtualRegister oldName = null;
-    private VirtualRegister newName = null;
+    private Map<Integer, VirtualRegister> newNames = null;
     public PhysicalRegister forcedPhysicalRegister = null;
 
     public VirtualRegister(String hintName) {
@@ -21,7 +24,13 @@ public class VirtualRegister extends Register {
     }
 
     public VirtualRegister getSSARenamedRegister(int id) {
-        if (newName == null) newName = new VirtualRegister(hintName, id, this);
+        assert ssaId == -1;
+        if (newNames == null) newNames = new HashMap<>();
+        VirtualRegister newName = newNames.get(id);
+        if (newName == null) {
+            newName = new VirtualRegister(hintName, id, this);
+            newNames.put(id, newName);
+        }
         return newName;
     }
 

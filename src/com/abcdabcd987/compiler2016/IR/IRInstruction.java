@@ -1,5 +1,7 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import com.abcdabcd987.compiler2016.BackEnd.SSATransformer;
+
 import java.util.*;
 
 /**
@@ -9,7 +11,9 @@ public abstract class IRInstruction {
     protected BasicBlock curBB;
     private IRInstruction prev = null;
     private IRInstruction next = null;
+    boolean removed = false;
     protected List<Register> usedRegister = new ArrayList<>();
+    protected List<IntValue> usedIntValue = new ArrayList<>();
 
     // liveness analysis
     public Set<VirtualRegister> liveIn = null;
@@ -47,11 +51,13 @@ public abstract class IRInstruction {
     }
 
     public void remove() {
+        assert !removed;
         if (this instanceof BranchInstruction) curBB.cleanEnd();
         if (prev != null) prev.next = next;
         if (next != null) next.prev = prev;
         if (curBB.getHead() == this) curBB.setHead(next);
         if (curBB.getLast() == this) curBB.setLast(prev);
+        removed = true;
     }
 
     public abstract void accept(IIRVisitor visitor);
@@ -59,12 +65,17 @@ public abstract class IRInstruction {
     public final Collection<Register> getUsedRegister() {
         return Collections.unmodifiableCollection(usedRegister);
     }
+
+    public final Collection<IntValue> getUsedIntValue() {
+        return Collections.unmodifiableCollection(usedIntValue);
+    }
     public abstract Register getDefinedRegister();
     protected abstract void reloadUsedRegisterCollection();
     public abstract void setDefinedRegister(Register newReg);
     public abstract void setUsedRegister(Map<Register, Register> regMap);
     public abstract void renameDefinedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier);
     public abstract void renameUsedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier);
+    public abstract void replaceIntValueUse(IntValue oldValue, IntValue newValue);
 
     public IRInstruction getPrev() {
         return prev;

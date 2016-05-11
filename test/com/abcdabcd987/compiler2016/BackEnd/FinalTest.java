@@ -67,14 +67,16 @@ public class FinalTest {
         System.out.flush();
         if (ansFile == null) throw new RuntimeException("no ans file");
 
-        final String outputPath           = "./out/out.s";
-        final boolean runSPIM             = true;
-        final boolean printToStdout       = false;
-        CompilerOptions.ifPrintAST        = false;
-        CompilerOptions.ifPrintRawIR      = false;
-        CompilerOptions.ifPrintSSAIR      = false;
-        CompilerOptions.enableSSA         = true;
-        CompilerOptions.registerAllocator = "color";
+        final String outputPath                 = "./out/out.s";
+        final boolean runSPIM                   = true;
+        final boolean printToStdout             = false;
+        CompilerOptions.ifPrintAST              = false;
+        CompilerOptions.ifPrintRawIR            = false;
+        CompilerOptions.ifPrintSSAIR            = false;
+        CompilerOptions.enableSSA               = true;
+        CompilerOptions.eliminateDeadCode       = true;
+        CompilerOptions.simpleConstantPropagate = true;
+        CompilerOptions.registerAllocator      = "color";
 
         TeeOutputStream tee = new TeeOutputStream();
         OutputStream fileOut = new FileOutputStream(outputPath);

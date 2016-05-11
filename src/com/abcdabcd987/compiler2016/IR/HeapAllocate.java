@@ -39,6 +39,8 @@ public class HeapAllocate extends IRInstruction {
     protected void reloadUsedRegisterCollection() {
         usedRegister.clear();
         if (allocSize instanceof Register) usedRegister.add((Register) allocSize);
+        usedIntValue.clear();
+        usedIntValue.add(allocSize);
     }
 
     @Override
@@ -64,4 +66,11 @@ public class HeapAllocate extends IRInstruction {
             allocSize = ((VirtualRegister) allocSize).getSSARenamedRegister(idSupplier.apply((VirtualRegister) allocSize));
         reloadUsedRegisterCollection();
     }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+        if (allocSize == oldValue) allocSize = newValue;
+        reloadUsedRegisterCollection();
+    }
+
 }

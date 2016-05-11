@@ -46,4 +46,9 @@ public class SystemCall extends IRInstruction {
     public void renameUsedRegister(Function<VirtualRegister, Integer> idSupplier) {
         // do nothing
     }
+
+    @Override
+    public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
+
+    }
 }

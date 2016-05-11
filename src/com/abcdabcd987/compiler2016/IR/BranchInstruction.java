@@ -13,39 +13,7 @@ public abstract class BranchInstruction extends IRInstruction {
         super(BB, prev, next);
     }
 
-    public BranchInstruction(BasicBlock BB) {
+    protected BranchInstruction(BasicBlock BB) {
         super(BB);
-    }
-
-    /**
-     * <pre>
-     * change from: curBB -> toBB
-     *          to: curBB -> insertedBB -> toBB
-     * </pre>
-     * used in ssa destruction.
-     * @param toBB old jump destination
-     * @param insertedBB inserted jump destination
-     * @see SSATransformer#removePhiInstruction()
-     */
-    public abstract void insertSplitBlock(BasicBlock toBB, BasicBlock insertedBB);
-
-    /**
-     * utility function for {@link #insertSplitBlock(BasicBlock, BasicBlock)}.
-     * replace `old` with `new` from `info`.
-     * @param info is either `curBB.getSucc()` or `toBB.getPred()`
-     * @param old old jump destination
-     * @param now new jump destination
-     * @see IRInstruction#curBB
-     * @see BasicBlock#getPred()
-     */
-    protected void updateConnectivity(Set<BasicBlock> info, BasicBlock old, BasicBlock now) {
-        if (info == null) return;
-        Iterator<BasicBlock> iter = info.iterator();
-        while (iter.hasNext())
-            if (iter.next() == old) {
-                iter.remove();
-                break;
-            }
-        info.add(now);
     }
 }

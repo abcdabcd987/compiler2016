@@ -9,20 +9,25 @@ import java.util.*;
  */
 public class SSATransformer {
     private static class RegisterInformation {
-        /**
-         * BBs that contains reg
-         */
+        /** BBs that contains reg */
         Set<BasicBlock> containingBB = new HashSet<>();
 
-        /**
-         * SSA id stack
-         */
+        /** SSA id stack */
         Stack<Integer> stack = new Stack<>();
 
-        /**
-         * SSA id allocator
-         */
+        /** SSA id allocator */
         int counter = 0;
+    }
+
+    private static class IntValueInformation {
+        /** Instruction that uses this int value */
+        Set<IRInstruction> usedBy = new HashSet<>();
+
+        /** Instruction that uses this int value */
+        Set<PhiInstruction> usedByPhiSet = new HashSet<>();
+
+        /** Instruction that defines this int value */
+        IRInstruction definedBy = null;
     }
 
     /**
@@ -31,9 +36,9 @@ public class SSATransformer {
      */
     private static class ParallelCopy {
         VirtualRegister target;
-        VirtualRegister source;
+        IntValue source;
 
-        public ParallelCopy(VirtualRegister target, VirtualRegister source) {
+        ParallelCopy(VirtualRegister target, IntValue source) {
             this.target = target;
             this.source = source;
         }
@@ -50,6 +55,7 @@ public class SSATransformer {
     private List<BasicBlock> blocksRPO;
     private Set<VirtualRegister> globals = new HashSet<>();
     private Map<VirtualRegister, RegisterInformation> regInfo = new HashMap<>();
+    private Map<IntValue, IntValueInformation> ivInfo = new HashMap<>();
     private Map<BasicBlock, BlockInformation> blockInfo = new HashMap<>();
 
     public SSATransformer(Function func) {
@@ -64,13 +70,13 @@ public class SSATransformer {
         buildGlobalSet();
         insertPhiInstruction();
         renameAll();
-        func.calcReversePostOrder();
     }
 
     public void destroy() {
         removePhiInstruction();
-        sequentializeParallelCopy();
         func.calcReversePostOrder();
+        blocksRPO = func.getReversePostOrder();
+        sequentializeParallelCopy();
     }
 
     /**
@@ -204,20 +210,19 @@ public class SSATransformer {
             predSet.clear();
             predSet.addAll(BB.getPred());
             for (BasicBlock in : predSet) {
-                Set<BasicBlock> inSucc = in.getSucc();
                 BasicBlock toInsert = in;
-                if (inSucc.size() > 1) {
-                    toInsert = new BasicBlock(func, "CEP");
+                if (in.getSucc().size() > 1) {
+                    assert in.getLast() instanceof Branch;
+                    toInsert = ((Branch) in.getLast()).insertSplitBlock(BB);
                     blockInfo.put(toInsert, new BlockInformation());
-                    ((BranchInstruction) BB.getLast()).insertSplitBlock(BB, toInsert);
                 }
                 mapPC.put(in, blockInfo.get(toInsert).pc);
             }
 
             for (PhiInstruction phi : BB.phi.values()) {
-                for (Map.Entry<BasicBlock, VirtualRegister> entry : phi.paths.entrySet()) {
+                for (Map.Entry<BasicBlock, IntValue> entry : phi.paths.entrySet()) {
                     BasicBlock fromBB = entry.getKey();
-                    VirtualRegister srcReg = entry.getValue();
+                    IntValue srcReg = entry.getValue();
                     VirtualRegister tarReg = phi.dest;
                     if (tarReg != srcReg && srcReg != null) // parallel self copy and copy of undef value is meaningless
                         mapPC.get(fromBB).add(new ParallelCopy(tarReg, srcReg));
@@ -255,18 +260,23 @@ public class SSATransformer {
 
             pred.put(tmpReg, null);
             for (ParallelCopy i : PC) {
-                location.put(i.target, null);
-                pred.put(i.source, null);
+                if (i.source instanceof VirtualRegister) {
+                    location.put(i.target, null);
+                    pred.put((VirtualRegister) i.source, null);
+                }
             }
 
             for (ParallelCopy i : PC) {
-                location.put(i.source, i.source);
-                pred.put(i.target, i.source);
-                todo.add(i.target);
+                if (i.source instanceof VirtualRegister) {
+                    VirtualRegister src = (VirtualRegister) i.source;
+                    location.put(src, src);
+                    pred.put(i.target, src);
+                    todo.add(i.target);
+                }
             }
 
             for (ParallelCopy i : PC)
-                if (location.get(i.target) == null)
+                if (i.source instanceof VirtualRegister && location.get(i.target) == null)
                     ready.add(i.target);
 
             while (!todo.isEmpty()) {
@@ -287,7 +297,134 @@ public class SSATransformer {
                 }
             }
 
+            for (ParallelCopy i : PC)
+                if (i.source instanceof IntImmediate)
+                    BB.appendBeforeJump(new Move(BB, i.target, i.source));
+
             PC.clear();
+        }
+    }
+
+    private IntValueInformation getIntValueInfo(IntValue reg) {
+        IntValueInformation info = ivInfo.get(reg);
+        if (info == null) {
+            info = new IntValueInformation();
+            ivInfo.put(reg, info);
+        }
+        return info;
+    }
+
+    private void buildDefUse() {
+        for (BasicBlock BB : func.getReversePostOrder()) {
+            for (PhiInstruction phi : BB.phi.values()) {
+                for (IntValue used : phi.paths.values()) {
+                    getIntValueInfo(used).usedBy.add(phi);
+                    getIntValueInfo(used).usedByPhiSet.add(phi);
+                }
+                getIntValueInfo(phi.dest).definedBy = phi;
+            }
+            for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext()) {
+                for (IntValue used : inst.getUsedIntValue())
+                    getIntValueInfo(used).usedBy.add(inst);
+                if (inst.getDefinedRegister() != null)
+                    getIntValueInfo(inst.getDefinedRegister()).definedBy = inst;
+            }
+        }
+    }
+
+    /**
+     * Return true if inst has side effect other than assigning to its destination.
+     * Should only be used by {@link #naivelyEliminateDeadCode()}
+     */
+    private boolean hasSideEffect(IRInstruction inst) {
+        return inst instanceof HeapAllocate || inst instanceof Call;
+    }
+
+    /**
+     * Naive Dead Code Elimination
+     * See the Tiger Book: Algorithm 19.12
+     */
+    public void naivelyEliminateDeadCode() {
+        buildDefUse();
+        Set<VirtualRegister> workList = new HashSet<>();
+        for (IntValue intValue : ivInfo.keySet()) {
+            if (intValue instanceof VirtualRegister)
+                workList.add((VirtualRegister) intValue);
+        }
+        while (!workList.isEmpty()) {
+            Iterator<VirtualRegister> iter = workList.iterator();
+            VirtualRegister reg = iter.next();
+            iter.remove();
+            IntValueInformation info = ivInfo.get(reg);
+            Set<IRInstruction> useList = info.usedBy;
+            if (useList.isEmpty()) {
+                IRInstruction def = info.definedBy;
+                if (def != null && !hasSideEffect(def)) {
+                    def.remove();
+                    for (PhiInstruction phi : info.usedByPhiSet)
+                        for (Map.Entry<BasicBlock, IntValue> e : phi.paths.entrySet())
+                            if (e.getValue() == reg)
+                                phi.paths.put(e.getKey(), null);
+                    for (Register used : def.getUsedRegister())
+                        if (used instanceof VirtualRegister) {
+                            VirtualRegister x = (VirtualRegister) used;
+                            ivInfo.get(x).usedBy.remove(def);
+                            if (def instanceof PhiInstruction) ivInfo.get(x).usedByPhiSet.remove(def);
+                            workList.add(x);
+                        }
+                }
+            }
+        }
+    }
+
+    private void replaceIntValueUse(Set<IRInstruction> workList, IRInstruction inst, IntValue oldValue, IntValue newValue) {
+        Set<IRInstruction> oldUser = ivInfo.get(oldValue).usedBy;
+        Set<IRInstruction> newUser = ivInfo.get(newValue).usedBy;
+        for (IRInstruction user : oldUser)
+            if (user != inst) {
+                user.replaceIntValueUse(oldValue, newValue);
+                workList.add(user);
+                newUser.add(user);
+            }
+        newUser.remove(inst);
+        oldUser.clear();
+        inst.remove();
+    }
+
+    /**
+     * Simple Constant Propagation
+     * See the Tiger Book: Chapter 19.3.2
+     */
+    public void simpleConstantPropagate() {
+        ivInfo.clear();
+        buildDefUse();
+        Set<IRInstruction> workList = new HashSet<>();
+        for (BasicBlock BB : func.getReversePostOrder()) {
+            BB.phi.values().forEach(workList::add);
+            for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext())
+                workList.add(inst);
+        }
+        while (!workList.isEmpty()) {
+            Iterator<IRInstruction> iter = workList.iterator();
+            IRInstruction inst = iter.next();
+            iter.remove();
+            if (inst instanceof Move) {
+                Move move = (Move) inst;
+                if (move.getSource() instanceof IntImmediate || move.getSource() instanceof VirtualRegister)
+                    replaceIntValueUse(workList, inst, move.getDest(), move.getSource());
+            } else if (inst instanceof PhiInstruction) {
+                PhiInstruction phi = (PhiInstruction) inst;
+                IntValue val = phi.paths.values().iterator().next();
+                if (phi.paths.size() == 1) {
+                    replaceIntValueUse(workList, inst, phi.dest, val);
+                } else if (val instanceof IntImmediate) {
+                    int c = ((IntImmediate) val).getValue();
+                    boolean same = phi.paths.values().stream().allMatch(x -> x instanceof IntImmediate && ((IntImmediate) x).getValue() == c);
+                    if (same) {
+                        replaceIntValueUse(workList, inst, phi.dest, val);
+                    }
+                }
+            }
         }
     }
 }
