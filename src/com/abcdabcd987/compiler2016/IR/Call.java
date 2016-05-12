@@ -94,4 +94,15 @@ public class Call extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public Call copyAndRename(Map<Object, Object> renameMap) {
+        Call call = new Call(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (VirtualRegister) renameMap.getOrDefault(dest, dest),
+                func
+        );
+        for (IntValue arg : args) call.appendArg((IntValue) renameMap.getOrDefault(arg, arg));
+        return call;
+    }
+
 }

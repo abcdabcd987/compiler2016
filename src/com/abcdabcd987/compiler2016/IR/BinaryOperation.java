@@ -100,4 +100,15 @@ public class BinaryOperation extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public BinaryOperation copyAndRename(Map<Object, Object> renameMap) {
+        return new BinaryOperation(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (Register) renameMap.getOrDefault(dest, dest),
+                op,
+                (IntValue) renameMap.getOrDefault(lhs, lhs),
+                (IntValue) renameMap.getOrDefault(rhs, rhs)
+        );
+    }
+
 }

@@ -10,6 +10,12 @@ public abstract class StaticData extends Register {
         this.hintName = hintName;
     }
 
+    @Override
+    public IntValue copy() {
+        // do nothing
+        return this;
+    }
+
     public String getHintName() {
         return hintName;
     }

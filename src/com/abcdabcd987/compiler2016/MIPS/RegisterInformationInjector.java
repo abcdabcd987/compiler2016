@@ -88,7 +88,7 @@ public class RegisterInformationInjector {
 
     private boolean modifyBuiltinFunctionCall(Function func, BasicBlock BB, Call call, Function callee, List<IntValue> args) {
         if (callee == irRoot.builtinPrintString) {
-            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
+            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
@@ -97,7 +97,7 @@ public class RegisterInformationInjector {
             return true;
         } else if (callee == irRoot.builtinPrintlnString) {
             StaticString data = irRoot.stringPool.get("\\n");
-            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
+            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
             call.prepend(new BinaryOperation(BB, A0, BinaryOperation.BinaryOp.ADD, args.get(0), new IntImmediate(wordSize)));
             call.prepend(new Move(BB, V0, new IntImmediate(4)));
             call.prepend(new SystemCall(BB));
@@ -109,7 +109,7 @@ public class RegisterInformationInjector {
             call.remove();
             return true;
         } else if (callee == irRoot.builtinPrintInt) {
-            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
+            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
             call.prepend(new Move(BB, A0, args.get(0)));
             call.prepend(new Move(BB, V0, new IntImmediate(1)));
             call.prepend(new SystemCall(BB));
@@ -118,7 +118,7 @@ public class RegisterInformationInjector {
             return true;
         } else if (callee == irRoot.builtinPrintlnInt) {
             StaticString data = irRoot.stringPool.get("\\n");
-            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
+            if (func.argVarRegList.size() > 0) call.prepend(new Store(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
             call.prepend(new Move(BB, A0, args.get(0)));
             call.prepend(new Move(BB, V0, new IntImmediate(1)));
             call.prepend(new SystemCall(BB));
@@ -144,7 +144,7 @@ public class RegisterInformationInjector {
 
     private void modifyHeapAllocation(Function func, BasicBlock BB, IRInstruction inst) {
         if (!(inst instanceof HeapAllocate)) return;
-        if (func.argVarRegList.size() > 0) inst.append(new Store(BB, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0, A0));
+        if (func.argVarRegList.size() > 0) inst.append(new Store(BB, A0, wordSize, func.argStackSlotMap.get(func.argVarRegList.get(0)), 0));
         HeapAllocate h = (HeapAllocate) inst;
         inst.prepend(new Move(BB, A0, h.getAllocSize()));
         inst.append(new Move(BB, h.getDest(), V0));

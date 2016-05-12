@@ -76,6 +76,13 @@ public class PhiInstruction extends IRInstruction {
                 paths.put(e.getKey(), newValue);
     }
 
+    @Override
+    public IRInstruction copyAndRename(Map<Object, Object> renameMap) {
+        // do nothing
+        assert false;
+        return null;
+    }
+
     public BasicBlock getBasicBlock() {
         return BB;
     }

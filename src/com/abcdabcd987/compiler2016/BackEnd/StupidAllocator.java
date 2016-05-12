@@ -71,7 +71,7 @@ public class StupidAllocator extends RegisterAllocator {
                     func.usedPhysicalGeneralRegister.add(pr);
                     inst.setDefinedRegister(pr);
                     Register addr = getStackSlot((VirtualRegister) defined);
-                    inst.append(new Store(BB, CompilerOptions.getSizeInt(), addr, 0, pr));
+                    inst.append(new Store(BB, pr, CompilerOptions.getSizeInt(), addr, 0));
                     inst = inst.getNext(); // skip the new added store
                 }
             }

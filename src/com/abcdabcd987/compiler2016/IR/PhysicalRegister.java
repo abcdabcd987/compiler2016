@@ -10,6 +10,12 @@ public abstract class PhysicalRegister extends Register {
     public abstract String getName();
 
     @Override
+    public IntValue copy() {
+        // do nothing
+        return null;
+    }
+
+    @Override
     public void accept(IIRVisitor visitor) {
         visitor.visit(this);
     }

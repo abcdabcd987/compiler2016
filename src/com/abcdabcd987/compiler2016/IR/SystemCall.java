@@ -51,4 +51,11 @@ public class SystemCall extends IRInstruction {
     public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
 
     }
+
+    @Override
+    public IRInstruction copyAndRename(Map<Object, Object> renameMap) {
+        // do nothing
+        assert false;
+        return null;
+    }
 }

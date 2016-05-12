@@ -1,5 +1,8 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -52,6 +55,19 @@ public class Jump extends BranchInstruction {
     @Override
     public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
 
+    }
+
+    @Override
+    public Collection<BasicBlock> getUsedBasicBlock() {
+        return Collections.singletonList(target);
+    }
+
+    @Override
+    public Jump copyAndRename(Map<Object, Object> renameMap) {
+        return new Jump(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (BasicBlock) renameMap.getOrDefault(target, target)
+        );
     }
 
     public BasicBlock getTarget() {

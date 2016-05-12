@@ -91,8 +91,10 @@ public class Mill {
         buildAST();
         if (CompilerOptions.ifPrintAST) printAST();
         buildIR();
-        new GlobalVariableResolver(ir).run();
         if (CompilerOptions.ifPrintRawIR) printIR();
+        if (CompilerOptions.enableInline) new FunctionInliner(ir).run();
+        if (CompilerOptions.ifPrintIRAfterInline) printIR();
+        new GlobalVariableResolver(ir).run();
         if (CompilerOptions.enableSSA) processSSA();
         new RegisterInformationInjector(ir).run();
         allocateRegister();
@@ -115,6 +117,7 @@ public class Mill {
         System.out.println("  -print-ast         Print the abstract semantic tree");
         System.out.println("  -print-ir          Print the intermediate representation");
         System.out.println("  -print-ssa-ir      Print the intermediate representation after SSA transforms");
+        System.out.println("  -no-inline         Disable function inlining");
         System.out.println("  -no-ssa            Disable single static assignment analysis and transforms");
         System.out.println("  -no-naive-dce      Disable naive dead code elimination");
         System.out.println("  -no-scp            Disable simple constant propagate");
@@ -122,15 +125,6 @@ public class Mill {
     }
 
     public static void main(String[] argv) throws Exception {
-        // default options:
-        CompilerOptions.ifPrintAST              = false;
-        CompilerOptions.ifPrintRawIR            = false;
-        CompilerOptions.ifPrintSSAIR            = false;
-        CompilerOptions.enableSSA               = true;
-        CompilerOptions.eliminateDeadCode       = true;
-        CompilerOptions.simpleConstantPropagate = true;
-        CompilerOptions.registerAllocator       = "color";
-
         // check options
         String inFile = null;
         String outFile = null;
@@ -161,6 +155,10 @@ public class Mill {
                 case "-o":
                     if (i+1 >= argv.length) printHelpAndExit(true);
                     outFile = argv[++i];
+                    break;
+
+                case "-no-inline":
+                    CompilerOptions.enableInline = false;
                     break;
 
                 case "-no-naive-dce":

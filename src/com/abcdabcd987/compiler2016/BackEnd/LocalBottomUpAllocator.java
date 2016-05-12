@@ -106,7 +106,7 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
             assert i != null;
             VirtualRegisterInfo vri = vrInfo.get(i.virtualRegister);
             vri.currentPhysicalRegister = null;
-            Store store = new Store(curBB, CompilerOptions.getSizeInt(), vri.stackSlot, 0, i.physicalRegister);
+            Store store = new Store(curBB, i.physicalRegister, CompilerOptions.getSizeInt(), vri.stackSlot, 0);
             curInst.prepend(store);
         } else {
             i = regStack.pop();
@@ -128,7 +128,7 @@ public class LocalBottomUpAllocator extends RegisterAllocator {
     }
 
     private void free(VirtualRegisterInfo info) {
-        Store store = new Store(curBB, CompilerOptions.getSizeInt(), info.stackSlot, 0, info.currentPhysicalRegister.physicalRegister);
+        Store store = new Store(curBB, info.currentPhysicalRegister.physicalRegister, CompilerOptions.getSizeInt(), info.stackSlot, 0);
         curInst.prepend(store);
         info.currentPhysicalRegister.clear();
         regStack.push(info.currentPhysicalRegister);

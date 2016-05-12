@@ -22,6 +22,7 @@ public class Function {
     private Set<BasicBlock> visited = null;
     public List<Return> retInstruction = new ArrayList<>();
     public Set<Function> calleeSet = new HashSet<>();
+    public Set<Function> recursiveCalleeSet = new HashSet<>();
 
     // register allocation information
     public Map<VirtualRegister, StackSlot> argStackSlotMap = new HashMap<>();
@@ -176,6 +177,19 @@ public class Function {
                     runner = runner.IDom;
                 }
             }
+        }
+    }
+
+    /**
+     * update callee set
+     */
+    public void updateCalleeSet() {
+        calleeSet.clear();
+        for (BasicBlock BB : getReversePostOrder()) {
+            for (IRInstruction inst = BB.getHead(); inst != null; inst = inst.getNext())
+                if (inst instanceof Call) {
+                    calleeSet.add(((Call) inst).getFunc());
+                }
         }
     }
 

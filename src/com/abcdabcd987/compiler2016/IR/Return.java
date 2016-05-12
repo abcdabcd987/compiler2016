@@ -30,7 +30,7 @@ public class Return extends BranchInstruction {
         usedRegister.clear();
         if (ret instanceof Register) usedRegister.add((Register) ret);
         usedIntValue.clear();
-        usedIntValue.add(ret);
+        if (ret != null) usedIntValue.add(ret);
     }
 
     @Override
@@ -60,6 +60,19 @@ public class Return extends BranchInstruction {
     public void replaceIntValueUse(IntValue oldValue, IntValue newValue) {
         if (ret == oldValue) ret = newValue;
         reloadUsedRegisterCollection();
+    }
+
+    @Override
+    public Collection<BasicBlock> getUsedBasicBlock() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Return copyAndRename(Map<Object, Object> renameMap) {
+        return new Return(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (IntValue) renameMap.getOrDefault(ret, ret)
+        );
     }
 
     public IntValue getRet() {

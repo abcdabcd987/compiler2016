@@ -25,4 +25,11 @@ public class StackSlot extends Register {
     public void accept(IIRVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public IntValue copy() {
+        // do nothing
+        assert false;
+        return null;
+    }
 }

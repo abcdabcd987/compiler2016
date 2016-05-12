@@ -13,7 +13,7 @@ public class Store extends IRInstruction {
     private IntValue value;
     public boolean isStaticData;
 
-    public Store(BasicBlock BB, int size, IntValue address, int offset, IntValue value) {
+    public Store(BasicBlock BB, IntValue value, int size, IntValue address, int offset) {
         super(BB);
         this.size = size;
         this.address = address;
@@ -23,8 +23,8 @@ public class Store extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
-    public Store(BasicBlock BB, int size, StaticData address, IntValue value) {
-        this(BB, size, address, 0, value);
+    public Store(BasicBlock BB, IntValue value, int size, StaticData address) {
+        this(BB, value, size, address, 0);
         isStaticData = true;
     }
 
@@ -81,6 +81,25 @@ public class Store extends IRInstruction {
         if (address == oldValue) address = newValue;
         if (value == oldValue) value = newValue;
         reloadUsedRegisterCollection();
+    }
+
+    @Override
+    public Store copyAndRename(Map<Object, Object> renameMap) {
+        if (isStaticData)
+            return new Store(
+                    (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                    (IntValue) renameMap.getOrDefault(value, value),
+                    size,
+                    (StaticData) address
+            );
+        else
+            return new Store(
+                    (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                    (IntValue) renameMap.getOrDefault(value, value),
+                    size,
+                    (IntValue) renameMap.getOrDefault(address, address),
+                    offset
+            );
     }
 
     public int getSize() {

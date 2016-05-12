@@ -206,7 +206,7 @@ public class GraphColoringAllocator extends RegisterAllocator {
                 if (defined instanceof VirtualRegister) {
                     Register color = vrInfo.get(defined).color;
                     if (color instanceof StackSlot) {
-                        inst.append(new Store(BB, wordSize, color, 0, tmpPR1));
+                        inst.append(new Store(BB, tmpPR1, wordSize, color, 0));
                         inst.setDefinedRegister(tmpPR1);
                         curFunc.usedPhysicalGeneralRegister.add(tmpPR1);
                         inst = inst.getNext();

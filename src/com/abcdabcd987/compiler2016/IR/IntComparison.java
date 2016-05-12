@@ -100,4 +100,15 @@ public class IntComparison extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public IRInstruction copyAndRename(Map<Object, Object> renameMap) {
+        return new IntComparison(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (VirtualRegister) renameMap.getOrDefault(dest, dest),
+                cond,
+                (IntValue) renameMap.getOrDefault(lhs, lhs),
+                (IntValue) renameMap.getOrDefault(rhs, rhs)
+        );
+    }
+
 }

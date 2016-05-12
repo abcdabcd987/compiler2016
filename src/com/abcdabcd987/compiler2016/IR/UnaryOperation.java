@@ -71,6 +71,16 @@ public class UnaryOperation extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public IRInstruction copyAndRename(Map<Object, Object> renameMap) {
+        return new UnaryOperation(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (VirtualRegister) renameMap.getOrDefault(dest, dest),
+                op,
+                (IntValue) renameMap.getOrDefault(operand, operand)
+        );
+    }
+
     public Register getDest() {
         return dest;
     }

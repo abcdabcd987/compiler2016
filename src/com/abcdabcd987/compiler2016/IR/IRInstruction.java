@@ -1,5 +1,6 @@
 package com.abcdabcd987.compiler2016.IR;
 
+import com.abcdabcd987.compiler2016.BackEnd.FunctionInliner;
 import com.abcdabcd987.compiler2016.BackEnd.SSATransformer;
 
 import java.util.*;
@@ -76,6 +77,14 @@ public abstract class IRInstruction {
     public abstract void renameDefinedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier);
     public abstract void renameUsedRegister(java.util.function.Function<VirtualRegister, Integer> idSupplier);
     public abstract void replaceIntValueUse(IntValue oldValue, IntValue newValue);
+
+    /**
+     * used by {@link FunctionInliner}
+     * make a copy of current instruction and rename used value
+     * @param renameMap the map use to rename used value
+     * @return return a renamed copy of current instruction
+     */
+    public abstract IRInstruction copyAndRename(Map<Object, Object> renameMap);
 
     public IRInstruction getPrev() {
         return prev;

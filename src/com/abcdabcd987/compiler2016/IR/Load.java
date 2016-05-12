@@ -79,6 +79,26 @@ public class Load extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public IRInstruction copyAndRename(Map<Object, Object> renameMap) {
+        if (isStaticData)
+            return new Load(
+                    (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                    (Register) renameMap.getOrDefault(dest, dest),
+                    size,
+                    (StaticData) address,
+                    isLoadAddress
+            );
+        else
+            return new Load(
+                    (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                    (Register) renameMap.getOrDefault(dest, dest),
+                    size,
+                    (IntValue) renameMap.getOrDefault(address, address),
+                    offset
+            );
+    }
+
     public Register getDest() {
         return dest;
     }

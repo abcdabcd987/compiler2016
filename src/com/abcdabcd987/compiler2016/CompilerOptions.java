@@ -8,13 +8,15 @@ public class CompilerOptions {
     private static final int SIZE_BOOL = 4; // FIXME!
     private static final int SIZE_POINTER = 4;
 
-    public static boolean ifPrintAST;
-    public static boolean ifPrintRawIR;
-    public static boolean ifPrintSSAIR;
-    public static boolean enableSSA;
-    public static boolean eliminateDeadCode;
-    public static boolean simpleConstantPropagate;
-    public static String registerAllocator;
+    public static boolean ifPrintAST              = false;
+    public static boolean ifPrintRawIR            = false;
+    public static boolean ifPrintSSAIR            = false;
+    public static boolean ifPrintIRAfterInline    = false;
+    public static boolean enableInline            = true;
+    public static boolean enableSSA               = true;
+    public static boolean eliminateDeadCode       = true;
+    public static boolean simpleConstantPropagate = true;
+    public static String registerAllocator        = "color";
 
     public static int getSizeInt() {
         return SIZE_INT;

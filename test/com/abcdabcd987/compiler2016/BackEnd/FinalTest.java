@@ -72,8 +72,10 @@ public class FinalTest {
         final boolean printToStdout             = false;
         CompilerOptions.ifPrintAST              = false;
         CompilerOptions.ifPrintRawIR            = false;
+        CompilerOptions.ifPrintIRAfterInline    = false;
         CompilerOptions.ifPrintSSAIR            = false;
-        CompilerOptions.enableSSA               = true;
+        CompilerOptions.enableInline            = true;
+        CompilerOptions.enableSSA               = false;
         CompilerOptions.eliminateDeadCode       = true;
         CompilerOptions.simpleConstantPropagate = true;
         CompilerOptions.registerAllocator      = "color";

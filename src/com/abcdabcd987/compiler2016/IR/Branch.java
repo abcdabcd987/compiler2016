@@ -68,6 +68,21 @@ public class Branch extends BranchInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public Collection<BasicBlock> getUsedBasicBlock() {
+        return Arrays.asList(then, otherwise);
+    }
+
+    @Override
+    public Branch copyAndRename(Map<Object, Object> renameMap) {
+        return new Branch(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (IntValue) renameMap.getOrDefault(cond, cond),
+                (BasicBlock) renameMap.getOrDefault(then, then),
+                (BasicBlock) renameMap.getOrDefault(otherwise, otherwise)
+        );
+    }
+
     public IntValue getCond() {
         return cond;
     }

@@ -47,6 +47,11 @@ public class VirtualRegister extends Register {
         visitor.visit(this);
     }
 
+    @Override
+    public VirtualRegister copy() {
+        return new VirtualRegister(hintName);
+    }
+
     public String getHintName() {
         return hintName;
     }

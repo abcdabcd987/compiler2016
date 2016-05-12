@@ -15,6 +15,11 @@ public class IntImmediate extends IntValue {
         visitor.visit(this);
     }
 
+    @Override
+    public IntImmediate copy() {
+        return new IntImmediate(value);
+    }
+
     public int getValue() {
         return value;
     }

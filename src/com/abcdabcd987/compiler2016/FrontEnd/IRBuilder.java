@@ -56,11 +56,8 @@ public class IRBuilder implements IASTVisitor {
     @Override
     public void visit(Program node) {
         node.decls.forEach(x -> x.accept(this));
-        for (Map.Entry<String, FunctionType> e : GlobalSymbolTable.builtinMethods.entrySet()) {
-            String name = e.getKey();
-            FunctionType type = e.getValue();
-            Function func = new Function(type);
-        }
+        irRoot.functions.values().forEach(Function::updateCalleeSet);
+        irRoot.calcRecursiveCalleeSet();
     }
 
     @Override
@@ -482,8 +479,8 @@ public class IRBuilder implements IASTVisitor {
             // for short-circuit evaluation
             BasicBlock merge = new BasicBlock(curFunction, null);
             if (isMemOp) {
-                rhs.ifTrue.append(new Store(curBB, size, addr, offset, new IntImmediate(1)));
-                rhs.ifFalse.append(new Store(curBB, size, addr, offset, new IntImmediate(0)));
+                rhs.ifTrue.append(new Store(curBB, new IntImmediate(1), size, addr, offset));
+                rhs.ifFalse.append(new Store(curBB, new IntImmediate(0), size, addr, offset));
             } else {
                 rhs.ifTrue.append(new Move(curBB, (VirtualRegister)addr, new IntImmediate(1)));
                 rhs.ifFalse.append(new Move(curBB, (VirtualRegister)addr, new IntImmediate(0)));
@@ -493,7 +490,7 @@ public class IRBuilder implements IASTVisitor {
             curBB = merge;
         } else {
             if (isMemOp) {
-                curBB.append(new Store(curBB, size, addr, offset, rhs.intValue));
+                curBB.append(new Store(curBB, rhs.intValue, size, addr, offset));
             } else {
                 curBB.append(new Move(curBB, (Register) addr, rhs.intValue));
             }
@@ -706,7 +703,7 @@ public class IRBuilder implements IASTVisitor {
             curBB.append(new BinaryOperation(curBB, reg, BinaryOp.MUL, dim.intValue, new IntImmediate(t.bodyType.getRegisterSize())));
             curBB.append(new BinaryOperation(curBB, reg, BinaryOp.ADD, reg, new IntImmediate(CompilerOptions.getSizeInt())));
             curBB.append(new HeapAllocate(curBB, reg, reg));
-            curBB.append(new Store(curBB, CompilerOptions.getSizeInt(), reg, 0, dim.intValue));
+            curBB.append(new Store(curBB, dim.intValue, CompilerOptions.getSizeInt(), reg, 0));
         }
         node.intValue = reg;
     }
@@ -767,7 +764,7 @@ public class IRBuilder implements IASTVisitor {
         if (isMemOp) {
             reg = new VirtualRegister(null);
             curBB.append(new BinaryOperation(curBB, reg, op, body.intValue, one));
-            curBB.append(new Store(curBB, body.exprType.getRegisterSize(), addr, offset, reg));
+            curBB.append(new Store(curBB, reg, body.exprType.getRegisterSize(), addr, offset));
             if (!isPostfix) node.intValue = reg;
         } else {
             curBB.append(new BinaryOperation(curBB, (Register) body.intValue, op, body.intValue, one));

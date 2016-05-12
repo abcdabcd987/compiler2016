@@ -92,11 +92,11 @@ public class TargetIRTransformer {
         firstInst.prepend(new BinaryOperation(entryBB, SP, BinaryOperation.BinaryOp.SUB, SP, new IntImmediate(info.frameSize)));
 
         // save $ra
-        firstInst.prepend(new Store(entryBB, sizeWord, SP, info.beginRA, RA));
+        firstInst.prepend(new Store(entryBB, RA, sizeWord, SP, info.beginRA));
 
         // save $s?
         for (int i = 0; i < info.usedCalleeSaveRegister.size(); ++i)
-            firstInst.prepend(new Store(entryBB, sizeWord, SP, info.beginSavedReg + i * sizeWord, info.usedCalleeSaveRegister.get(i)));
+            firstInst.prepend(new Store(entryBB, info.usedCalleeSaveRegister.get(i), sizeWord, SP, info.beginSavedReg + i * sizeWord));
     }
 
     private void modifyReturn(Function func) {
@@ -154,14 +154,14 @@ public class TargetIRTransformer {
         for (int i = 0; i < info.usedCallerSaveRegister.size(); ++i) {
             PhysicalRegister reg = info.usedCallerSaveRegister.get(i);
             if (calleeInfo.recursiveUsedRegister.contains(reg))
-                inst.prepend(new Store(BB, sizeWord, SP, info.beginTempReg + i * sizeWord, reg));
+                inst.prepend(new Store(BB, reg, sizeWord, SP, info.beginTempReg + i * sizeWord));
         }
 
         // save $a? register
-        if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg, A0));
-        if (func.argVarRegList.size() > 1) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + sizeWord, A1));
-        if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 2*sizeWord, A2));
-        if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, sizeWord, SP, info.beginArg + 3*sizeWord, A3));
+        if (func.argVarRegList.size() > 0) inst.prepend(new Store(BB, A0, sizeWord, SP, info.beginArg));
+        if (func.argVarRegList.size() > 1) inst.prepend(new Store(BB, A1, sizeWord, SP, info.beginArg + sizeWord));
+        if (func.argVarRegList.size() > 2) inst.prepend(new Store(BB, A2, sizeWord, SP, info.beginArg + 2*sizeWord));
+        if (func.argVarRegList.size() > 3) inst.prepend(new Store(BB, A3, sizeWord, SP, info.beginArg + 3*sizeWord));
 
         // copy argument
         if (callee.builtinFunctionHackName == null) {
@@ -177,7 +177,7 @@ public class TargetIRTransformer {
                     inst.prepend(new Load(BB, A0, sizeWord, SP, info.stackSlotOffset.get(slot)));
                     value = A0;
                 }
-                inst.prepend(new Store(BB, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + i*sizeWord, value));
+                inst.prepend(new Store(BB, value, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + i*sizeWord));
             }
             if (args.size() > 0) inst.prepend(new Load(BB, A0, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg));
             if (args.size() > 1) inst.prepend(new Load(BB, A1, sizeWord, SP, - calleeInfo.frameSize + calleeInfo.beginArg + sizeWord));
@@ -228,30 +228,15 @@ public class TargetIRTransformer {
     }
 
     private void calcRecursiveRegisterUse() {
-        Collection<Function> funcs = irRoot.functions.values();
-        Set<PhysicalRegister> set = new HashSet<>();
-
-        funcs.forEach(x -> funcInfo.get(x).recursiveUsedRegister.addAll(x.usedPhysicalGeneralRegister));
         for (Function func : irRoot.builtinFunctions) {
             FunctionInfo info = new FunctionInfo();
             funcInfo.put(func, info);
-            info.recursiveUsedRegister.addAll(func.usedPhysicalGeneralRegister);
         }
-
-        boolean changed = true;
-        while (changed) {
-            changed = false;
-            for (Function func : funcs) {
-                FunctionInfo info = funcInfo.get(func);
-                set.clear();
-                set.addAll(info.recursiveUsedRegister);
-                func.calleeSet.forEach(x -> set.addAll(funcInfo.get(x).recursiveUsedRegister));
-                if (!set.equals(info.recursiveUsedRegister)) {
-                    changed = true;
-                    info.recursiveUsedRegister.clear();
-                    info.recursiveUsedRegister.addAll(set);
-                }
-            }
+        for (Map.Entry<Function, FunctionInfo> entry : funcInfo.entrySet()) {
+            Function func = entry.getKey();
+            FunctionInfo info = entry.getValue();
+            info.recursiveUsedRegister.addAll(func.usedPhysicalGeneralRegister);
+            func.recursiveCalleeSet.forEach(x -> info.recursiveUsedRegister.addAll(x.usedPhysicalGeneralRegister));
         }
     }
 

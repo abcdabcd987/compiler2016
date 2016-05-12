@@ -73,4 +73,13 @@ public class HeapAllocate extends IRInstruction {
         reloadUsedRegisterCollection();
     }
 
+    @Override
+    public IRInstruction copyAndRename(Map<Object, Object> renameMap) {
+        return new HeapAllocate(
+                (BasicBlock) renameMap.getOrDefault(curBB, curBB),
+                (VirtualRegister) renameMap.getOrDefault(dest, dest),
+                (IntValue) renameMap.getOrDefault(allocSize, allocSize)
+        );
+    }
+
 }
